@@ -1,0 +1,60 @@
+{
+  "meta": {
+    "id": "athens_consensus",
+    "name": "雅典直接民主制",
+    "version": "0.1.0",
+    "pattern": "consensus",
+    "description": "Planner proposes, consensus layer votes, executor runs"
+  },
+  "entry_stage": "boule_planner",
+  "agents": {
+    "boule": {"runtime_id": "boule", "role": "planner"},
+    "citizen_a": {"runtime_id": "citizen_a", "role": "voter"},
+    "citizen_b": {"runtime_id": "citizen_b", "role": "voter"},
+    "citizen_c": {"runtime_id": "citizen_c", "role": "voter"},
+    "strategos": {"runtime_id": "strategos", "role": "executor"}
+  },
+  "stages": [
+    {
+      "id": "boule_planner",
+      "kind": "planner",
+      "agent": "boule",
+      "prompt_template": "你是议事会，生成提案。任务:{title}",
+      "transitions": [
+        {"decision": "next", "to": "ekklesia_vote"}
+      ]
+    },
+    {
+      "id": "ekklesia_vote",
+      "kind": "consensus",
+      "prompt_template": "你是公民代表，请投票同意(yes)或反对(no)。任务:{title}",
+      "consensus": {
+        "voters": ["citizen_a", "citizen_b", "citizen_c"],
+        "algorithm": "majority",
+        "threshold": 0.5,
+        "tie_breaker": "reject"
+      },
+      "transitions": [
+        {"decision": "approve", "to": "strategos_execute"},
+        {"decision": "reject", "to": "completed"}
+      ]
+    },
+    {
+      "id": "strategos_execute",
+      "kind": "executor",
+      "agent": "strategos",
+      "prompt_template": "你是将军，执行已通过提案。",
+      "transitions": [
+        {"decision": "next", "to": "completed"}
+      ]
+    },
+    {"id": "completed", "kind": "terminal"}
+  ],
+  "features": [
+    {"name": "monitor", "enabled": true, "config": {}}
+  ],
+  "policy": {
+    "require_json_decision": false,
+    "max_steps": 16
+  }
+}

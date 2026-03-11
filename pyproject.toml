@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mas-governance-engine"
+version = "0.1.0"
+description = "Pattern+Feature governance runtime for multi-agent systems"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [{ name = "SocialSystemArena" }]
+dependencies = []
+
+[project.scripts]
+mas-engine = "mas_engine.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["mas_engine*"]

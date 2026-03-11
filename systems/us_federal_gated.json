@@ -1,0 +1,77 @@
+{
+  "meta": {
+    "id": "us_federal_gated",
+    "name": "美国联邦总统制",
+    "version": "0.1.0",
+    "pattern": "gated_pipeline",
+    "description": "Multi-gate pipeline with committee, congress, president and auditor"
+  },
+  "entry_stage": "committee_modify",
+  "agents": {
+    "committee": {"runtime_id": "committee", "role": "gate"},
+    "congress": {"runtime_id": "congress", "role": "gate"},
+    "president": {"runtime_id": "president", "role": "gate"},
+    "agency": {"runtime_id": "agency", "role": "executor"},
+    "supreme_court": {"runtime_id": "supreme_court", "role": "auditor"}
+  },
+  "stages": [
+    {
+      "id": "committee_modify",
+      "kind": "gate",
+      "agent": "committee",
+      "prompt_template": "委员会审议并可修改，decision=approve或reject",
+      "transitions": [
+        {"decision": "approve", "to": "congress_vote"},
+        {"decision": "reject", "to": "completed"}
+      ]
+    },
+    {
+      "id": "congress_vote",
+      "kind": "gate",
+      "agent": "congress",
+      "prompt_template": "国会投票，decision=approve或reject",
+      "transitions": [
+        {"decision": "approve", "to": "president_veto"},
+        {"decision": "reject", "to": "completed"}
+      ]
+    },
+    {
+      "id": "president_veto",
+      "kind": "gate",
+      "agent": "president",
+      "prompt_template": "总统签署或否决，decision=approve或veto",
+      "transitions": [
+        {"decision": "approve", "to": "agency_execute"},
+        {"decision": "veto", "to": "completed"}
+      ]
+    },
+    {
+      "id": "agency_execute",
+      "kind": "executor",
+      "agent": "agency",
+      "transitions": [
+        {"decision": "next", "to": "court_audit"}
+      ]
+    },
+    {
+      "id": "court_audit",
+      "kind": "auditor",
+      "agent": "supreme_court",
+      "prompt_template": "最高法院审计，decision=approve或invalidate",
+      "transitions": [
+        {"decision": "approve", "to": "completed"},
+        {"decision": "invalidate", "to": "completed"},
+        {"decision": "default", "to": "completed"}
+      ]
+    },
+    {"id": "completed", "kind": "terminal"}
+  ],
+  "features": [
+    {"name": "monitor", "enabled": true, "config": {}},
+    {"name": "shared_state", "enabled": true, "config": {}}
+  ],
+  "policy": {
+    "require_json_decision": false,
+    "max_steps": 20
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "meta": {
+    "id": "egypt_pipeline",
+    "name": "古埃及法老制",
+    "version": "0.1.0",
+    "pattern": "pipeline",
+    "description": "Simple unilateral command chain"
+  },
+  "entry_stage": "vizier_planning",
+  "agents": {
+    "vizier": {"runtime_id": "vizier", "role": "planner"},
+    "nomarch": {"runtime_id": "nomarch", "role": "executor"}
+  },
+  "stages": [
+    {
+      "id": "vizier_planning",
+      "kind": "planner",
+      "agent": "vizier",
+      "prompt_template": "你是维齐尔，制定执行计划。任务:{title}",
+      "transitions": [
+        {"decision": "next", "to": "nomarch_execution"}
+      ]
+    },
+    {
+      "id": "nomarch_execution",
+      "kind": "executor",
+      "agent": "nomarch",
+      "prompt_template": "你是地方官执行计划。任务:{title}",
+      "transitions": [
+        {"decision": "next", "to": "completed"}
+      ]
+    },
+    {"id": "completed", "kind": "terminal"}
+  ],
+  "features": [
+    {"name": "monitor", "enabled": true, "config": {}}
+  ],
+  "policy": {
+    "require_json_decision": false,
+    "max_steps": 10
+  }
+}

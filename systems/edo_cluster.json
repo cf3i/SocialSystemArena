@@ -1,0 +1,59 @@
+{
+  "meta": {
+    "id": "edo_cluster",
+    "name": "江户幕藩体制",
+    "version": "0.1.0",
+    "pattern": "autonomous_cluster",
+    "description": "Orchestrator delegates to autonomous subsystems with heartbeat monitoring"
+  },
+  "entry_stage": "bakufu_orchestrator",
+  "agents": {
+    "bakufu": {"runtime_id": "bakufu", "role": "orchestrator"},
+    "satsuma": {"runtime_id": "satsuma", "role": "subsystem"},
+    "choshu": {"runtime_id": "choshu", "role": "subsystem"},
+    "kaga": {"runtime_id": "kaga", "role": "subsystem"}
+  },
+  "stages": [
+    {
+      "id": "bakufu_orchestrator",
+      "kind": "orchestrator",
+      "agent": "bakufu",
+      "prompt_template": "你是幕府，拆分政策到各藩。任务:{title}",
+      "transitions": [
+        {"decision": "next", "to": "han_cluster"}
+      ]
+    },
+    {
+      "id": "han_cluster",
+      "kind": "cluster",
+      "prompt_template": "你是藩国子系统，独立执行并回报。任务:{title}",
+      "cluster_members": [
+        {"agent": "satsuma", "role": "subsystem", "required": true},
+        {"agent": "choshu", "role": "subsystem", "required": true},
+        {"agent": "kaga", "role": "subsystem", "required": true}
+      ],
+      "transitions": [
+        {"decision": "success", "to": "bakufu_summary"},
+        {"decision": "failure", "to": "bakufu_summary"}
+      ]
+    },
+    {
+      "id": "bakufu_summary",
+      "kind": "auditor",
+      "agent": "bakufu",
+      "prompt_template": "你是幕府，汇总各藩结果并形成总报告。",
+      "transitions": [
+        {"decision": "next", "to": "completed"}
+      ]
+    },
+    {"id": "completed", "kind": "terminal"}
+  ],
+  "features": [
+    {"name": "monitor", "enabled": true, "config": {}},
+    {"name": "shared_state", "enabled": true, "config": {}}
+  ],
+  "policy": {
+    "require_json_decision": false,
+    "max_steps": 16
+  }
+}

@@ -1,0 +1,74 @@
+{
+  "meta": {
+    "id": "qinhan_junxian",
+    "name": "秦汉郡县制",
+    "version": "0.1.0",
+    "pattern": "pipeline",
+    "description": "Imperial decree pipeline with side-channel censor monitoring"
+  },
+  "entry_stage": "huangdi_decree",
+  "agents": {
+    "huangdi": {"runtime_id": "huangdi", "role": "initiator"},
+    "chengxiang": {"runtime_id": "chengxiang", "role": "planner"},
+    "junshou": {"runtime_id": "junshou", "role": "executor"},
+    "xianling": {"runtime_id": "xianling", "role": "executor"},
+    "yushi": {"runtime_id": "yushi", "role": "monitor"}
+  },
+  "stages": [
+    {
+      "id": "huangdi_decree",
+      "kind": "initiator",
+      "agent": "huangdi",
+      "prompt_template": "你是皇帝，下达新政令。任务:{title}",
+      "transitions": [
+        {"decision": "next", "to": "chengxiang_plan"},
+        {"decision": "default", "to": "chengxiang_plan"}
+      ]
+    },
+    {
+      "id": "chengxiang_plan",
+      "kind": "planner",
+      "agent": "chengxiang",
+      "prompt_template": "你是丞相，制定郡县执行细则。任务:{title}",
+      "transitions": [
+        {"decision": "next", "to": "jun_dispatch"},
+        {"decision": "default", "to": "jun_dispatch"}
+      ]
+    },
+    {
+      "id": "jun_dispatch",
+      "kind": "executor",
+      "agent": "junshou",
+      "prompt_template": "你是郡守，向各县分解并派发执行任务。任务:{title}",
+      "transitions": [
+        {"decision": "next", "to": "xian_execute"},
+        {"decision": "default", "to": "xian_execute"}
+      ]
+    },
+    {
+      "id": "xian_execute",
+      "kind": "executor",
+      "agent": "xianling",
+      "prompt_template": "你是县令，在辖区内落地执行政令。任务:{title}",
+      "transitions": [
+        {"decision": "next", "to": "completed"},
+        {"decision": "default", "to": "completed"}
+      ]
+    },
+    {"id": "completed", "kind": "terminal"}
+  ],
+  "features": [
+    {
+      "name": "monitor",
+      "enabled": true,
+      "config": {
+        "label": "御史大夫旁路监察",
+        "observer_agent": "yushi"
+      }
+    }
+  ],
+  "policy": {
+    "require_json_decision": false,
+    "max_steps": 16
+  }
+}

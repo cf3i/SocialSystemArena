@@ -1,0 +1,132 @@
+meta: {
+  id:          "tang_sanshengliubu"
+  name:        "唐代三省六部"
+  version:     "0.1.0"
+  pattern:     "gated_pipeline"
+  description: "Single-gate institutional review with multi-ministry execution"
+}
+
+entry_stage: "taizi_triage"
+
+agents: {
+  taizi: {
+    runtime_id: "taizi"
+    role:       "initiator"
+    timeout_sec: 180
+    retries:    1
+  }
+  zhongshu: {
+    runtime_id: "zhongshu"
+    role:       "planner"
+    timeout_sec: 300
+    retries:    1
+  }
+  menxia: {
+    runtime_id: "menxia"
+    role:       "gate"
+    timeout_sec: 240
+    retries:    1
+  }
+  shangshu: {
+    runtime_id: "shangshu"
+    role:       "dispatcher"
+    timeout_sec: 300
+    retries:    1
+  }
+  hubu: { runtime_id: "hubu", role: "executor" }
+  libu: { runtime_id: "libu", role: "executor" }
+  bingbu: { runtime_id: "bingbu", role: "executor" }
+  xingbu: { runtime_id: "xingbu", role: "executor" }
+  gongbu: { runtime_id: "gongbu", role: "executor" }
+  libu_hr: { runtime_id: "libu_hr", role: "executor" }
+}
+
+stages: [
+  {
+    id:    "taizi_triage"
+    kind:  "initiator"
+    agent: "taizi"
+    prompt_template: "你是太子，请分拣此输入是否为正式旨意。\\n任务: {title}\\n输入: {input_text}\\n返回JSON decision=work_order或smalltalk"
+    transitions: [
+      { decision: "smalltalk", to: "completed" },
+      { decision: "work_order", to: "zhongshu_plan" },
+      { decision: "default", to: "zhongshu_plan" },
+    ]
+  },
+  {
+    id:    "zhongshu_plan"
+    kind:  "planner"
+    agent: "zhongshu"
+    prompt_template: "你是中书省，输出执行方案并提交门下省。\\n任务: {title}\\n输入: {input_text}\\n返回JSON decision=submit"
+    transitions: [
+      { decision: "submit", to: "menxia_gate" },
+      { decision: "default", to: "menxia_gate" },
+    ]
+  },
+  {
+    id:    "menxia_gate"
+    kind:  "gate"
+    agent: "menxia"
+    prompt_template: "你是门下省，审议中书方案，decision=approve或reject。\\n历史: {history}"
+    transitions: [
+      { decision: "approve", to: "shangshu_dispatch" },
+      { decision: "reject", to: "zhongshu_plan" },
+      { decision: "default", to: "zhongshu_plan" },
+    ]
+  },
+  {
+    id:    "shangshu_dispatch"
+    kind:  "executor"
+    agent: "shangshu"
+    prompt_template: "你是尚书省，负责分派六部执行。返回 decision=dispatched"
+    transitions: [
+      { decision: "dispatched", to: "liubu_cluster" },
+      { decision: "default", to: "liubu_cluster" },
+    ]
+  },
+  {
+    id:   "liubu_cluster"
+    kind: "cluster"
+    prompt_template: "你是六部成员，请执行分配子任务并返回JSON decision=success|failed"
+    cluster_members: [
+      { agent: "hubu", role: "finance", required: true },
+      { agent: "libu", role: "documentation", required: true },
+      { agent: "bingbu", role: "engineering", required: true },
+      { agent: "xingbu", role: "compliance", required: true },
+      { agent: "gongbu", role: "infrastructure", required: true },
+      { agent: "libu_hr", role: "staffing", required: false },
+    ]
+    transitions: [
+      { decision: "success", to: "review_report" },
+      { decision: "failure", to: "shangshu_dispatch" },
+      { decision: "default", to: "review_report" },
+    ]
+  },
+  {
+    id:    "review_report"
+    kind:  "auditor"
+    agent: "zhongshu"
+    prompt_template: "你是中书省，总结六部结果并回奏。decision=approve或rework"
+    transitions: [
+      { decision: "approve", to: "completed" },
+      { decision: "rework", to: "zhongshu_plan" },
+      { decision: "default", to: "completed" },
+    ]
+  },
+  {
+    id:   "completed"
+    kind: "terminal"
+  },
+]
+
+features: [
+  { name: "monitor", enabled: true, config: {} },
+  { name: "shared_state", enabled: true, config: {} },
+  { name: "system_protocol", enabled: true, config: { banned_terms: ["rm -rf", "DROP TABLE"] } },
+]
+
+policy: {
+  banned_terms: ["rm -rf", "DROP TABLE"]
+  require_json_decision: false
+  max_steps: 40
+}
