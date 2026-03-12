@@ -1,4 +1,4 @@
-"""Compiler for governance specs (CUE/JSON -> in-memory IR)."""
+"""Compiler for governance specs (CUE/JSON/YAML -> in-memory IR)."""
 
 from __future__ import annotations
 
@@ -28,10 +28,49 @@ def compile_spec(path: str | Path) -> GovernanceSpec:
         raise SpecError(f"Spec not found: {src}")
     src = src.resolve()
 
-    raw = _load_raw(src)
+    raw = _load_raw_from_path(src)
+    return compile_spec_obj(raw)
+
+
+def compile_spec_obj(raw: dict[str, Any]) -> GovernanceSpec:
     spec = _parse_raw(raw)
     validate_spec(spec)
     return spec
+
+
+def compile_spec_text(text: str, fmt: str = "yaml") -> GovernanceSpec:
+    raw = load_spec_text(text=text, fmt=fmt)
+    return compile_spec_obj(raw)
+
+
+def load_spec_text(text: str, fmt: str = "yaml") -> dict[str, Any]:
+    mode = (fmt or "yaml").strip().lower()
+    if mode == "json":
+        try:
+            raw = json.loads(text)
+        except json.JSONDecodeError as exc:
+            raise SpecError(f"JSON parse failed: {exc}") from exc
+    elif mode in {"yaml", "yml"}:
+        raw = _load_yaml_text(text)
+    else:
+        raise SpecError("Unsupported inline format. Use `yaml` or `json`.")
+
+    if not isinstance(raw, dict):
+        raise SpecError("Spec root must be an object")
+    return raw
+
+
+def dump_spec_yaml(raw: dict[str, Any]) -> str:
+    try:
+        import yaml
+    except ImportError as exc:
+        raise SpecError(
+            "YAML export requires PyYAML. Install with `pip install pyyaml`."
+        ) from exc
+
+    if not isinstance(raw, dict):
+        raise SpecError("spec object must be a dict")
+    return yaml.safe_dump(raw, allow_unicode=True, sort_keys=False)
 
 
 def export_ir_json(spec: GovernanceSpec) -> dict[str, Any]:
@@ -100,7 +139,7 @@ def export_ir_json(spec: GovernanceSpec) -> dict[str, Any]:
     }
 
 
-def _load_raw(src: Path) -> dict[str, Any]:
+def _load_raw_from_path(src: Path) -> dict[str, Any]:
     suffix = src.suffix.lower()
     if suffix == ".json":
         return json.loads(src.read_text())
@@ -112,6 +151,10 @@ def _load_raw(src: Path) -> dict[str, Any]:
 
 
 def _load_yaml(src: Path) -> dict[str, Any]:
+    return _load_yaml_text(src.read_text(encoding="utf-8"))
+
+
+def _load_yaml_text(text: str) -> dict[str, Any]:
     try:
         import yaml
     except ImportError as exc:
@@ -120,7 +163,7 @@ def _load_yaml(src: Path) -> dict[str, Any]:
         ) from exc
 
     try:
-        raw = yaml.safe_load(src.read_text(encoding="utf-8"))
+        raw = yaml.safe_load(text)
     except Exception as exc:
         raise SpecError(f"YAML parse failed: {exc}") from exc
 

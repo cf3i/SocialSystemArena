@@ -11,6 +11,8 @@ from pathlib import Path
 from .adapters import MockAdapter, OpenClawAdapter, PcAgentLoopAdapter
 from .core.errors import SpecError
 from .core.runtime import GovernanceRuntime
+from .dashboard_server import serve_dashboard
+from .observability.task_manager import TaskRunManager
 from .spec.compiler import compile_spec, export_ir_json
 from .spec.templates import SUPPORTED_PATTERNS, build_spec_template
 from .storage.jsonl import JsonlStore
@@ -77,6 +79,20 @@ def main() -> None:
     p_run.add_argument("--max-steps", type=int, default=0, help="runtime step budget")
     p_run.add_argument("--human-confirm", action="store_true", help="enable interactive HITL callback")
 
+    p_serve = sub.add_parser("serve", help="start dashboard backend (API + event stream)")
+    p_serve.add_argument("--host", default="127.0.0.1", help="bind host")
+    p_serve.add_argument("--port", type=int, default=8787, help="bind port")
+    p_serve.add_argument(
+        "--trace-dir",
+        default="traces/dashboard",
+        help="directory for per-task trace jsonl files",
+    )
+    p_serve.add_argument(
+        "--institutions",
+        default="systems/institutions.yaml",
+        help="institution registry file",
+    )
+
     args = parser.parse_args()
 
     try:
@@ -88,6 +104,8 @@ def main() -> None:
             return _cmd_init_spec(args)
         if args.cmd == "run":
             return _cmd_run(args)
+        if args.cmd == "serve":
+            return _cmd_serve(args)
     except SpecError as exc:
         print(f"[spec-error] {exc}", file=sys.stderr)
         raise SystemExit(2)
@@ -184,6 +202,14 @@ def _cmd_run(args: argparse.Namespace) -> None:
         ensure_ascii=False,
         indent=2,
     ))
+
+
+def _cmd_serve(args: argparse.Namespace) -> None:
+    manager = TaskRunManager(
+        trace_dir=args.trace_dir,
+        institutions_path=args.institutions,
+    )
+    serve_dashboard(manager=manager, host=args.host, port=args.port)
 
 
 def _interactive_confirm(**kwargs) -> bool:

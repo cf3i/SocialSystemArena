@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Iterable
 
 from ..core.types import TaskEvent, TaskState
 
@@ -13,8 +14,9 @@ class JsonlStore:
         self.path = Path(path)
         self.path.parent.mkdir(parents=True, exist_ok=True)
 
-    def append_event(self, task: TaskState, event: TaskEvent) -> None:
-        row = {
+    @staticmethod
+    def build_event_row(task: TaskState, event: TaskEvent) -> dict:
+        return {
             "record_type": "stage_event",
             "task_id": task.task_id,
             "title": task.title,
@@ -32,28 +34,26 @@ class JsonlStore:
             },
             "shared_state": task.shared_state,
         }
-        with self.path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(row, ensure_ascii=False) + "\n")
 
-    def append_agent_traces(
-        self,
+    @staticmethod
+    def build_agent_rows(
         task: TaskState,
         stage_index: int,
         stage_id: str,
         stage_kind: str,
         traces: list[dict],
-    ) -> None:
+    ) -> list[dict]:
         if not traces:
-            return
+            return []
 
         sorted_traces = sorted(
             traces,
             key=lambda item: int(item.get("sequential_id") or 0),
         )
-
-        with self.path.open("a", encoding="utf-8") as f:
-            for trace in sorted_traces:
-                row = {
+        rows: list[dict] = []
+        for trace in sorted_traces:
+            rows.append(
+                {
                     "record_type": "agent_trace",
                     "task_id": task.task_id,
                     "title": task.title,
@@ -74,4 +74,30 @@ class JsonlStore:
                     },
                     "shared_state": task.shared_state,
                 }
+            )
+        return rows
+
+    def _write_rows(self, rows: Iterable[dict]) -> None:
+        with self.path.open("a", encoding="utf-8") as f:
+            for row in rows:
                 f.write(json.dumps(row, ensure_ascii=False) + "\n")
+
+    def append_event(self, task: TaskState, event: TaskEvent) -> None:
+        self._write_rows([self.build_event_row(task, event)])
+
+    def append_agent_traces(
+        self,
+        task: TaskState,
+        stage_index: int,
+        stage_id: str,
+        stage_kind: str,
+        traces: list[dict],
+    ) -> None:
+        rows = self.build_agent_rows(
+            task=task,
+            stage_index=stage_index,
+            stage_id=stage_id,
+            stage_kind=stage_kind,
+            traces=traces,
+        )
+        self._write_rows(rows)

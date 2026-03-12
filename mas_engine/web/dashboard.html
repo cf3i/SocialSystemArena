@@ -1,0 +1,3137 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MAS Institution Dashboard</title>
+  <style>
+    @import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap");
+
+    :root {
+      --bg: #f4eee3;
+      --bg-noise: rgba(15, 56, 66, 0.03);
+      --panel: #fffdf8;
+      --panel-elevated: #ffffff;
+      --line: #d9cdb8;
+      --line-soft: #eadfce;
+      --ink: #16232d;
+      --muted: #5b6873;
+      --accent: #0b7486;
+      --accent-strong: #085764;
+      --accent-soft: #e3f1f4;
+      --warn: #a65a33;
+      --ok: #1f7b53;
+      --err: #b34545;
+      --chip: #eef4f6;
+      --shadow-soft: 0 8px 24px rgba(24, 39, 48, 0.08);
+      --shadow-heavy: 0 12px 34px rgba(24, 39, 48, 0.12);
+      --radius-l: 16px;
+      --radius-m: 12px;
+      --radius-s: 10px;
+      --ease: 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+    body[data-theme="slate"] {
+      --bg: #e8edf4;
+      --bg-noise: rgba(32, 51, 92, 0.04);
+      --panel: #fdfefe;
+      --panel-elevated: #ffffff;
+      --line: #ccd4e2;
+      --line-soft: #dbe2ee;
+      --ink: #152031;
+      --muted: #5a667a;
+      --accent: #355f9a;
+      --accent-strong: #27497b;
+      --accent-soft: #e5eef9;
+      --warn: #a86a38;
+      --chip: #edf2fb;
+      --shadow-soft: 0 8px 24px rgba(25, 43, 73, 0.1);
+      --shadow-heavy: 0 14px 34px rgba(25, 43, 73, 0.14);
+    }
+    body[data-theme="citrus"] {
+      --bg: #f5f3e5;
+      --bg-noise: rgba(61, 88, 35, 0.03);
+      --panel: #fffef8;
+      --panel-elevated: #ffffff;
+      --line: #d9d8bf;
+      --line-soft: #e7e5d3;
+      --ink: #27311e;
+      --muted: #667257;
+      --accent: #5f7e2d;
+      --accent-strong: #486420;
+      --accent-soft: #edf4de;
+      --warn: #9b6836;
+      --chip: #f3f7ea;
+      --shadow-soft: 0 8px 24px rgba(44, 58, 30, 0.08);
+      --shadow-heavy: 0 14px 34px rgba(44, 58, 30, 0.12);
+    }
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      background:
+        radial-gradient(circle at 14% 10%, #efe3cf 0%, transparent 36%),
+        radial-gradient(circle at 88% 80%, #dfedf1 0%, transparent 32%),
+        linear-gradient(120deg, transparent 0%, var(--bg-noise) 100%),
+        var(--bg);
+      color: var(--ink);
+      font-family: "Manrope", "Avenir Next", "PingFang SC", sans-serif;
+      line-height: 1.38;
+    }
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image: radial-gradient(rgba(22, 35, 45, 0.05) 0.4px, transparent 0.4px);
+      background-size: 3px 3px;
+      opacity: 0.2;
+      z-index: -1;
+    }
+    .app-shell {
+      max-width: 1600px;
+      margin: 0 auto;
+      padding: 18px;
+    }
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+      padding: 10px 12px;
+      border: 1px solid var(--line-soft);
+      border-radius: var(--radius-l);
+      background: color-mix(in srgb, #fff 90%, var(--accent-soft));
+      box-shadow: var(--shadow-soft);
+    }
+    .topbar-left,
+    .topbar-right {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .lang-switch {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px;
+      border-radius: 999px;
+      border: 1px solid var(--line-soft);
+      background: #fff;
+    }
+    .lang-btn {
+      border-radius: 999px;
+      border: 1px solid transparent;
+      padding: 6px 10px;
+      font-size: 11px;
+      background: transparent;
+      color: var(--muted);
+    }
+    .lang-btn.active {
+      background: var(--accent-soft);
+      border-color: color-mix(in srgb, var(--accent) 38%, var(--line-soft));
+      color: var(--accent-strong);
+    }
+    .tab-nav {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px;
+      border-radius: 999px;
+      border: 1px solid var(--line-soft);
+      background: #fff;
+    }
+    .tab-btn {
+      border-radius: 999px;
+      border: 1px solid transparent;
+      padding: 7px 12px;
+      font-size: 12px;
+      background: transparent;
+      color: var(--muted);
+    }
+    .tab-btn.active {
+      background: linear-gradient(160deg, var(--accent), var(--accent-strong));
+      color: #fff;
+      box-shadow: 0 6px 14px rgba(8, 87, 100, 0.18);
+    }
+    .theme-label {
+      font-size: 11px;
+      color: var(--muted);
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+    }
+    .theme-select {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #fff;
+      color: var(--ink);
+      font-size: 12px;
+      font-weight: 600;
+      padding: 7px 12px;
+      min-width: 132px;
+    }
+    .wrap {
+      display: grid;
+      grid-template-columns: minmax(340px, 1.08fr) minmax(360px, 1fr) minmax(360px, 1.12fr);
+      grid-template-areas:
+        "run run run"
+        "builder yaml events"
+        "topology topology events"
+        "agents agents events";
+      gap: 14px;
+    }
+    .wrap[data-active-tab="run"] {
+      grid-template-columns: minmax(880px, 1fr);
+      grid-template-areas: "run";
+      max-width: 1120px;
+      margin: 0 auto;
+    }
+    .wrap[data-active-tab="builder"] {
+      grid-template-columns: minmax(420px, 1.15fr) minmax(420px, 1fr);
+      grid-template-areas: "builder yaml";
+    }
+    .wrap[data-active-tab="monitor"] {
+      grid-template-columns: minmax(360px, 1fr) minmax(360px, 1fr) minmax(380px, 1.1fr);
+      grid-template-areas:
+        "topology topology events"
+        "agents agents events";
+    }
+    .card.tab-hidden {
+      display: none !important;
+    }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line-soft);
+      border-radius: var(--radius-l);
+      box-shadow: var(--shadow-soft);
+      padding: 14px;
+      position: relative;
+      overflow: hidden;
+      opacity: 0;
+      transform: translateY(8px);
+      animation: card-enter 420ms var(--ease) forwards;
+    }
+    .card::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 0;
+      height: 2px;
+      background: linear-gradient(90deg, rgba(11, 116, 134, 0.1), rgba(11, 116, 134, 0.48), rgba(11, 116, 134, 0.1));
+    }
+    .card:nth-of-type(1) { animation-delay: 40ms; }
+    .card:nth-of-type(2) { animation-delay: 80ms; }
+    .card:nth-of-type(3) { animation-delay: 120ms; }
+    .card:nth-of-type(4) { animation-delay: 160ms; }
+    .card:nth-of-type(5) { animation-delay: 200ms; }
+    .card:nth-of-type(6) { animation-delay: 240ms; }
+
+    @keyframes card-enter {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    #run { grid-area: run; }
+    #builder { grid-area: builder; }
+    #yaml { grid-area: yaml; }
+    #topology { grid-area: topology; min-height: 280px; }
+    #agents { grid-area: agents; min-height: 270px; }
+    #events { grid-area: events; min-height: 760px; }
+    h1, h2 {
+      margin: 0;
+      font-family: "Space Grotesk", "Manrope", sans-serif;
+      letter-spacing: 0.02em;
+    }
+    h1 { font-size: 24px; margin-bottom: 6px; }
+    h2 { font-size: 17px; margin-bottom: 8px; }
+    .muted {
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .section-head .sub {
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .grid {
+      display: grid;
+      gap: 10px;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+    }
+    .grid-run {
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+    }
+    .span-2 { grid-column: span 2; }
+    .span-3 { grid-column: span 3; }
+    .span-4 { grid-column: span 4; }
+    .span-6 { grid-column: span 6; }
+    .run-section {
+      border: 1px solid var(--line-soft);
+      border-radius: var(--radius-m);
+      padding: 10px;
+      background: linear-gradient(180deg, #ffffff, color-mix(in srgb, #fff 70%, var(--accent-soft)));
+      margin-bottom: 10px;
+    }
+    .run-section-title {
+      font-family: "Space Grotesk", "Manrope", sans-serif;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+    .run-advanced {
+      border: 1px dashed var(--line);
+      border-radius: var(--radius-m);
+      padding: 8px 10px 10px 10px;
+      background: color-mix(in srgb, #fff 84%, var(--accent-soft));
+      margin-bottom: 10px;
+    }
+    .run-advanced summary {
+      cursor: pointer;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      user-select: none;
+    }
+    .run-hint-grid {
+      margin-bottom: 4px;
+    }
+    .hint-card {
+      border: 1px solid var(--line-soft);
+      border-radius: var(--radius-m);
+      padding: 10px;
+      background: #fff;
+      min-height: 68px;
+    }
+    .hint-title {
+      font-size: 12px;
+      font-weight: 700;
+      margin-bottom: 4px;
+      color: var(--ink);
+    }
+    .hint-text {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+    .field label {
+      display: block;
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 4px;
+      font-weight: 600;
+      letter-spacing: 0.015em;
+    }
+    .inline-control {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 6px;
+      align-items: center;
+    }
+    .field input, .field select, .field textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-s);
+      padding: 10px 11px;
+      background: var(--panel-elevated);
+      color: var(--ink);
+      font-size: 13px;
+      transition: border-color var(--ease), box-shadow var(--ease), transform var(--ease);
+    }
+    .field input:hover, .field select:hover, .field textarea:hover {
+      border-color: color-mix(in srgb, var(--accent) 36%, var(--line));
+    }
+    .field input:focus, .field select:focus, .field textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(11, 116, 134, 0.18);
+    }
+    .field textarea {
+      min-height: 72px;
+      resize: vertical;
+    }
+
+    .row {
+      display: flex;
+      gap: 9px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+    .run-actions {
+      padding-top: 8px;
+      border-top: 1px dashed var(--line-soft);
+      margin-top: 10px;
+    }
+
+    button {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 9px 14px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      letter-spacing: 0.01em;
+      transition: all var(--ease);
+    }
+    button:hover {
+      transform: translateY(-1px);
+    }
+    button:active {
+      transform: translateY(0);
+    }
+    .primary {
+      background: linear-gradient(160deg, var(--accent), var(--accent-strong));
+      border-color: transparent;
+      color: #fff;
+      box-shadow: 0 8px 16px rgba(8, 87, 100, 0.22);
+    }
+    .primary:hover {
+      box-shadow: 0 10px 20px rgba(8, 87, 100, 0.3);
+    }
+    .secondary {
+      background: #fff;
+      border-color: var(--line);
+      color: var(--ink);
+    }
+    .secondary:hover {
+      border-color: color-mix(in srgb, var(--accent) 35%, var(--line));
+      background: #fcfffe;
+    }
+    .danger {
+      background: #fff3f3;
+      border-color: #e4c1c1;
+      color: var(--err);
+    }
+
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 10px;
+      border-radius: 99px;
+      border: 1px solid color-mix(in srgb, var(--accent) 35%, #d8e7ea);
+      background: var(--accent-soft);
+      font-size: 12px;
+      font-weight: 700;
+      color: color-mix(in srgb, var(--accent) 72%, #183541);
+    }
+    .status::before {
+      content: "";
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: currentColor;
+      opacity: 0.8;
+      box-shadow: 0 0 0 4px rgba(11, 116, 134, 0.12);
+    }
+    .status.running {
+      color: var(--accent);
+      animation: status-pulse 1.4s ease-in-out infinite;
+    }
+    .status.done { color: var(--ok); border-color: #b6e0cd; background: #ecf9f2; }
+    .status.error { color: var(--err); border-color: #e7c4c4; background: #fff1f1; }
+    @keyframes status-pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(11, 116, 134, 0.15); }
+      50% { box-shadow: 0 0 0 8px rgba(11, 116, 134, 0.02); }
+    }
+
+    .chips { display: flex; gap: 6px; flex-wrap: wrap; }
+    .chip {
+      border: 1px solid #cadde4;
+      background: linear-gradient(180deg, var(--chip), #f6fafb);
+      border-radius: 99px;
+      padding: 4px 10px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #31505d;
+    }
+    #focusStageChip {
+      cursor: pointer;
+      transition: transform var(--ease), box-shadow var(--ease), border-color var(--ease);
+    }
+    #focusStageChip:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 5px 10px rgba(16, 37, 45, 0.1);
+    }
+    .toolbar {
+      display: grid;
+      grid-template-columns: 180px 1fr;
+      gap: 8px;
+      margin-bottom: 8px;
+      align-items: end;
+    }
+    .toolbar.compact {
+      grid-template-columns: 170px 1fr auto auto;
+    }
+    .toolbar .field label {
+      margin-bottom: 3px;
+      font-size: 11px;
+    }
+    .toolbar .tool-opt {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--muted);
+      padding: 0 4px 6px 4px;
+      white-space: nowrap;
+    }
+    .toolbar .tool-opt input[type="checkbox"] {
+      accent-color: var(--accent);
+    }
+
+    .builder-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .feature-row {
+      margin-top: 10px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+    .feature-row label {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      border: 1px solid var(--line-soft);
+      border-radius: 999px;
+      padding: 4px 9px;
+      font-size: 12px;
+      background: #fff;
+      color: var(--ink);
+    }
+    .feature-row input[type="checkbox"] {
+      accent-color: var(--accent);
+    }
+
+    .stage-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      margin-top: 10px;
+      border: 1px solid var(--line-soft);
+      border-radius: var(--radius-m);
+      overflow: hidden;
+      background: #fff;
+    }
+    .stage-table th, .stage-table td {
+      border-bottom: 1px solid var(--line-soft);
+      padding: 7px 6px;
+      text-align: left;
+      vertical-align: top;
+    }
+    .stage-table th {
+      color: var(--muted);
+      font-weight: 700;
+      background: color-mix(in srgb, var(--accent-soft) 55%, #ffffff);
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+    .stage-table tr:last-child td {
+      border-bottom: none;
+    }
+    .stage-table tbody tr {
+      transition: background var(--ease);
+      cursor: pointer;
+    }
+    .stage-table tbody tr:hover {
+      background: #f6fafc;
+    }
+    .stage-table tbody tr.selected {
+      background: #eff8fb;
+      box-shadow: inset 2px 0 0 var(--accent);
+    }
+    .stage-table input, .stage-table select {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 6px 7px;
+      font-size: 12px;
+      background: #fff;
+      transition: border-color var(--ease), box-shadow var(--ease);
+    }
+    .stage-table input:focus, .stage-table select:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(11, 116, 134, 0.16);
+    }
+    .inspector {
+      margin-top: 10px;
+      border: 1px solid var(--line-soft);
+      border-radius: var(--radius-m);
+      padding: 10px;
+      background: linear-gradient(180deg, #fff, #fffaf4);
+    }
+    .inspector h3 {
+      margin: 0 0 8px;
+      font-family: "Space Grotesk", "Manrope", sans-serif;
+      font-size: 14px;
+      letter-spacing: 0.02em;
+    }
+    .inspector-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+    .inspector .hint {
+      margin-top: 6px;
+      font-size: 11px;
+      color: var(--muted);
+      line-height: 1.35;
+    }
+    .inspector input:disabled,
+    .inspector select:disabled,
+    .inspector textarea:disabled {
+      background: #f2f3f4;
+      color: #8b949b;
+      border-color: #dde1e4;
+      cursor: not-allowed;
+    }
+
+    #spec_text {
+      width: 100%;
+      min-height: 420px;
+      resize: vertical;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-m);
+      padding: 12px;
+      font-family: "JetBrains Mono", "SFMono-Regular", monospace;
+      font-size: 12px;
+      line-height: 1.5;
+      background: linear-gradient(180deg, #fffefb, #fff);
+      color: #20303a;
+      transition: border-color var(--ease), box-shadow var(--ease);
+    }
+    #spec_text:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(11, 116, 134, 0.16);
+    }
+
+    .stages {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+    .topology-canvas-wrap {
+      margin-top: 10px;
+      border: 1px solid var(--line-soft);
+      border-radius: var(--radius-m);
+      background:
+        linear-gradient(180deg, #fff, #fff9f0),
+        radial-gradient(circle at 12% 12%, rgba(11, 116, 134, 0.06) 0%, transparent 30%);
+      overflow: auto;
+      max-height: 360px;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    }
+    #topoSvg {
+      min-width: 760px;
+      width: 100%;
+      display: block;
+    }
+    .topo-edge {
+      fill: none;
+      stroke: color-mix(in srgb, var(--accent) 60%, #7b8f9a);
+      stroke-opacity: 0.68;
+      stroke-width: 1.8;
+    }
+    .topo-label {
+      font-family: "JetBrains Mono", "SFMono-Regular", monospace;
+      font-size: 10px;
+      fill: #5c6d79;
+    }
+    .topo-node {
+      fill: #fff;
+      stroke: var(--line);
+      stroke-width: 1.3;
+      rx: 12;
+      ry: 12;
+      filter: drop-shadow(0 3px 7px rgba(13, 34, 44, 0.12));
+    }
+    .topo-node-group {
+      cursor: pointer;
+    }
+    .topo-node-group:hover .topo-node {
+      stroke: color-mix(in srgb, var(--accent) 50%, var(--line));
+    }
+    .topo-node.active {
+      stroke: var(--accent);
+      stroke-width: 2.2;
+      fill: #f2fcff;
+    }
+    .topo-node.focused:not(.active) {
+      stroke: var(--warn);
+      stroke-width: 1.9;
+      fill: #fffaf4;
+    }
+    .topo-node-text {
+      font-family: "Space Grotesk", "Manrope", sans-serif;
+      font-size: 12px;
+      fill: var(--ink);
+      font-weight: 600;
+    }
+    .topo-node-meta {
+      font-family: "JetBrains Mono", "SFMono-Regular", monospace;
+      font-size: 10px;
+      fill: #647783;
+    }
+    .stage {
+      border: 1px solid var(--line-soft);
+      border-radius: var(--radius-m);
+      padding: 9px 10px;
+      min-width: 130px;
+      background: linear-gradient(180deg, #ffffff, #fffaf3);
+      transition: all var(--ease);
+      box-shadow: 0 4px 10px rgba(16, 31, 39, 0.05);
+      cursor: pointer;
+    }
+    .stage:hover {
+      border-color: color-mix(in srgb, var(--accent) 40%, var(--line-soft));
+    }
+    .stage.active {
+      border-color: color-mix(in srgb, var(--accent) 70%, #ffffff);
+      box-shadow:
+        0 0 0 2px rgba(11, 116, 134, 0.2),
+        0 9px 18px rgba(9, 79, 90, 0.2);
+      transform: translateY(-3px);
+      animation: active-stage-glow 1.8s ease-in-out infinite;
+    }
+    @keyframes active-stage-glow {
+      0%, 100% { box-shadow: 0 0 0 2px rgba(11, 116, 134, 0.2), 0 9px 18px rgba(9, 79, 90, 0.2); }
+      50% { box-shadow: 0 0 0 3px rgba(11, 116, 134, 0.26), 0 10px 24px rgba(9, 79, 90, 0.26); }
+    }
+    .stage.focused:not(.active) {
+      border-color: color-mix(in srgb, var(--warn) 62%, #ffffff);
+      box-shadow: 0 0 0 2px rgba(166, 90, 51, 0.12);
+      background: linear-gradient(180deg, #fff9f4, #fffefc);
+    }
+    .stage .sid {
+      font-size: 12px;
+      font-weight: 700;
+      margin-bottom: 2px;
+    }
+    .stage .meta { font-size: 11px; color: var(--muted); }
+
+    .edges {
+      margin-top: 10px;
+      border-top: 1px dashed var(--line-soft);
+      padding-top: 8px;
+      max-height: 130px;
+      overflow: auto;
+      font-family: "JetBrains Mono", "SFMono-Regular", monospace;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .events {
+      max-height: 720px;
+      overflow: auto;
+      border-top: 1px solid var(--line-soft);
+      margin-top: 8px;
+      padding-top: 9px;
+    }
+    .ev {
+      border-left: 3px solid #d9d1c4;
+      padding: 8px 9px;
+      margin-bottom: 8px;
+      border-radius: 8px;
+      background: #fff;
+      box-shadow: 0 3px 9px rgba(14, 34, 43, 0.05);
+      animation: event-in 220ms var(--ease) both;
+      cursor: pointer;
+    }
+    .ev.stage_event {
+      border-left-color: var(--accent);
+      background: linear-gradient(180deg, #f9feff, #ffffff);
+    }
+    .ev.agent_trace {
+      border-left-color: #6f8e9a;
+    }
+    .ev.lifecycle {
+      border-left-color: var(--warn);
+      background: linear-gradient(180deg, #fffaf4, #ffffff);
+    }
+    .ev.selected {
+      box-shadow:
+        0 0 0 2px rgba(11, 116, 134, 0.2),
+        0 10px 18px rgba(11, 116, 134, 0.18);
+      border-left-width: 4px;
+    }
+    @keyframes event-in {
+      from {
+        opacity: 0;
+        transform: translateY(4px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    .ev .head {
+      font-family: "JetBrains Mono", "SFMono-Regular", monospace;
+      color: var(--muted);
+      font-size: 10px;
+      margin-bottom: 3px;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+    .ev .body {
+      font-size: 12px;
+      line-height: 1.4;
+      word-break: break-word;
+    }
+
+    table.trace {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      border: 1px solid var(--line-soft);
+      border-radius: var(--radius-m);
+      overflow: hidden;
+      background: #fff;
+    }
+    .trace th, .trace td {
+      border-bottom: 1px solid var(--line-soft);
+      padding: 7px 6px;
+      text-align: left;
+      vertical-align: top;
+    }
+    .trace tr:last-child td {
+      border-bottom: none;
+    }
+    .trace tbody tr {
+      cursor: pointer;
+      transition: background var(--ease);
+    }
+    .trace tbody tr:hover {
+      background: #f6fbfd;
+    }
+    .trace tbody tr.selected {
+      background: #eef8fb;
+      box-shadow: inset 2px 0 0 var(--accent);
+    }
+    .trace th {
+      color: var(--muted);
+      font-weight: 700;
+      background: color-mix(in srgb, var(--accent-soft) 52%, #ffffff);
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+    .mono { font-family: "JetBrains Mono", "SFMono-Regular", monospace; }
+    .detail-panel {
+      margin-top: 8px;
+      border: 1px solid var(--line-soft);
+      border-radius: var(--radius-m);
+      background: #fff;
+      padding: 8px;
+    }
+    .detail-panel .title {
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+    .detail-panel pre {
+      margin: 0;
+      max-height: 120px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-family: "JetBrains Mono", "SFMono-Regular", monospace;
+      font-size: 11px;
+      color: #1f3340;
+      line-height: 1.4;
+    }
+
+    #validateMsg {
+      margin-top: 8px;
+      border-radius: 9px;
+      padding: 7px 10px;
+      background: #f7fafb;
+      border: 1px solid var(--line-soft);
+    }
+    #taskBadge {
+      max-width: 360px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      display: inline-block;
+    }
+
+    @media (max-width: 1380px) {
+      .wrap {
+        grid-template-columns: 1fr 1fr;
+        grid-template-areas:
+          "run run"
+          "builder yaml"
+          "topology events"
+          "agents events";
+      }
+      #events {
+        min-height: 620px;
+      }
+      .wrap[data-active-tab="run"] {
+        max-width: none;
+      }
+      .wrap[data-active-tab="builder"] {
+        grid-template-columns: 1fr;
+        grid-template-areas:
+          "builder"
+          "yaml";
+      }
+    }
+
+    @media (max-width: 1024px) {
+      .topbar {
+        flex-wrap: wrap;
+        align-items: stretch;
+      }
+      .topbar-left,
+      .topbar-right {
+        width: 100%;
+        justify-content: space-between;
+      }
+      .theme-select {
+        min-width: 140px;
+      }
+      .wrap {
+        grid-template-columns: 1fr;
+        grid-template-areas:
+          "run"
+          "builder"
+          "yaml"
+          "topology"
+          "agents"
+          "events";
+      }
+      .wrap[data-active-tab="run"] {
+        grid-template-columns: 1fr;
+        grid-template-areas: "run";
+      }
+      .wrap[data-active-tab="builder"] {
+        grid-template-columns: 1fr;
+        grid-template-areas:
+          "builder"
+          "yaml";
+      }
+      .wrap[data-active-tab="monitor"] {
+        grid-template-columns: 1fr;
+        grid-template-areas:
+          "topology"
+          "agents"
+          "events";
+      }
+      .grid,
+      .grid-run {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .span-2,
+      .span-3,
+      .span-4,
+      .span-6 {
+        grid-column: span 2 !important;
+      }
+      #events {
+        min-height: 460px;
+      }
+      .toolbar {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .app-shell {
+        padding: 12px;
+      }
+      .topbar {
+        margin-bottom: 10px;
+      }
+      .tab-nav {
+        width: 100%;
+        justify-content: space-between;
+      }
+      .wrap {
+        padding: 0;
+      }
+      .builder-grid {
+        grid-template-columns: 1fr;
+      }
+      .inspector-grid {
+        grid-template-columns: 1fr;
+      }
+      .grid,
+      .grid-run {
+        grid-template-columns: 1fr;
+      }
+      .span-2,
+      .span-3,
+      .span-4,
+      .span-6 {
+        grid-column: span 1 !important;
+      }
+      #spec_text {
+        min-height: 300px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="topbar-left">
+        <div class="lang-switch">
+          <button class="lang-btn active" id="langZhBtn" type="button">ZH</button>
+          <button class="lang-btn" id="langEnBtn" type="button">EN</button>
+        </div>
+      </div>
+      <nav class="tab-nav">
+        <button class="tab-btn active" id="tabRunBtn" data-tab="run" type="button" data-i18n="tab.run">运行</button>
+        <button class="tab-btn" id="tabMonitorBtn" data-tab="monitor" type="button" data-i18n="tab.monitor">监控</button>
+        <button class="tab-btn" id="tabBuilderBtn" data-tab="builder" type="button" data-i18n="tab.builder">Builder</button>
+      </nav>
+      <div class="topbar-right">
+        <label class="theme-label" for="themeSelect" data-i18n="top.theme">主题</label>
+        <select id="themeSelect" class="theme-select">
+          <option value="atelier" data-i18n="top.themeAtelier">Atelier</option>
+          <option value="slate" data-i18n="top.themeSlate">Slate</option>
+          <option value="citrus" data-i18n="top.themeCitrus">Citrus</option>
+        </select>
+      </div>
+    </header>
+
+  <main class="wrap">
+    <section class="card" id="run" data-tab-group="run">
+      <div class="section-head">
+        <div>
+          <h1 data-i18n="run.title">MAS Institution Control Plane</h1>
+          <div class="sub muted" data-i18n="run.subtitle">先选制度，再编辑策略拓扑，最后实时观测执行流转。</div>
+        </div>
+      </div>
+      <div class="run-section">
+        <div class="run-section-title" data-i18n="run.sectionSetup">执行设置</div>
+        <div class="grid grid-run">
+          <div class="field span-2">
+            <label data-i18n="run.institution">制度</label>
+            <div class="inline-control">
+              <select id="institution_id"></select>
+              <button class="secondary" id="addInstitutionBtn" type="button" data-i18n="run.addInstitution">Add</button>
+            </div>
+          </div>
+          <div class="field span-2">
+            <label data-i18n="run.specVersion">Spec版本</label>
+            <select id="spec_id"></select>
+          </div>
+          <div class="field span-2">
+            <label data-i18n="run.adapter">Adapter</label>
+            <select id="adapter">
+              <option value="pc-agent-loop">pc-agent-loop</option>
+              <option value="openclaw">openclaw</option>
+              <option value="mock">mock</option>
+            </select>
+          </div>
+          <div class="field span-2">
+            <label data-i18n="run.taskId">Task ID (可选)</label>
+            <input id="task_id" placeholder="TASK-xxxxxx" data-i18n-placeholder="ph.taskId">
+          </div>
+        </div>
+      </div>
+
+      <div class="run-section">
+        <div class="run-section-title" data-i18n="run.sectionTask">任务内容</div>
+        <div class="grid grid-run">
+          <div class="field span-3">
+            <label data-i18n="run.taskTitle">Title (任务名)</label>
+            <input id="title" value="计算 1*3*5 是多少">
+          </div>
+          <div class="field span-3">
+            <label data-i18n="run.taskInput">Input (详细指令)</label>
+            <textarea id="input_text">请只回答最终结果</textarea>
+          </div>
+        </div>
+      </div>
+
+      <details class="run-advanced">
+        <summary data-i18n="run.advanced">高级适配器参数</summary>
+        <div class="grid grid-run">
+          <div class="field span-3">
+            <label>pc_agent_root</label>
+            <input id="pc_agent_root" value="third_party/pc-agent-loop">
+          </div>
+          <div class="field span-3">
+            <label>pc_mykey</label>
+            <input id="pc_mykey" value="third_party/pc-agent-loop/mykey.py">
+          </div>
+        </div>
+      </details>
+
+      <div class="grid grid-run run-hint-grid">
+        <div class="hint-card span-3">
+          <div class="hint-title" data-i18n="run.titleHelpTitle">Title 是什么</div>
+          <div class="hint-text" data-i18n="run.titleHelpBody">用于任务列表与追踪展示，建议简洁表达目标。</div>
+        </div>
+        <div class="hint-card span-3">
+          <div class="hint-title" data-i18n="run.inputHelpTitle">Input 是什么</div>
+          <div class="hint-text" data-i18n="run.inputHelpBody">作为 agent 的执行指令正文，建议写清目标、约束和输出要求。</div>
+        </div>
+      </div>
+      <div class="row run-actions">
+        <button class="secondary" id="loadSpecBtn" data-i18n="run.loadSpec">加载所选Spec</button>
+        <button class="secondary" id="validateBtn" data-i18n="run.validateYaml">校验当前YAML</button>
+        <button class="primary" id="runBtn" data-i18n="run.runYaml">运行当前YAML</button>
+        <span class="status" id="statusBadge">idle</span>
+        <span class="mono muted" id="taskBadge"></span>
+      </div>
+      <div id="institutionMeta" class="chips" style="margin-top:9px;"></div>
+      <div id="runtimeStats" class="chips" style="margin-top:8px;"></div>
+    </section>
+
+    <section class="card" id="builder" data-tab-group="builder">
+      <div class="section-head">
+        <h2 data-i18n="builder.title">Spec Builder</h2>
+      </div>
+      <div class="builder-grid">
+        <div class="field">
+          <label data-i18n="builder.institutionId">institution.id</label>
+          <input id="save_institution_id" placeholder="qinhan_junxian" data-i18n-placeholder="ph.saveInstitutionId">
+        </div>
+        <div class="field">
+          <label data-i18n="builder.institutionName">institution.name</label>
+          <input id="save_institution_name" placeholder="秦汉郡县" data-i18n-placeholder="ph.saveInstitutionName">
+        </div>
+        <div class="field">
+          <label data-i18n="builder.institutionNameEn">institution.name_en</label>
+          <input id="save_institution_name_en" placeholder="Qin-Han Commandery-County" data-i18n-placeholder="ph.saveInstitutionNameEn">
+        </div>
+        <div class="field">
+          <label data-i18n="builder.specId">spec.id</label>
+          <input id="save_spec_id" placeholder="qinhan_yaml" data-i18n-placeholder="ph.saveSpecId">
+        </div>
+        <div class="field">
+          <label data-i18n="builder.specName">spec.name</label>
+          <input id="save_spec_name" placeholder="秦汉郡县（YAML）" data-i18n-placeholder="ph.saveSpecName">
+        </div>
+        <div class="field">
+          <label data-i18n="builder.specNameEn">spec.name_en</label>
+          <input id="save_spec_name_en" placeholder="Qin-Han (YAML)" data-i18n-placeholder="ph.saveSpecNameEn">
+        </div>
+      </div>
+      <div class="field" style="margin-top:8px;">
+        <label data-i18n="builder.institutionDesc">institution.description</label>
+        <input id="save_institution_description" placeholder="制度说明（可选）" data-i18n-placeholder="ph.institutionDesc">
+      </div>
+      <div class="field" style="margin-top:8px;">
+        <label data-i18n="builder.institutionDescEn">institution.description_en</label>
+        <input id="save_institution_description_en" placeholder="Institution description (optional)" data-i18n-placeholder="ph.institutionDescEn">
+      </div>
+      <div class="field" style="margin-top:8px;">
+        <label data-i18n="builder.specDesc">spec.description</label>
+        <input id="save_spec_description" placeholder="Spec说明（可选）" data-i18n-placeholder="ph.specDesc">
+      </div>
+      <div class="field" style="margin-top:8px;">
+        <label data-i18n="builder.specDescEn">spec.description_en</label>
+        <input id="save_spec_description_en" placeholder="Spec description (optional)" data-i18n-placeholder="ph.specDescEn">
+      </div>
+      <div class="row" style="margin-top:8px;">
+        <label class="tool-opt"><input type="checkbox" id="save_set_default" checked><span data-i18n="builder.setDefault">设为默认Spec</span></label>
+      </div>
+      <div class="builder-grid">
+        <div class="field">
+          <label>meta.id</label>
+          <input id="b_meta_id">
+        </div>
+        <div class="field">
+          <label>meta.name</label>
+          <input id="b_meta_name">
+        </div>
+        <div class="field">
+          <label>pattern</label>
+          <select id="b_pattern">
+            <option value="pipeline">pipeline</option>
+            <option value="gated_pipeline">gated_pipeline</option>
+            <option value="autonomous_cluster">autonomous_cluster</option>
+            <option value="consensus">consensus</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>entry_stage</label>
+          <input id="b_entry_stage">
+        </div>
+      </div>
+      <div class="feature-row">
+        <span class="muted">features</span>
+        <label><input type="checkbox" class="b_feature" value="monitor"> monitor</label>
+        <label><input type="checkbox" class="b_feature" value="shared_state"> shared_state</label>
+        <label><input type="checkbox" class="b_feature" value="system_protocol"> system_protocol</label>
+        <label><input type="checkbox" class="b_feature" value="emergency_handler"> emergency_handler</label>
+        <label><input type="checkbox" class="b_feature" value="human_confirmation"> human_confirmation</label>
+      </div>
+      <table class="stage-table">
+        <thead>
+          <tr>
+            <th>stage_id</th>
+            <th>kind</th>
+            <th>agent</th>
+            <th>transitions(decision:to, ...)</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="stageBody"></tbody>
+      </table>
+      <div class="row">
+        <button class="secondary" id="addStageBtn" data-i18n="builder.addStage">添加节点</button>
+        <button class="secondary" id="builderToYamlBtn">Builder -> YAML</button>
+        <button class="secondary" id="yamlToBuilderBtn">YAML -> Builder</button>
+        <button class="primary" id="saveSpecBtn" data-i18n="builder.save">保存制度+Spec</button>
+        <button class="secondary" id="saveAndBackBtn" data-i18n="builder.saveBack">保存并返回</button>
+      </div>
+      <div class="inspector">
+        <h3 data-i18n="builder.inspectorTitle">Stage Inspector</h3>
+        <div class="inspector-grid">
+          <div class="field">
+            <label>Selected Stage</label>
+            <input id="ins_stage_id" readonly>
+          </div>
+          <div class="field">
+            <label>Kind</label>
+            <input id="ins_stage_kind" readonly>
+          </div>
+          <div class="field">
+            <label>consensus.voters (comma)</label>
+            <input id="ins_consensus_voters" placeholder="citizen_a, citizen_b, citizen_c">
+          </div>
+          <div class="field">
+            <label>consensus.algorithm</label>
+            <select id="ins_consensus_algorithm">
+              <option value="majority">majority</option>
+              <option value="weighted">weighted</option>
+              <option value="unanimity">unanimity</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>consensus.threshold</label>
+            <input id="ins_consensus_threshold" placeholder="0.5">
+          </div>
+          <div class="field">
+            <label>consensus.tie_breaker</label>
+            <input id="ins_consensus_tiebreaker" placeholder="reject">
+          </div>
+          <div class="field" style="grid-column: span 2;">
+            <label>cluster.members (one per line: agent|role|required)</label>
+            <textarea id="ins_cluster_members" style="min-height:80px;" placeholder="hubu|finance|true"></textarea>
+          </div>
+        </div>
+        <div class="row">
+          <button class="secondary" id="insApplyBtn" data-i18n="builder.applyStage">应用到当前节点</button>
+          <button class="secondary" id="insResetBtn" data-i18n="builder.resetInspector">重置Inspector</button>
+        </div>
+        <div class="hint">
+          仅当节点类型为 <code>consensus</code> 或 <code>cluster</code> 时会写入对应高级配置。其余类型会忽略这些字段。
+        </div>
+      </div>
+    </section>
+
+    <section class="card" id="yaml" data-tab-group="builder">
+      <div class="section-head">
+        <h2 data-i18n="yaml.title">YAML Editor</h2>
+        <div class="muted" data-i18n="yaml.subtitle">可直接粘贴或由 Builder 生成</div>
+      </div>
+      <textarea id="spec_text" placeholder="在此编辑 YAML 规范" data-i18n-placeholder="ph.specText"></textarea>
+      <div class="muted" id="validateMsg"></div>
+    </section>
+
+    <section class="card" id="topology" data-tab-group="monitor">
+      <div class="section-head">
+        <h2>Topology</h2>
+        <div class="muted" data-i18n="monitor.topologySubtitle">当前执行节点会高亮</div>
+      </div>
+      <div class="muted" id="topologyMeta">尚未加载</div>
+      <div class="row" style="margin-top:8px;">
+        <span class="chip" id="focusStageChip">focus: all</span>
+        <button class="secondary" id="clearFocusBtn" data-i18n="monitor.clearFocus">清除Stage聚焦</button>
+      </div>
+      <div class="topology-canvas-wrap">
+        <svg id="topoSvg" viewBox="0 0 900 280" preserveAspectRatio="xMidYMin meet"></svg>
+      </div>
+      <div id="topoStages" class="stages"></div>
+      <div id="topoEdges" class="edges"></div>
+    </section>
+
+    <section class="card" id="agents" data-tab-group="monitor">
+      <div class="section-head">
+        <h2>Agent Trace</h2>
+        <div class="muted" data-i18n="monitor.traceSubtitle">支持关键词过滤</div>
+      </div>
+      <div class="toolbar">
+        <div class="field">
+          <label>Search</label>
+          <input id="traceSearch" placeholder="按 agent / stage / summary 过滤" data-i18n-placeholder="ph.traceSearch">
+        </div>
+        <div class="field">
+          <label>Decision</label>
+          <select id="traceDecisionFilter">
+            <option value="all">all</option>
+            <option value="next">next</option>
+            <option value="approve">approve</option>
+            <option value="reject">reject</option>
+            <option value="error">error</option>
+          </select>
+        </div>
+      </div>
+      <table class="trace">
+        <thead>
+          <tr>
+            <th>seq</th><th>stage</th><th>agent</th><th>decision</th><th>summary</th>
+          </tr>
+        </thead>
+        <tbody id="traceBody"></tbody>
+      </table>
+      <div class="detail-panel">
+        <div class="title" data-i18n="monitor.traceDetailTitle">Trace Detail</div>
+        <pre id="traceDetail">点击一条 agent trace 查看详情</pre>
+      </div>
+    </section>
+
+    <section class="card" id="events" data-tab-group="monitor">
+      <div class="section-head">
+        <h2>Event Stream</h2>
+        <div class="muted" data-i18n="monitor.eventSubtitle">实时SSE</div>
+      </div>
+      <div class="toolbar compact">
+        <div class="field">
+          <label>Type</label>
+          <select id="eventTypeFilter">
+            <option value="all">all</option>
+            <option value="lifecycle">lifecycle</option>
+            <option value="stage_event">stage_event</option>
+            <option value="agent_trace">agent_trace</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Search</label>
+          <input id="eventSearch" placeholder="按 summary / stage / agent 过滤" data-i18n-placeholder="ph.eventSearch">
+        </div>
+        <label class="tool-opt"><input type="checkbox" id="autoScrollEvents" checked><span data-i18n="monitor.autoScroll">自动滚动</span></label>
+        <button class="secondary" id="clearEventsBtn" data-i18n="monitor.clearView">清空视图</button>
+      </div>
+      <div class="events" id="eventList"></div>
+      <div class="detail-panel">
+        <div class="title" data-i18n="monitor.eventDetailTitle">Event Detail</div>
+        <pre id="eventDetail">点击一条事件查看详情</pre>
+      </div>
+    </section>
+  </main>
+  </div>
+
+  <script>
+    const I18N = {
+      zh: {
+        "top.theme": "主题",
+        "top.themeAtelier": "Atelier",
+        "top.themeSlate": "Slate",
+        "top.themeCitrus": "Citrus",
+        "tab.run": "运行",
+        "tab.monitor": "监控",
+        "tab.builder": "Builder",
+        "run.title": "MAS Institution Control Plane",
+        "run.subtitle": "先选制度，再编辑策略拓扑，最后实时观测执行流转。",
+        "run.institution": "制度",
+        "run.addInstitution": "Add",
+        "run.specVersion": "Spec版本",
+        "run.adapter": "Adapter",
+        "run.taskId": "Task ID (可选)",
+        "run.taskTitle": "Title (任务名)",
+        "run.taskInput": "Input (详细指令)",
+        "run.sectionSetup": "执行设置",
+        "run.sectionTask": "任务内容",
+        "run.advanced": "高级适配器参数",
+        "run.titleHelpTitle": "Title 是什么",
+        "run.titleHelpBody": "用于任务列表与追踪展示，建议简洁表达目标。",
+        "run.inputHelpTitle": "Input 是什么",
+        "run.inputHelpBody": "作为 agent 的执行指令正文，建议写清目标、约束和输出要求。",
+        "run.defaultTitle": "计算 1*3*5 是多少",
+        "run.defaultInput": "请只回答最终结果",
+        "run.loadSpec": "加载所选Spec",
+        "run.validateYaml": "校验当前YAML",
+        "run.runYaml": "运行当前YAML",
+        "builder.title": "Spec Builder",
+        "builder.institutionId": "institution.id",
+        "builder.institutionName": "institution.name",
+        "builder.institutionNameEn": "institution.name_en",
+        "builder.specId": "spec.id",
+        "builder.specName": "spec.name",
+        "builder.specNameEn": "spec.name_en",
+        "builder.institutionDesc": "institution.description",
+        "builder.institutionDescEn": "institution.description_en",
+        "builder.specDesc": "spec.description",
+        "builder.specDescEn": "spec.description_en",
+        "builder.setDefault": "设为默认Spec",
+        "builder.addStage": "添加节点",
+        "builder.inspectorTitle": "Stage Inspector",
+        "builder.applyStage": "应用到当前节点",
+        "builder.resetInspector": "重置Inspector",
+        "builder.save": "保存制度+Spec",
+        "builder.saveBack": "保存并返回",
+        "yaml.title": "YAML Editor",
+        "yaml.subtitle": "可直接粘贴或由 Builder 生成",
+        "monitor.topologySubtitle": "当前执行节点会高亮",
+        "monitor.clearFocus": "清除Stage聚焦",
+        "monitor.traceSubtitle": "支持关键词过滤",
+        "monitor.traceDetailTitle": "Trace Detail",
+        "monitor.eventSubtitle": "实时SSE",
+        "monitor.eventDetailTitle": "Event Detail",
+        "monitor.autoScroll": "自动滚动",
+        "monitor.clearView": "清空视图",
+        "msg.idle": "idle",
+        "msg.focusAll": "all",
+        "msg.stageInspectorApplied": "已应用 Stage Inspector 配置",
+        "msg.builderToYamlDone": "Builder 已生成 YAML",
+        "msg.yamlToBuilderDone": "YAML 解析成功并同步到 Builder",
+        "msg.loadedSpec": "已加载",
+        "msg.validatePassed": "校验通过",
+        "msg.validateFailed": "校验失败",
+        "msg.saving": "保存中",
+        "msg.saved": "已保存",
+        "msg.clickEvent": "点击一条事件查看详情",
+        "msg.clickTrace": "点击一条 agent trace 查看详情",
+        "msg.saveAndBackHint": "已切换到 Builder，可创建新制度并保存后返回",
+        "ph.taskId": "TASK-xxxxxx",
+        "ph.saveInstitutionId": "qinhan_junxian",
+        "ph.saveInstitutionName": "秦汉郡县",
+        "ph.saveInstitutionNameEn": "Qin-Han Commandery-County",
+        "ph.saveSpecId": "qinhan_yaml",
+        "ph.saveSpecName": "秦汉郡县（YAML）",
+        "ph.saveSpecNameEn": "Qin-Han (YAML)",
+        "ph.institutionDesc": "制度说明（可选）",
+        "ph.institutionDescEn": "Institution description (optional)",
+        "ph.specDesc": "Spec说明（可选）",
+        "ph.specDescEn": "Spec description (optional)",
+        "ph.specText": "在此编辑 YAML 规范",
+        "ph.traceSearch": "按 agent / stage / summary 过滤",
+        "ph.eventSearch": "按 summary / stage / agent 过滤",
+      },
+      en: {
+        "top.theme": "Theme",
+        "top.themeAtelier": "Atelier",
+        "top.themeSlate": "Slate",
+        "top.themeCitrus": "Citrus",
+        "tab.run": "Run",
+        "tab.monitor": "Monitor",
+        "tab.builder": "Builder",
+        "run.title": "MAS Institution Control Plane",
+        "run.subtitle": "Pick an institution, edit topology strategy, then observe execution in real time.",
+        "run.institution": "Institution",
+        "run.addInstitution": "Add",
+        "run.specVersion": "Spec Version",
+        "run.adapter": "Adapter",
+        "run.taskId": "Task ID (optional)",
+        "run.taskTitle": "Title",
+        "run.taskInput": "Input",
+        "run.sectionSetup": "Execution Setup",
+        "run.sectionTask": "Task Content",
+        "run.advanced": "Advanced Adapter Settings",
+        "run.titleHelpTitle": "What is Title",
+        "run.titleHelpBody": "Shown in task list and trace views. Keep it concise and goal-oriented.",
+        "run.inputHelpTitle": "What is Input",
+        "run.inputHelpBody": "Main instruction body for agents. Include goal, constraints, and output format.",
+        "run.defaultTitle": "Calculate 1*3*5",
+        "run.defaultInput": "Please reply with the final result only",
+        "run.loadSpec": "Load Selected Spec",
+        "run.validateYaml": "Validate YAML",
+        "run.runYaml": "Run YAML",
+        "builder.title": "Spec Builder",
+        "builder.institutionId": "institution.id",
+        "builder.institutionName": "institution.name",
+        "builder.institutionNameEn": "institution.name_en",
+        "builder.specId": "spec.id",
+        "builder.specName": "spec.name",
+        "builder.specNameEn": "spec.name_en",
+        "builder.institutionDesc": "institution.description",
+        "builder.institutionDescEn": "institution.description_en",
+        "builder.specDesc": "spec.description",
+        "builder.specDescEn": "spec.description_en",
+        "builder.setDefault": "Set as default spec",
+        "builder.addStage": "Add Stage",
+        "builder.inspectorTitle": "Stage Inspector",
+        "builder.applyStage": "Apply to Selected Stage",
+        "builder.resetInspector": "Reset Inspector",
+        "builder.save": "Save Institution + Spec",
+        "builder.saveBack": "Save and Back",
+        "yaml.title": "YAML Editor",
+        "yaml.subtitle": "Paste directly or generate from Builder",
+        "monitor.topologySubtitle": "Current stage is highlighted",
+        "monitor.clearFocus": "Clear Stage Focus",
+        "monitor.traceSubtitle": "Filter by keyword",
+        "monitor.traceDetailTitle": "Trace Detail",
+        "monitor.eventSubtitle": "Live SSE",
+        "monitor.eventDetailTitle": "Event Detail",
+        "monitor.autoScroll": "Auto Scroll",
+        "monitor.clearView": "Clear View",
+        "msg.idle": "idle",
+        "msg.focusAll": "all",
+        "msg.stageInspectorApplied": "Stage inspector applied",
+        "msg.builderToYamlDone": "Builder generated YAML",
+        "msg.yamlToBuilderDone": "Parsed YAML and synced into Builder",
+        "msg.loadedSpec": "Loaded",
+        "msg.validatePassed": "Validation passed",
+        "msg.validateFailed": "Validation failed",
+        "msg.saving": "Saving",
+        "msg.saved": "Saved",
+        "msg.clickEvent": "Click an event to view details",
+        "msg.clickTrace": "Click an agent trace to view details",
+        "msg.saveAndBackHint": "Switched to Builder. Create a new institution and save, then return.",
+        "ph.taskId": "TASK-xxxxxx",
+        "ph.saveInstitutionId": "qinhan_junxian",
+        "ph.saveInstitutionName": "Qin-Han Commandery-County",
+        "ph.saveInstitutionNameEn": "Qin-Han Commandery-County",
+        "ph.saveSpecId": "qinhan_yaml",
+        "ph.saveSpecName": "Qin-Han (YAML)",
+        "ph.saveSpecNameEn": "Qin-Han (YAML)",
+        "ph.institutionDesc": "Institution description (optional)",
+        "ph.institutionDescEn": "Institution description (optional)",
+        "ph.specDesc": "Spec description (optional)",
+        "ph.specDescEn": "Spec description (optional)",
+        "ph.specText": "Edit YAML spec here",
+        "ph.traceSearch": "Filter by agent / stage / summary",
+        "ph.eventSearch": "Filter by summary / stage / agent",
+      },
+    };
+
+    const STAGE_KINDS = [
+      "initiator","planner","gate","executor","auditor","orchestrator","consensus","cluster","terminal"
+    ];
+    const state = {
+      lang: "zh",
+      theme: "atelier",
+      activeTab: "run",
+      builderReturnTab: "",
+      institutions: [],
+      institution: null,
+      currentSpecId: "",
+      taskId: "",
+      topology: null,
+      currentStage: "",
+      focusStage: "",
+      selectedEventSeq: 0,
+      selectedTraceSeq: 0,
+      autoScrollEvents: true,
+      status: "idle",
+      events: [],
+      traces: [],
+      sse: null,
+      builder: null,
+      builderSelected: -1,
+      validateHint: { kind: "", value: "" },
+    };
+
+    const el = (id) => document.getElementById(id);
+
+    function t(key, fallback = "") {
+      const langPack = I18N[state.lang] || I18N.zh;
+      if (Object.prototype.hasOwnProperty.call(langPack, key)) {
+        return langPack[key];
+      }
+      const zhPack = I18N.zh || {};
+      if (Object.prototype.hasOwnProperty.call(zhPack, key)) {
+        return zhPack[key];
+      }
+      return fallback || key;
+    }
+
+    function applyI18nText() {
+      document.documentElement.lang = state.lang === "en" ? "en" : "zh-CN";
+      document.querySelectorAll("[data-i18n]").forEach((node) => {
+        const key = node.getAttribute("data-i18n");
+        if (!key) return;
+        node.textContent = t(key, node.textContent || "");
+      });
+      document.querySelectorAll("[data-i18n-placeholder]").forEach((node) => {
+        const key = node.getAttribute("data-i18n-placeholder");
+        if (!key) return;
+        const current = node.getAttribute("placeholder") || "";
+        node.setAttribute("placeholder", t(key, current));
+      });
+      const zhBtn = el("langZhBtn");
+      const enBtn = el("langEnBtn");
+      if (zhBtn) zhBtn.classList.toggle("active", state.lang === "zh");
+      if (enBtn) enBtn.classList.toggle("active", state.lang === "en");
+      renderInstitutionOptions(el("institution_id") ? el("institution_id").value : "");
+      renderSpecOptions(el("spec_id") ? el("spec_id").value : "");
+      syncLocalizedEditableFields();
+      renderFocusStageChip();
+      renderRuntimeStats();
+      renderInstitutionMeta();
+      renderValidateHint();
+      const selectedEvent = state.events.find(
+        (x) => Number(x.stream_seq || 0) === Number(state.selectedEventSeq || 0)
+      );
+      const selectedTrace = state.traces.find(
+        (x) => Number((x.agent_trace && x.agent_trace.sequential_id) || 0) === Number(state.selectedTraceSeq || 0)
+      );
+      renderEventDetail(selectedEvent || null);
+      renderTraceDetail(selectedTrace || null);
+    }
+
+    function switchLang(lang) {
+      state.lang = lang === "en" ? "en" : "zh";
+      try {
+        localStorage.setItem("mas_dashboard_lang", state.lang);
+      } catch (_) {}
+      applyI18nText();
+      setStatus(state.status || "idle");
+    }
+
+    function applyTheme(themeName) {
+      const theme = ["atelier", "slate", "citrus"].includes(themeName)
+        ? themeName
+        : "atelier";
+      state.theme = theme;
+      const body = document.body;
+      if (body) {
+        body.setAttribute("data-theme", theme);
+      }
+      const select = el("themeSelect");
+      if (select && select.value !== theme) {
+        select.value = theme;
+      }
+    }
+
+    function switchTheme(themeName) {
+      applyTheme(themeName);
+      try {
+        localStorage.setItem("mas_dashboard_theme", state.theme);
+      } catch (_) {}
+    }
+
+    function switchTab(tabName) {
+      const target = String(tabName || "run").trim() || "run";
+      state.activeTab = target;
+      const wrap = document.querySelector(".wrap");
+      if (wrap) wrap.setAttribute("data-active-tab", target);
+      document.querySelectorAll(".tab-btn").forEach((btn) => {
+        btn.classList.toggle("active", btn.dataset.tab === target);
+      });
+      document.querySelectorAll(".card[data-tab-group]").forEach((card) => {
+        const belong = card.getAttribute("data-tab-group") || "";
+        card.classList.toggle("tab-hidden", belong !== target);
+      });
+    }
+
+    function setStatus(status, extra = "") {
+      state.status = status || "idle";
+      const b = el("statusBadge");
+      const label = state.status || t("msg.idle");
+      b.textContent = extra ? `${label} · ${extra}` : label;
+      b.className = "status";
+      if (state.status === "running" || state.status === "starting" || state.status === "queued") {
+        b.classList.add("running");
+      }
+      if (state.status === "done") b.classList.add("done");
+      if (state.status === "error") b.classList.add("error");
+      renderRuntimeStats();
+    }
+
+    function renderValidateHint() {
+      const node = el("validateMsg");
+      if (!node) return;
+      const hint = state.validateHint || { kind: "", value: "" };
+      const kind = String(hint.kind || "");
+      const value = String(hint.value || "");
+      if (!kind) {
+        node.textContent = value;
+        return;
+      }
+      if (kind === "loaded") {
+        node.textContent = `${t("msg.loadedSpec", "Loaded")}: ${value}`;
+        return;
+      }
+      if (kind === "validate_passed") {
+        node.textContent = `${t("msg.validatePassed", "Validation passed")}: ${value}`;
+        return;
+      }
+      if (kind === "validate_failed") {
+        node.textContent = `${t("msg.validateFailed", "Validation failed")}: ${value}`;
+        return;
+      }
+      if (kind === "saved") {
+        node.textContent = `${t("msg.saved", "Saved")}: ${value}`;
+        return;
+      }
+      if (kind === "builder_to_yaml") {
+        node.textContent = t("msg.builderToYamlDone", "Builder generated YAML");
+        return;
+      }
+      if (kind === "yaml_to_builder") {
+        node.textContent = t("msg.yamlToBuilderDone", "Parsed YAML and synced into Builder");
+        return;
+      }
+      if (kind === "stage_applied") {
+        node.textContent = t("msg.stageInspectorApplied", "Stage inspector applied");
+        return;
+      }
+      node.textContent = value;
+    }
+
+    function setValidateHint(kind, value = "") {
+      state.validateHint = { kind: String(kind || ""), value: String(value || "") };
+      renderValidateHint();
+    }
+
+    function esc(s) {
+      return String(s || "")
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;");
+    }
+
+    async function api(path, opts = {}) {
+      const res = await fetch(path, opts);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || res.statusText);
+      return data;
+    }
+
+    function stageIdOfRow(row) {
+      if (!row || typeof row !== "object") return "";
+      if (row.record_type === "stage_event") {
+        return String((row.event && row.event.stage_id) || "");
+      }
+      if (row.record_type === "agent_trace") {
+        return String((row.agent_trace && row.agent_trace.stage_id) || "");
+      }
+      return "";
+    }
+
+    function setFocusStage(stageId) {
+      const next = String(stageId || "").trim();
+      if (state.focusStage === next) {
+        state.focusStage = "";
+      } else {
+        state.focusStage = next;
+      }
+      renderFocusStageChip();
+      renderTopology();
+      renderEvents();
+      renderTraces();
+      renderRuntimeStats();
+    }
+
+    function renderFocusStageChip() {
+      const chip = el("focusStageChip");
+      if (!chip) return;
+      chip.textContent = `focus: ${state.focusStage || t("msg.focusAll", "all")}`;
+      chip.className = "chip";
+      if (state.focusStage) {
+        chip.style.borderColor = "rgba(166,90,51,0.45)";
+        chip.style.background = "#fff7ef";
+        chip.style.color = "#8e4b2a";
+      } else {
+        chip.style.borderColor = "";
+        chip.style.background = "";
+        chip.style.color = "";
+      }
+    }
+
+    function selectedBuilderStage() {
+      if (!state.builder || !Array.isArray(state.builder.stages)) return null;
+      if (state.builderSelected < 0 || state.builderSelected >= state.builder.stages.length) return null;
+      return state.builder.stages[state.builderSelected];
+    }
+
+    function ensureBuilderSelection() {
+      if (!state.builder || !Array.isArray(state.builder.stages)) {
+        state.builderSelected = -1;
+        return;
+      }
+      if (state.builder.stages.length === 0) {
+        state.builderSelected = -1;
+        return;
+      }
+      if (state.builderSelected < 0 || state.builderSelected >= state.builder.stages.length) {
+        state.builderSelected = 0;
+      }
+    }
+
+    function formatClusterMembersText(arr) {
+      if (!Array.isArray(arr) || !arr.length) return "";
+      return arr.map((m) => {
+        const agent = String(m.agent || "").trim();
+        const role = String(m.role || "executor").trim();
+        const required = m.required === false ? "false" : "true";
+        return `${agent}|${role}|${required}`;
+      }).join("\n");
+    }
+
+    function parseClusterMembersText(text) {
+      return String(text || "")
+        .split("\n")
+        .map((line) => line.trim())
+        .filter(Boolean)
+        .map((line) => {
+          const parts = line.split("|").map((x) => x.trim());
+          return {
+            agent: parts[0] || "",
+            role: parts[1] || "executor",
+            required: (parts[2] || "true").toLowerCase() !== "false",
+          };
+        })
+        .filter((m) => !!m.agent);
+    }
+
+    function renderStageInspector() {
+      const stage = selectedBuilderStage();
+      el("ins_stage_id").value = stage ? String(stage.id || "") : "";
+      el("ins_stage_kind").value = stage ? String(stage.kind || "") : "";
+
+      const consensus = (stage && stage.consensus) || {};
+      el("ins_consensus_voters").value = Array.isArray(consensus.voters) ? consensus.voters.join(", ") : "";
+      el("ins_consensus_algorithm").value = String(consensus.algorithm || "majority");
+      el("ins_consensus_threshold").value = String(
+        consensus.threshold !== undefined ? consensus.threshold : 0.5
+      );
+      el("ins_consensus_tiebreaker").value = String(consensus.tie_breaker || "reject");
+
+      const clusterMembers = stage && Array.isArray(stage.cluster_members) ? stage.cluster_members : [];
+      el("ins_cluster_members").value = formatClusterMembersText(clusterMembers);
+
+      const consensusEnabled = !!stage && String(stage.kind || "") === "consensus";
+      const clusterEnabled = !!stage && String(stage.kind || "") === "cluster";
+      ["ins_consensus_voters", "ins_consensus_algorithm", "ins_consensus_threshold", "ins_consensus_tiebreaker"]
+        .forEach((id) => {
+          const node = el(id);
+          if (node) node.disabled = !consensusEnabled;
+        });
+      const clusterNode = el("ins_cluster_members");
+      if (clusterNode) clusterNode.disabled = !clusterEnabled;
+    }
+
+    function resetInspectorFields() {
+      el("ins_consensus_voters").value = "";
+      el("ins_consensus_algorithm").value = "majority";
+      el("ins_consensus_threshold").value = "0.5";
+      el("ins_consensus_tiebreaker").value = "reject";
+      el("ins_cluster_members").value = "";
+    }
+
+    function applyInspectorToSelectedStage() {
+      const stage = selectedBuilderStage();
+      if (!stage) return;
+
+      const voters = String(el("ins_consensus_voters").value || "")
+        .split(",")
+        .map((x) => x.trim())
+        .filter(Boolean);
+      const algorithm = String(el("ins_consensus_algorithm").value || "majority").trim() || "majority";
+      const thresholdRaw = Number(el("ins_consensus_threshold").value || "0.5");
+      const threshold = Number.isFinite(thresholdRaw) ? thresholdRaw : 0.5;
+      const tieBreaker = String(el("ins_consensus_tiebreaker").value || "reject").trim() || "reject";
+
+      const members = parseClusterMembersText(el("ins_cluster_members").value || "");
+
+      stage.consensus = undefined;
+      stage.cluster_members = undefined;
+
+      if (String(stage.kind || "") === "consensus") {
+        if (!voters.length) {
+          throw new Error("consensus 节点需要至少一个 voter");
+        }
+        stage.consensus = {
+          voters,
+          algorithm,
+          threshold,
+          tie_breaker: tieBreaker,
+        };
+      }
+
+      if (String(stage.kind || "") === "cluster") {
+        if (!members.length) {
+          throw new Error("cluster 节点需要至少一个成员");
+        }
+        stage.cluster_members = members;
+      }
+    }
+
+    function institutionDisplayName(row) {
+      if (!row || typeof row !== "object") return "";
+      if (state.lang === "en") {
+        return String(row.institution_name_en || row.institution_name || row.institution_id || "");
+      }
+      return String(row.institution_name || row.institution_name_en || row.institution_id || "");
+    }
+
+    function institutionDisplayDescription(row) {
+      if (!row || typeof row !== "object") return "";
+      if (state.lang === "en") {
+        return String(row.description_en || row.description || "");
+      }
+      return String(row.description || row.description_en || "");
+    }
+
+    function specDisplayName(row) {
+      if (!row || typeof row !== "object") return "";
+      if (state.lang === "en") {
+        return String(row.spec_name_en || row.spec_name || row.spec_id || "");
+      }
+      return String(row.spec_name || row.spec_name_en || row.spec_id || "");
+    }
+
+    function renderInstitutionOptions(selectedInstitutionId = "") {
+      const sel = el("institution_id");
+      if (!sel) return;
+      const current = selectedInstitutionId || sel.value || "";
+      sel.innerHTML = "";
+      state.institutions.forEach((inst) => {
+        const op = document.createElement("option");
+        op.value = inst.institution_id;
+        op.textContent = institutionDisplayName(inst);
+        sel.appendChild(op);
+      });
+      if (current && state.institutions.some((x) => x.institution_id === current)) {
+        sel.value = current;
+      }
+    }
+
+    function renderSpecOptions(selectedSpecId = "") {
+      const specSel = el("spec_id");
+      if (!specSel || !state.institution) return;
+      const current = selectedSpecId || specSel.value || "";
+      specSel.innerHTML = "";
+      (state.institution.specs || []).forEach((s) => {
+        const op = document.createElement("option");
+        op.value = s.spec_id;
+        op.textContent = `${specDisplayName(s)}${s.exists ? "" : " (missing)"}`;
+        specSel.appendChild(op);
+      });
+      if (current && (state.institution.specs || []).some((x) => x.spec_id === current)) {
+        specSel.value = current;
+      }
+    }
+
+    function syncLocalizedEditableFields() {
+      const titleInput = el("title");
+      const taskInput = el("input_text");
+      const zhDefaultTitle = String((I18N.zh && I18N.zh["run.defaultTitle"]) || "");
+      const enDefaultTitle = String((I18N.en && I18N.en["run.defaultTitle"]) || "");
+      const zhDefaultInput = String((I18N.zh && I18N.zh["run.defaultInput"]) || "");
+      const enDefaultInput = String((I18N.en && I18N.en["run.defaultInput"]) || "");
+      if (titleInput) {
+        const cur = String(titleInput.value || "");
+        if (cur === zhDefaultTitle || cur === enDefaultTitle || !cur.trim()) {
+          titleInput.value = t("run.defaultTitle", cur);
+        }
+      }
+      if (taskInput) {
+        const cur = String(taskInput.value || "");
+        if (cur === zhDefaultInput || cur === enDefaultInput || !cur.trim()) {
+          taskInput.value = t("run.defaultInput", cur);
+        }
+      }
+
+      if (!state.institution) return;
+      if (el("save_institution_name")) {
+        el("save_institution_name").value = institutionDisplayName(state.institution);
+      }
+      if (el("save_institution_description")) {
+        el("save_institution_description").value = institutionDisplayDescription(state.institution);
+      }
+
+      const specId = el("spec_id") ? String(el("spec_id").value || "") : "";
+      const spec = (state.institution.specs || []).find((x) => x.spec_id === specId);
+      if (!spec) return;
+      if (el("save_spec_name")) {
+        el("save_spec_name").value = specDisplayName(spec);
+      }
+      if (el("save_spec_description")) {
+        const localizedSpecDesc = state.lang === "en"
+          ? String(spec.spec_description_en || spec.spec_description || "")
+          : String(spec.spec_description || spec.spec_description_en || "");
+        el("save_spec_description").value = localizedSpecDesc;
+      }
+      if (state.builder && el("b_meta_name")) {
+        state.builder.meta_name = specDisplayName(spec);
+        el("b_meta_name").value = state.builder.meta_name || "";
+      }
+    }
+
+    function renderInstitutionMeta() {
+      const wrap = el("institutionMeta");
+      wrap.innerHTML = "";
+      if (!state.institution) return;
+      const chips = [
+        `${t("run.institution", "Institution")}: ${institutionDisplayName(state.institution)}`,
+        institutionDisplayDescription(state.institution),
+        `${t("run.specVersion", "Spec")}: ${state.institution.default_spec_id || ""}`,
+      ].filter(Boolean);
+      chips.forEach((txt) => {
+        const d = document.createElement("span");
+        d.className = "chip";
+        d.textContent = txt;
+        wrap.appendChild(d);
+      });
+    }
+
+    function renderTopology() {
+      const top = state.topology;
+      if (!top) return;
+      const meta = top.meta || {};
+      el("topologyMeta").textContent = `${meta.id || "-"} · ${meta.pattern || "-"} · entry=${top.entry_stage || "-"}`;
+
+      renderTopologySvg(top);
+
+      const stages = el("topoStages");
+      stages.innerHTML = "";
+      (top.nodes || []).forEach((n) => {
+        const d = document.createElement("div");
+        const focused = state.focusStage && state.focusStage === n.id ? " focused" : "";
+        d.className = "stage" + (state.currentStage === n.id ? " active" : "") + focused;
+        d.dataset.stage = n.id || "";
+        d.innerHTML = `<div class="sid">${esc(n.id)}</div><div class="meta">${esc((n.kind || "") + (n.agent ? " · " + n.agent : ""))}</div>`;
+        d.addEventListener("click", () => setFocusStage(n.id || ""));
+        stages.appendChild(d);
+      });
+      const lines = (top.edges || []).map((e) => `${e.from} --${e.decision || "next"}--> ${e.to}`);
+      el("topoEdges").innerHTML = lines.map((x) => `<div>${esc(x)}</div>`).join("");
+    }
+
+    function renderTopologySvg(top) {
+      const svg = el("topoSvg");
+      svg.innerHTML = "";
+      const nodes = Array.isArray(top.nodes) ? top.nodes : [];
+      const edges = Array.isArray(top.edges) ? top.edges : [];
+      if (!nodes.length) {
+        svg.setAttribute("viewBox", "0 0 900 180");
+        return;
+      }
+
+      const ns = "http://www.w3.org/2000/svg";
+      const defs = document.createElementNS(ns, "defs");
+      const marker = document.createElementNS(ns, "marker");
+      marker.setAttribute("id", "arrow");
+      marker.setAttribute("viewBox", "0 0 10 10");
+      marker.setAttribute("refX", "8");
+      marker.setAttribute("refY", "5");
+      marker.setAttribute("markerWidth", "6");
+      marker.setAttribute("markerHeight", "6");
+      marker.setAttribute("orient", "auto-start-reverse");
+      const mpath = document.createElementNS(ns, "path");
+      mpath.setAttribute("d", "M 0 0 L 10 5 L 0 10 z");
+      mpath.setAttribute("fill", "#6f8a96");
+      marker.appendChild(mpath);
+      defs.appendChild(marker);
+      svg.appendChild(defs);
+
+      const layers = computeNodeLayers(top);
+      const orderedLayers = Object.keys(layers)
+        .map((k) => Number(k))
+        .sort((a, b) => a - b)
+        .map((k) => layers[k]);
+
+      const nodeW = 170;
+      const nodeH = 56;
+      const colGap = 74;
+      const rowGap = 34;
+      const marginX = 34;
+      const marginY = 24;
+
+      let maxRows = 1;
+      for (const layer of orderedLayers) {
+        maxRows = Math.max(maxRows, layer.length);
+      }
+      const width = Math.max(900, marginX * 2 + orderedLayers.length * nodeW + Math.max(0, orderedLayers.length - 1) * colGap);
+      const height = Math.max(280, marginY * 2 + maxRows * nodeH + Math.max(0, maxRows - 1) * rowGap);
+      svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+
+      const pos = {};
+      orderedLayers.forEach((layer, cIdx) => {
+        const colX = marginX + cIdx * (nodeW + colGap);
+        const totalH = layer.length * nodeH + Math.max(0, layer.length - 1) * rowGap;
+        const startY = marginY + (height - marginY * 2 - totalH) / 2;
+        layer.forEach((node, rIdx) => {
+          const x = colX;
+          const y = startY + rIdx * (nodeH + rowGap);
+          pos[node.id] = { x, y };
+        });
+      });
+
+      edges.forEach((edge) => {
+        const a = pos[edge.from];
+        const b = pos[edge.to];
+        if (!a || !b) return;
+        const sx = a.x + nodeW;
+        const sy = a.y + nodeH / 2;
+        const tx = b.x;
+        const ty = b.y + nodeH / 2;
+        const c1x = sx + 28;
+        const c2x = tx - 28;
+
+        const path = document.createElementNS(ns, "path");
+        path.setAttribute("d", `M ${sx} ${sy} C ${c1x} ${sy}, ${c2x} ${ty}, ${tx} ${ty}`);
+        path.setAttribute("class", "topo-edge");
+        path.setAttribute("marker-end", "url(#arrow)");
+        svg.appendChild(path);
+
+        const lx = (sx + tx) / 2;
+        const ly = (sy + ty) / 2 - 6;
+        const label = document.createElementNS(ns, "text");
+        label.setAttribute("x", String(lx));
+        label.setAttribute("y", String(ly));
+        label.setAttribute("text-anchor", "middle");
+        label.setAttribute("class", "topo-label");
+        label.textContent = String(edge.decision || "next");
+        svg.appendChild(label);
+      });
+
+      nodes.forEach((node) => {
+        const p = pos[node.id];
+        if (!p) return;
+
+        const group = document.createElementNS(ns, "g");
+        group.setAttribute("class", "topo-node-group");
+        group.setAttribute("data-stage", String(node.id || ""));
+        group.addEventListener("click", () => setFocusStage(node.id || ""));
+
+        const rect = document.createElementNS(ns, "rect");
+        rect.setAttribute("x", String(p.x));
+        rect.setAttribute("y", String(p.y));
+        rect.setAttribute("width", String(nodeW));
+        rect.setAttribute("height", String(nodeH));
+        const focused = state.focusStage && state.focusStage === node.id ? " focused" : "";
+        rect.setAttribute("class", "topo-node" + (state.currentStage === node.id ? " active" : "") + focused);
+        group.appendChild(rect);
+
+        const title = document.createElementNS(ns, "text");
+        title.setAttribute("x", String(p.x + 10));
+        title.setAttribute("y", String(p.y + 22));
+        title.setAttribute("class", "topo-node-text");
+        title.textContent = String(node.id || "");
+        group.appendChild(title);
+
+        const meta = document.createElementNS(ns, "text");
+        meta.setAttribute("x", String(p.x + 10));
+        meta.setAttribute("y", String(p.y + 40));
+        meta.setAttribute("class", "topo-node-meta");
+        const m = `${node.kind || ""}${node.agent ? " · " + node.agent : ""}`;
+        meta.textContent = m;
+        group.appendChild(meta);
+        svg.appendChild(group);
+      });
+    }
+
+    function computeNodeLayers(top) {
+      const nodes = Array.isArray(top.nodes) ? top.nodes : [];
+      const edges = Array.isArray(top.edges) ? top.edges : [];
+      const nodeIds = nodes.map((n) => n.id);
+      const adjacency = {};
+      nodeIds.forEach((id) => adjacency[id] = []);
+      edges.forEach((e) => {
+        if (adjacency[e.from]) adjacency[e.from].push(e.to);
+      });
+
+      const depth = {};
+      const used = {};
+      const entry = top.entry_stage && adjacency[top.entry_stage] !== undefined ? top.entry_stage : (nodeIds[0] || "");
+      const q = [];
+      if (entry) {
+        depth[entry] = 0;
+        used[entry] = true;
+        q.push(entry);
+      }
+      while (q.length) {
+        const cur = q.shift();
+        const d = depth[cur] || 0;
+        (adjacency[cur] || []).forEach((nx) => {
+          if (used[nx]) return;
+          used[nx] = true;
+          depth[nx] = d + 1;
+          q.push(nx);
+        });
+      }
+
+      let maxDepth = 0;
+      Object.values(depth).forEach((d) => {
+        maxDepth = Math.max(maxDepth, Number(d) || 0);
+      });
+      nodeIds.forEach((id) => {
+        if (depth[id] === undefined) {
+          maxDepth += 1;
+          depth[id] = maxDepth;
+        }
+      });
+
+      const layers = {};
+      nodes.forEach((node) => {
+        const d = depth[node.id] || 0;
+        if (!layers[d]) layers[d] = [];
+        layers[d].push(node);
+      });
+      return layers;
+    }
+
+    function addEvent(row) {
+      state.events.push(row);
+      if (state.events.length > 600) state.events.shift();
+      if (row.record_type === "stage_event") {
+        state.currentStage = row.current_stage || (row.event && row.event.next_stage) || state.currentStage;
+        if (row.status) setStatus(row.status);
+      } else if (row.record_type === "agent_trace") {
+        state.traces.push(row);
+        state.traces.sort((a,b) => ((a.agent_trace && a.agent_trace.sequential_id) || 0) - ((b.agent_trace && b.agent_trace.sequential_id) || 0));
+        if (state.traces.length > 240) state.traces = state.traces.slice(-240);
+      } else if (row.record_type === "lifecycle") {
+        const evt = row.event_type || "";
+        const payload = row.payload || {};
+        if (evt === "task_started") setStatus("running");
+        if (evt === "task_finished") setStatus(payload.status || "done", `steps=${payload.steps || 0}`);
+        if (evt === "task_error") setStatus("error");
+      }
+      renderEvents();
+      renderTraces();
+      renderTopology();
+      renderRuntimeStats();
+    }
+
+    function summary(row) {
+      if (row.record_type === "stage_event") {
+        const ev = row.event || {};
+        return `[${ev.stage_id}] ${ev.decision} -> ${ev.next_stage} | ${ev.summary || ""}`;
+      }
+      if (row.record_type === "agent_trace") {
+        const a = row.agent_trace || {};
+        return `#${a.sequential_id} ${a.agent_id}/${a.runtime_id} ${a.decision} | ${a.summary || ""}`;
+      }
+      if (row.record_type === "lifecycle") {
+        return `${row.event_type} ${JSON.stringify(row.payload || {})}`;
+      }
+      return JSON.stringify(row);
+    }
+
+    function renderEventDetail(row) {
+      const box = el("eventDetail");
+      if (!box) return;
+      if (!row) {
+        box.textContent = t("msg.clickEvent", "Click an event to view details");
+        return;
+      }
+      try {
+        box.textContent = JSON.stringify(row, null, 2);
+      } catch (_) {
+        box.textContent = String(row);
+      }
+    }
+
+    function renderTraceDetail(traceRow) {
+      const box = el("traceDetail");
+      if (!box) return;
+      if (!traceRow) {
+        box.textContent = t("msg.clickTrace", "Click an agent trace to view details");
+        return;
+      }
+      const a = traceRow.agent_trace || {};
+      const detail = {
+        sequential_id: a.sequential_id,
+        stage_id: a.stage_id,
+        agent_id: a.agent_id,
+        runtime_id: a.runtime_id,
+        decision: a.decision,
+        summary: a.summary,
+        updates: a.updates || {},
+        meta: a.meta || {},
+        raw_tail: a.raw_tail || "",
+      };
+      box.textContent = JSON.stringify(detail, null, 2);
+    }
+
+    function renderEvents() {
+      const list = el("eventList");
+      list.innerHTML = "";
+      const typeFilter = (el("eventTypeFilter") && el("eventTypeFilter").value) || "all";
+      const search = ((el("eventSearch") && el("eventSearch").value) || "").trim().toLowerCase();
+      const focusStage = (state.focusStage || "").trim();
+      [...state.events].slice(-220).reverse().forEach((row) => {
+        const kind = String(row.record_type || "event");
+        if (typeFilter !== "all" && kind !== typeFilter) return;
+        if (focusStage) {
+          const sid = stageIdOfRow(row);
+          if (sid && sid !== focusStage) return;
+          if (!sid && kind !== "lifecycle") return;
+        }
+        if (search) {
+          const hay = `${kind} ${summary(row)}`.toLowerCase();
+          if (!hay.includes(search)) return;
+        }
+        const d = document.createElement("div");
+        d.className = `ev ${kind}`;
+        const seq = Number(row.stream_seq || 0);
+        if (seq && seq === Number(state.selectedEventSeq || 0)) {
+          d.classList.add("selected");
+        }
+        d.innerHTML = `<div class="head">${row.stream_seq || "-"} · ${kind} · ${row.ts || ""}</div><div class="body">${esc(summary(row))}</div>`;
+        d.addEventListener("click", () => {
+          state.selectedEventSeq = seq;
+          const sid = stageIdOfRow(row);
+          if (sid) {
+            state.focusStage = sid;
+            renderFocusStageChip();
+            renderTopology();
+          }
+          renderEventDetail(row);
+          renderEvents();
+          renderTraces();
+        });
+        list.appendChild(d);
+      });
+      if (state.autoScrollEvents) {
+        list.scrollTop = 0;
+      }
+    }
+
+    function renderTraces() {
+      const body = el("traceBody");
+      body.innerHTML = "";
+      const search = ((el("traceSearch") && el("traceSearch").value) || "").trim().toLowerCase();
+      const decisionFilter = (el("traceDecisionFilter") && el("traceDecisionFilter").value) || "all";
+      const focusStage = (state.focusStage || "").trim();
+      state.traces.slice(-180).forEach((row) => {
+        const a = row.agent_trace || {};
+        const decision = String(a.decision || "").toLowerCase();
+        if (decisionFilter !== "all" && decision !== decisionFilter) return;
+        if (focusStage && String(a.stage_id || "") !== focusStage) return;
+        if (search) {
+          const hay = `${a.agent_id || ""} ${a.runtime_id || ""} ${a.stage_id || ""} ${a.summary || ""}`.toLowerCase();
+          if (!hay.includes(search)) return;
+        }
+        const tr = document.createElement("tr");
+        const seq = Number(a.sequential_id || 0);
+        if (seq && seq === Number(state.selectedTraceSeq || 0)) {
+          tr.classList.add("selected");
+        }
+        tr.innerHTML = `
+          <td class="mono">${esc(a.sequential_id || "")}</td>
+          <td class="mono">${esc(a.stage_id || "")}</td>
+          <td>${esc((a.agent_id || "") + "/" + (a.runtime_id || ""))}</td>
+          <td>${esc(a.decision || "")}</td>
+          <td>${esc(a.summary || "")}</td>
+        `;
+        tr.addEventListener("click", () => {
+          state.selectedTraceSeq = seq;
+          renderTraceDetail(row);
+          const sid = String(a.stage_id || "");
+          if (!sid) {
+            renderTraces();
+            return;
+          }
+          state.focusStage = sid;
+          renderFocusStageChip();
+          renderTopology();
+          renderEvents();
+          renderTraces();
+        });
+        body.appendChild(tr);
+      });
+    }
+
+    function renderRuntimeStats() {
+      const box = el("runtimeStats");
+      if (!box) return;
+      const stageCount = state.events.filter((x) => x.record_type === "stage_event").length;
+      const agentCount = state.traces.length;
+      const eventCount = state.events.length;
+      const chips = [
+        `status: ${state.status || t("msg.idle", "idle")}`,
+        `events: ${eventCount}`,
+        `stage_events: ${stageCount}`,
+        `agent_traces: ${agentCount}`,
+        state.currentStage ? `current_stage: ${state.currentStage}` : "",
+        state.focusStage ? `focus_stage: ${state.focusStage}` : "",
+      ].filter(Boolean);
+      box.innerHTML = "";
+      chips.forEach((txt) => {
+        const d = document.createElement("span");
+        d.className = "chip";
+        d.textContent = txt;
+        box.appendChild(d);
+      });
+    }
+
+    function closeSse() {
+      if (state.sse) {
+        state.sse.close();
+        state.sse = null;
+      }
+    }
+
+    function openStream(taskId) {
+      closeSse();
+      const es = new EventSource(`/api/tasks/${encodeURIComponent(taskId)}/stream?since=0`);
+      state.sse = es;
+      ["lifecycle","stage_event","agent_trace"].forEach((tp) => {
+        es.addEventListener(tp, (evt) => {
+          try { addEvent(JSON.parse(evt.data)); } catch (_) {}
+        });
+      });
+    }
+
+    async function loadInstitutions(preferredInstitutionId = "", preferredSpecId = "") {
+      const data = await api("/api/institutions");
+      state.institutions = data.items || [];
+      const sel = el("institution_id");
+      const prev = sel.value || "";
+      renderInstitutionOptions(prev);
+      if (!state.institutions.length) return;
+      const wanted = preferredInstitutionId || prev;
+      const exists = state.institutions.some((x) => x.institution_id === wanted);
+      const target = exists ? wanted : state.institutions[0].institution_id;
+      sel.value = target;
+      await selectInstitution(target, preferredSpecId);
+    }
+
+    async function selectInstitution(institutionId, preferredSpecId = "") {
+      const data = await api(`/api/institutions/${encodeURIComponent(institutionId)}`);
+      state.institution = data.institution;
+      renderInstitutionMeta();
+      if (el("save_institution_id")) el("save_institution_id").value = state.institution.institution_id || "";
+      if (el("save_institution_name")) el("save_institution_name").value = institutionDisplayName(state.institution);
+      if (el("save_institution_name_en")) el("save_institution_name_en").value = state.institution.institution_name_en || state.institution.institution_name || "";
+      if (el("save_institution_description")) el("save_institution_description").value = institutionDisplayDescription(state.institution);
+      if (el("save_institution_description_en")) el("save_institution_description_en").value = state.institution.description_en || state.institution.description || "";
+      const specSel = el("spec_id");
+      renderSpecOptions("");
+      const def = preferredSpecId || state.institution.default_spec_id || (state.institution.specs && state.institution.specs[0] && state.institution.specs[0].spec_id) || "";
+      if (def) specSel.value = def;
+      state.currentSpecId = specSel.value || "";
+      if (state.currentSpecId) await loadSpec(state.currentSpecId);
+    }
+
+    async function loadSpec(specId) {
+      const data = await api(`/api/specs/${encodeURIComponent(specId)}`);
+      const spec = data.spec || {};
+      state.currentSpecId = spec.spec_id || specId;
+      el("spec_text").value = spec.spec_text || "";
+      state.topology = spec.topology || null;
+      state.currentStage = state.topology && state.topology.entry_stage || "";
+      state.focusStage = "";
+      state.selectedEventSeq = 0;
+      state.selectedTraceSeq = 0;
+      renderFocusStageChip();
+      renderTopology();
+      if (spec.spec_ir) {
+        state.builder = builderFromSpecIR(spec.spec_ir);
+        const localizedSpecName = state.lang === "en"
+          ? (spec.spec_name_en || spec.spec_name || "")
+          : (spec.spec_name || spec.spec_name_en || "");
+        if (localizedSpecName) {
+          state.builder.meta_name = localizedSpecName;
+        }
+        state.builderSelected = -1;
+        renderBuilder();
+      }
+      if (el("save_spec_id")) el("save_spec_id").value = spec.spec_id || specId || "";
+      if (el("save_spec_name")) {
+        const localizedSpecName = state.lang === "en"
+          ? (spec.spec_name_en || spec.spec_name || "")
+          : (spec.spec_name || spec.spec_name_en || "");
+        el("save_spec_name").value = localizedSpecName || (state.builder && state.builder.meta_name) || "";
+      }
+      if (el("save_spec_name_en")) el("save_spec_name_en").value = spec.spec_name_en || spec.spec_name || "";
+      if (el("save_spec_description")) {
+        const localizedSpecDesc = state.lang === "en"
+          ? (spec.spec_description_en || spec.spec_description || "")
+          : (spec.spec_description || spec.spec_description_en || "");
+        el("save_spec_description").value = localizedSpecDesc || "";
+      }
+      if (el("save_spec_description_en")) {
+        el("save_spec_description_en").value = spec.spec_description_en || spec.spec_description || "";
+      }
+      setValidateHint("loaded", specDisplayName(spec) || specId);
+      renderEventDetail(null);
+      renderTraceDetail(null);
+      renderRuntimeStats();
+    }
+
+    function parseTransitions(text) {
+      const src = String(text || "").trim();
+      if (!src) return [];
+      const out = [];
+      src.split(/[,\n;]/).map((x) => x.trim()).filter(Boolean).forEach((piece) => {
+        const idx = piece.indexOf(":");
+        if (idx <= 0) return;
+        const decision = piece.slice(0, idx).trim();
+        const to = piece.slice(idx + 1).trim();
+        if (decision && to) out.push({ decision, to });
+      });
+      return out;
+    }
+
+    function transitionsToText(arr) {
+      return (arr || []).map((t) => `${t.decision}:${t.to}`).join(", ");
+    }
+
+    function builderFromSpecIR(ir) {
+      const features = (ir.features || []).filter((f) => f && f.enabled !== false).map((f) => f.name);
+      const stages = (ir.stages || []).map((s) => ({
+        id: s.id || "",
+        kind: s.kind || "executor",
+        agent: s.agent || "",
+        transitions: transitionsToText(s.transitions || []),
+        consensus: s.consensus ? {
+          voters: Array.isArray(s.consensus.voters) ? s.consensus.voters : [],
+          algorithm: s.consensus.algorithm || "majority",
+          threshold: s.consensus.threshold !== undefined ? s.consensus.threshold : 0.5,
+          tie_breaker: s.consensus.tie_breaker || "reject",
+        } : undefined,
+        cluster_members: Array.isArray(s.cluster_members) ? s.cluster_members : undefined,
+      }));
+      return {
+        meta_id: (ir.meta && ir.meta.id) || "custom_system",
+        meta_name: (ir.meta && ir.meta.name) || "自定义制度",
+        pattern: (ir.meta && ir.meta.pattern) || "pipeline",
+        entry_stage: ir.entry_stage || (stages[0] && stages[0].id) || "",
+        features,
+        stages,
+      };
+    }
+
+    function renderBuilder() {
+      if (!state.builder) {
+        state.builder = {
+          meta_id: "custom_system",
+          meta_name: "自定义制度",
+          pattern: "pipeline",
+          entry_stage: "",
+          features: [],
+          stages: [],
+        };
+      }
+      ensureBuilderSelection();
+      el("b_meta_id").value = state.builder.meta_id || "";
+      el("b_meta_name").value = state.builder.meta_name || "";
+      el("b_pattern").value = state.builder.pattern || "pipeline";
+      el("b_entry_stage").value = state.builder.entry_stage || "";
+      document.querySelectorAll(".b_feature").forEach((cb) => {
+        cb.checked = state.builder.features.includes(cb.value);
+      });
+
+      const body = el("stageBody");
+      body.innerHTML = "";
+      state.builder.stages.forEach((st, idx) => {
+        const tr = document.createElement("tr");
+        tr.className = idx === state.builderSelected ? "selected" : "";
+        tr.dataset.rowIndex = String(idx);
+        tr.innerHTML = `
+          <td><input data-k="id" data-i="${idx}" value="${esc(st.id || "")}"></td>
+          <td>
+            <select data-k="kind" data-i="${idx}">
+              ${STAGE_KINDS.map((k) => `<option value="${k}" ${k === st.kind ? "selected" : ""}>${k}</option>`).join("")}
+            </select>
+          </td>
+          <td><input data-k="agent" data-i="${idx}" value="${esc(st.agent || "")}"></td>
+          <td><input data-k="transitions" data-i="${idx}" value="${esc(st.transitions || "")}"></td>
+          <td><button class="danger" data-del="${idx}">删</button></td>
+        `;
+        body.appendChild(tr);
+      });
+      if (el("save_spec_id") && !String(el("save_spec_id").value || "").trim()) {
+        el("save_spec_id").value = state.builder.meta_id || "";
+      }
+      if (el("save_spec_name") && !String(el("save_spec_name").value || "").trim()) {
+        el("save_spec_name").value = state.builder.meta_name || "";
+      }
+      if (el("save_spec_name_en") && !String(el("save_spec_name_en").value || "").trim()) {
+        el("save_spec_name_en").value = state.builder.meta_name || "";
+      }
+      renderStageInspector();
+    }
+
+    function bindBuilderInputs() {
+      ["b_meta_id","b_meta_name","b_pattern","b_entry_stage"].forEach((id) => {
+        el(id).addEventListener("input", () => {
+          if (!state.builder) return;
+          state.builder.meta_id = el("b_meta_id").value.trim();
+          state.builder.meta_name = el("b_meta_name").value.trim();
+          state.builder.pattern = el("b_pattern").value;
+          state.builder.entry_stage = el("b_entry_stage").value.trim();
+        });
+      });
+      document.querySelectorAll(".b_feature").forEach((cb) => {
+        cb.addEventListener("change", () => {
+          if (!state.builder) return;
+          const selected = Array.from(document.querySelectorAll(".b_feature"))
+            .filter((x) => x.checked)
+            .map((x) => x.value);
+          state.builder.features = selected;
+        });
+      });
+      el("stageBody").addEventListener("input", (evt) => {
+        const t = evt.target;
+        if (!t || !t.dataset) return;
+        const i = Number(t.dataset.i || "-1");
+        const k = t.dataset.k || "";
+        if (!state.builder || i < 0 || i >= state.builder.stages.length) return;
+        state.builder.stages[i][k] = t.value;
+        state.builderSelected = i;
+        renderStageInspector();
+      });
+      el("stageBody").addEventListener("change", (evt) => {
+        const t = evt.target;
+        if (!t || !t.dataset) return;
+        const i = Number(t.dataset.i || "-1");
+        if (!state.builder || i < 0 || i >= state.builder.stages.length) return;
+        state.builderSelected = i;
+        renderBuilder();
+      });
+      el("stageBody").addEventListener("click", (evt) => {
+        const t = evt.target;
+        if (!t) return;
+
+        const withData = t.dataset || {};
+        if ("del" in withData) {
+          const i = Number(withData.del || "-1");
+          if (!state.builder || i < 0 || i >= state.builder.stages.length) return;
+          state.builder.stages.splice(i, 1);
+          if (state.builderSelected >= state.builder.stages.length) {
+            state.builderSelected = state.builder.stages.length - 1;
+          }
+          renderBuilder();
+          return;
+        }
+
+        const tr = t.closest("tr");
+        if (!tr || !("rowIndex" in tr.dataset)) return;
+        const i = Number(tr.dataset.rowIndex || "-1");
+        if (i < 0) return;
+        state.builderSelected = i;
+        renderBuilder();
+      });
+
+      const insApply = el("insApplyBtn");
+      if (insApply) {
+        insApply.addEventListener("click", () => {
+          try {
+            applyInspectorToSelectedStage();
+            renderBuilder();
+            setValidateHint("stage_applied");
+          } catch (err) {
+            setStatus("error", err.message || String(err));
+          }
+        });
+      }
+      const insReset = el("insResetBtn");
+      if (insReset) {
+        insReset.addEventListener("click", () => {
+          resetInspectorFields();
+        });
+      }
+    }
+
+    function buildSpecObjFromBuilder() {
+      const b = state.builder || {};
+      const stages = Array.isArray(b.stages) ? b.stages : [];
+      const stageObjs = stages
+        .map((st) => ({
+          id: String(st.id || "").trim(),
+          kind: String(st.kind || "executor").trim(),
+          agent: String(st.agent || "").trim(),
+          transitions: parseTransitions(st.transitions || ""),
+          consensus: st.consensus && typeof st.consensus === "object" ? st.consensus : undefined,
+          cluster_members: Array.isArray(st.cluster_members) ? st.cluster_members : undefined,
+        }))
+        .filter((s) => !!s.id);
+
+      if (!stageObjs.length) throw new Error("Builder 至少需要一个 stage");
+
+      if (!stageObjs.some((s) => s.kind === "terminal")) {
+        stageObjs.push({ id: "completed", kind: "terminal", agent: "", transitions: [] });
+      }
+
+      const allStageIds = new Set(stageObjs.map((s) => s.id));
+      stageObjs.forEach((s) => {
+        if (s.kind === "terminal") {
+          s.transitions = [];
+          return;
+        }
+        if (!Array.isArray(s.transitions) || !s.transitions.length) {
+          s.transitions = [{ decision: "next", to: "completed" }];
+        } else {
+          s.transitions = s.transitions.filter((t) => t.decision && t.to && allStageIds.has(t.to));
+          if (!s.transitions.length) {
+            s.transitions = [{ decision: "next", to: "completed" }];
+          }
+        }
+      });
+
+      const agentIds = Array.from(new Set(stageObjs.map((s) => s.agent).filter(Boolean)));
+      const agents = {};
+      stageObjs.forEach((s) => {
+        if (!s.agent) return;
+        if (agents[s.agent]) return;
+        agents[s.agent] = {
+          runtime_id: s.agent,
+          role: s.kind,
+        };
+      });
+      stageObjs.forEach((s) => {
+        if (s.kind === "consensus" && s.consensus && Array.isArray(s.consensus.voters)) {
+          s.consensus.voters.forEach((v) => {
+            const voter = String(v || "").trim();
+            if (!voter || agents[voter]) return;
+            agents[voter] = { runtime_id: voter, role: "voter" };
+          });
+        }
+        if (s.kind === "cluster" && Array.isArray(s.cluster_members)) {
+          s.cluster_members.forEach((m) => {
+            const member = String((m && m.agent) || "").trim();
+            if (!member || agents[member]) return;
+            agents[member] = { runtime_id: member, role: (m && m.role) || "executor" };
+          });
+        }
+      });
+      if (!agentIds.length) {
+        const hasDerivedAgents = Object.keys(agents).length > 0;
+        if (!hasDerivedAgents) {
+          throw new Error("非终态 stage 需要至少一个 agent");
+        }
+      }
+
+      const entry = String(b.entry_stage || "").trim() || stageObjs[0].id;
+      if (!allStageIds.has(entry)) throw new Error(`entry_stage 不存在: ${entry}`);
+
+      const features = (Array.isArray(b.features) ? b.features : []).map((name) => ({
+        name,
+        enabled: true,
+        config: {},
+      }));
+
+      return {
+        meta: {
+          id: String(b.meta_id || "custom_system").trim() || "custom_system",
+          name: String(b.meta_name || "自定义制度").trim() || "自定义制度",
+          version: "0.1.0",
+          pattern: String(b.pattern || "pipeline"),
+          description: "generated by dashboard builder",
+        },
+        entry_stage: entry,
+        agents,
+        stages: stageObjs.map((s) => {
+          const o = { id: s.id, kind: s.kind };
+          if (s.agent) o.agent = s.agent;
+          if (s.transitions && s.transitions.length) o.transitions = s.transitions;
+          if (s.kind === "consensus" && s.consensus && Array.isArray(s.consensus.voters) && s.consensus.voters.length) {
+            o.consensus = {
+              voters: s.consensus.voters.map((x) => String(x).trim()).filter(Boolean),
+              algorithm: String(s.consensus.algorithm || "majority"),
+              threshold: Number(s.consensus.threshold ?? 0.5),
+              tie_breaker: String(s.consensus.tie_breaker || "reject"),
+            };
+          }
+          if (s.kind === "cluster" && Array.isArray(s.cluster_members) && s.cluster_members.length) {
+            o.cluster_members = s.cluster_members
+              .map((m) => ({
+                agent: String((m && m.agent) || "").trim(),
+                role: String((m && m.role) || "executor").trim() || "executor",
+                required: (m && m.required) !== false,
+              }))
+              .filter((m) => !!m.agent);
+          }
+          return o;
+        }),
+        features,
+        policy: {
+          require_json_decision: false,
+          max_steps: 40,
+        },
+      };
+    }
+
+    async function builderToYaml() {
+      const specObj = buildSpecObjFromBuilder();
+      const data = await api("/api/specs/to-yaml", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ spec_obj: specObj }),
+      });
+      el("spec_text").value = data.spec_text || "";
+      setValidateHint("builder_to_yaml");
+    }
+
+    async function yamlToBuilder() {
+      const text = el("spec_text").value;
+      const data = await api("/api/specs/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ spec_inline: text, spec_format: "yaml" }),
+      });
+      state.topology = data.topology || null;
+      renderTopology();
+      state.builder = builderFromSpecIR(data.spec_ir || {});
+      state.builderSelected = -1;
+      renderBuilder();
+      setValidateHint("yaml_to_builder");
+    }
+
+    async function validateCurrentYaml() {
+      const text = el("spec_text").value;
+      const payload = {
+        spec_inline: text,
+        spec_format: "yaml",
+        institution_id: el("institution_id").value || "",
+        spec_id: el("spec_id").value || "",
+      };
+      const data = await api("/api/specs/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      state.topology = data.topology || null;
+      renderTopology();
+      setValidateHint("validate_passed", data.meta && data.meta.id ? data.meta.id : "-");
+      return data;
+    }
+
+    function newEmptyBuilder() {
+      return {
+        meta_id: "",
+        meta_name: "",
+        pattern: "pipeline",
+        entry_stage: "",
+        features: [],
+        stages: [],
+      };
+    }
+
+    function prefillBuilderCreateForm() {
+      state.builder = newEmptyBuilder();
+      state.builderSelected = -1;
+      renderBuilder();
+      el("spec_text").value = "";
+      setValidateHint("", "");
+
+      if (el("save_institution_id")) el("save_institution_id").value = "";
+      if (el("save_spec_id")) el("save_spec_id").value = "";
+      if (el("save_institution_name")) el("save_institution_name").value = "";
+      if (el("save_institution_name_en")) el("save_institution_name_en").value = "";
+      if (el("save_spec_name")) el("save_spec_name").value = "";
+      if (el("save_spec_name_en")) el("save_spec_name_en").value = "";
+      if (el("save_institution_description")) el("save_institution_description").value = "";
+      if (el("save_institution_description_en")) el("save_institution_description_en").value = "";
+      if (el("save_spec_description")) el("save_spec_description").value = "";
+      if (el("save_spec_description_en")) el("save_spec_description_en").value = "";
+      if (el("save_set_default")) el("save_set_default").checked = true;
+    }
+
+    function jumpToBuilderFromAdd() {
+      state.builderReturnTab = state.activeTab || "run";
+      prefillBuilderCreateForm();
+      switchTab("builder");
+      setStatus("ready", t("msg.saveAndBackHint"));
+    }
+
+    async function saveInstitutionAndSpec(goBack = false) {
+      let specText = String(el("spec_text").value || "");
+      if (!specText.trim()) {
+        await builderToYaml();
+        specText = String(el("spec_text").value || "");
+      }
+      const payload = {
+        institution_id: String(el("save_institution_id").value || "").trim(),
+        institution_name: String(el("save_institution_name").value || "").trim(),
+        institution_name_en: String(el("save_institution_name_en").value || "").trim(),
+        institution_description: String(el("save_institution_description").value || "").trim(),
+        institution_description_en: String(el("save_institution_description_en").value || "").trim(),
+        spec_id: String(el("save_spec_id").value || "").trim(),
+        spec_name: String(el("save_spec_name").value || "").trim(),
+        spec_name_en: String(el("save_spec_name_en").value || "").trim(),
+        spec_description: String(el("save_spec_description").value || "").trim(),
+        spec_description_en: String(el("save_spec_description_en").value || "").trim(),
+        set_default: !!(el("save_set_default") && el("save_set_default").checked),
+        spec_text: specText,
+        spec_format: "yaml",
+      };
+      setStatus("running", t("msg.saving", "Saving"));
+      const data = await api("/api/institutions/save", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const instId =
+        (data.institution && data.institution.institution_id) ||
+        payload.institution_id;
+      const specId =
+        (data.spec && data.spec.spec_id) ||
+        payload.spec_id;
+
+      await loadInstitutions(instId, specId);
+      if (specId) {
+        const specSel = el("spec_id");
+        if (specSel) specSel.value = specId;
+        await loadSpec(specId);
+      }
+      setValidateHint("saved", `${instId}/${specId}`);
+      setStatus("ready", t("msg.saved", "Saved"));
+
+      const shouldBack = goBack || !!state.builderReturnTab;
+      if (shouldBack) {
+        const backTo = state.builderReturnTab || "run";
+        state.builderReturnTab = "";
+        switchTab(backTo);
+      }
+      return data;
+    }
+
+    async function runCurrentYaml() {
+      const payload = {
+        institution_id: el("institution_id").value || "",
+        spec_id: el("spec_id").value || "",
+        spec_inline: el("spec_text").value,
+        spec_format: "yaml",
+        adapter: el("adapter").value,
+        title: el("title").value.trim(),
+        input: el("input_text").value.trim(),
+      };
+      const taskId = el("task_id").value.trim();
+      if (taskId) payload.task_id = taskId;
+      const pcRoot = el("pc_agent_root").value.trim();
+      const pcMykey = el("pc_mykey").value.trim();
+      if (pcRoot) payload.pc_agent_root = pcRoot;
+      if (pcMykey) payload.pc_mykey = pcMykey;
+
+      state.events = [];
+      state.traces = [];
+      state.selectedEventSeq = 0;
+      state.selectedTraceSeq = 0;
+      state.focusStage = "";
+      renderFocusStageChip();
+      renderEvents();
+      renderTraces();
+      renderEventDetail(null);
+      renderTraceDetail(null);
+      setStatus("starting");
+
+      const resp = await api("/api/runs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const task = resp.task || {};
+      state.taskId = task.task_id || "";
+      state.currentStage = task.current_stage || "";
+      setStatus(task.status || "queued");
+      el("taskBadge").textContent = state.taskId;
+
+      const topo = await api(`/api/tasks/${encodeURIComponent(state.taskId)}/topology`);
+      state.topology = topo.topology || null;
+      renderTopology();
+      openStream(state.taskId);
+    }
+
+    function addStage() {
+      if (!state.builder) renderBuilder();
+      const idx = state.builder.stages.length + 1;
+      state.builder.stages.push({
+        id: `stage_${idx}`,
+        kind: "executor",
+        agent: `agent_${idx}`,
+        transitions: "next:completed",
+      });
+      if (!state.builder.entry_stage) state.builder.entry_stage = state.builder.stages[0].id;
+      state.builderSelected = state.builder.stages.length - 1;
+      renderBuilder();
+    }
+
+    async function init() {
+      try {
+        const savedLang = localStorage.getItem("mas_dashboard_lang");
+        if (savedLang === "en" || savedLang === "zh") {
+          state.lang = savedLang;
+        }
+        const savedTheme = localStorage.getItem("mas_dashboard_theme");
+        if (savedTheme) {
+          state.theme = savedTheme;
+        }
+      } catch (_) {}
+
+      bindBuilderInputs();
+      applyTheme(state.theme || "atelier");
+      applyI18nText();
+      switchTab("run");
+      await loadInstitutions();
+
+      const zhBtn = el("langZhBtn");
+      const enBtn = el("langEnBtn");
+      if (zhBtn) zhBtn.addEventListener("click", () => switchLang("zh"));
+      if (enBtn) enBtn.addEventListener("click", () => switchLang("en"));
+      const themeSelect = el("themeSelect");
+      if (themeSelect) {
+        themeSelect.value = state.theme || "atelier";
+        themeSelect.addEventListener("change", () => {
+          switchTheme(themeSelect.value || "atelier");
+        });
+      }
+      document.querySelectorAll(".tab-btn").forEach((btn) => {
+        btn.addEventListener("click", () => switchTab(btn.dataset.tab || "run"));
+      });
+
+      el("institution_id").addEventListener("change", async (e) => {
+        await selectInstitution(e.target.value);
+      });
+      el("spec_id").addEventListener("change", async (e) => {
+        state.currentSpecId = e.target.value;
+      });
+      el("loadSpecBtn").addEventListener("click", async () => {
+        try {
+          await loadSpec(el("spec_id").value);
+        } catch (err) {
+          setStatus("error", err.message);
+        }
+      });
+      el("validateBtn").addEventListener("click", async () => {
+        try {
+          await validateCurrentYaml();
+          setStatus("ready");
+        } catch (err) {
+          setStatus("error", err.message);
+          setValidateHint("validate_failed", err.message || String(err));
+        }
+      });
+      el("runBtn").addEventListener("click", async () => {
+        try {
+          await validateCurrentYaml();
+          await runCurrentYaml();
+          switchTab("monitor");
+        } catch (err) {
+          setStatus("error", err.message);
+        }
+      });
+      const addInstBtn = el("addInstitutionBtn");
+      if (addInstBtn) {
+        addInstBtn.addEventListener("click", jumpToBuilderFromAdd);
+      }
+      el("addStageBtn").addEventListener("click", addStage);
+      el("builderToYamlBtn").addEventListener("click", async () => {
+        try {
+          await builderToYaml();
+        } catch (err) {
+          setStatus("error", err.message);
+        }
+      });
+      const saveSpecBtn = el("saveSpecBtn");
+      if (saveSpecBtn) {
+        saveSpecBtn.addEventListener("click", async () => {
+          try {
+            await saveInstitutionAndSpec(false);
+          } catch (err) {
+            setStatus("error", err.message || String(err));
+          }
+        });
+      }
+      const saveAndBackBtn = el("saveAndBackBtn");
+      if (saveAndBackBtn) {
+        saveAndBackBtn.addEventListener("click", async () => {
+          try {
+            await saveInstitutionAndSpec(true);
+          } catch (err) {
+            setStatus("error", err.message || String(err));
+          }
+        });
+      }
+      el("yamlToBuilderBtn").addEventListener("click", async () => {
+        try {
+          await yamlToBuilder();
+        } catch (err) {
+          setStatus("error", err.message);
+        }
+      });
+
+      ["eventTypeFilter", "eventSearch"].forEach((id) => {
+        const node = el(id);
+        if (!node) return;
+        node.addEventListener("input", renderEvents);
+        node.addEventListener("change", renderEvents);
+      });
+      ["traceSearch", "traceDecisionFilter"].forEach((id) => {
+        const node = el(id);
+        if (!node) return;
+        node.addEventListener("input", renderTraces);
+        node.addEventListener("change", renderTraces);
+      });
+
+      const autoScroll = el("autoScrollEvents");
+      if (autoScroll) {
+        state.autoScrollEvents = !!autoScroll.checked;
+        autoScroll.addEventListener("change", () => {
+          state.autoScrollEvents = !!autoScroll.checked;
+        });
+      }
+      const clearFocusBtn = el("clearFocusBtn");
+      if (clearFocusBtn) {
+        clearFocusBtn.addEventListener("click", () => {
+          state.focusStage = "";
+          renderFocusStageChip();
+          renderTopology();
+          renderEvents();
+          renderTraces();
+          renderRuntimeStats();
+        });
+      }
+      const focusChip = el("focusStageChip");
+      if (focusChip) {
+        focusChip.addEventListener("click", () => {
+          state.focusStage = "";
+          renderFocusStageChip();
+          renderTopology();
+          renderEvents();
+          renderTraces();
+          renderRuntimeStats();
+        });
+      }
+      const clearEventsBtn = el("clearEventsBtn");
+      if (clearEventsBtn) {
+        clearEventsBtn.addEventListener("click", () => {
+          state.events = [];
+          state.traces = [];
+          state.selectedEventSeq = 0;
+          state.selectedTraceSeq = 0;
+          renderEvents();
+          renderTraces();
+          renderEventDetail(null);
+          renderTraceDetail(null);
+          renderRuntimeStats();
+        });
+      }
+
+      renderFocusStageChip();
+      renderEventDetail(null);
+      renderTraceDetail(null);
+      renderRuntimeStats();
+      applyI18nText();
+    }
+
+    init().catch((err) => {
+      setStatus("error", err.message);
+    });
+  </script>
+</body>
+</html>

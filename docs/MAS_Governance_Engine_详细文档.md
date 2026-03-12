@@ -398,3 +398,113 @@ YAML 现在也已支持，适合手写配置；运行时会统一编译为同一
 ### Q3：如何保证制度改动不破坏运行？
 
 每新增制度必须配套至少一条测试，并纳入全量 `validate + unittest`。
+
+---
+
+## 13. Dashboard + 后端事件流（新增）
+
+### 13.1 设计目标
+
+为了满足“可观测 + 可回放 + 实时态势”需求，新增了一个轻量后端：
+
+- `TaskRunManager`：异步执行任务（后台线程）
+- `InMemoryEventStream`：按 `task_id` 维护有序事件流（含 `stream_seq`）
+- `EventStreamStore`：把运行时 trace 同时写入 JSONL 并发布事件
+- HTTP API + SSE：前端实时订阅任务事件
+- Dashboard：拓扑可视化 + 事件时间线 + agent trace 明细
+
+### 13.2 启动方式
+
+```bash
+python -m mas_engine.cli serve \
+  --host 127.0.0.1 \
+  --port 8787 \
+  --trace-dir traces/dashboard
+```
+
+打开：
+
+`http://127.0.0.1:8787`
+
+### 13.3 API 一览
+
+- `POST /api/runs`：发起任务
+- `GET /api/tasks`：任务列表
+- `GET /api/tasks/{task_id}`：任务快照
+- `GET /api/tasks/{task_id}/topology`：该任务拓扑
+- `GET /api/tasks/{task_id}/events?since=0&limit=200`：事件回放
+- `GET /api/tasks/{task_id}/stream?since=0`：SSE 实时流
+- `GET /api/spec-topology?spec=systems/xxx.yaml`：预览 spec 拓扑
+
+### 13.4 事件类型
+
+SSE/回放输出统一携带 `stream_seq`，并按 `record_type` 区分：
+
+- `lifecycle`
+  - `task_queued`
+  - `task_started`
+  - `task_finished`
+  - `task_error`
+- `stage_event`
+  - 每个 stage 一条聚合流转记录
+- `agent_trace`
+  - 每个 agent dispatch 一条记录，含 `sequential_id`
+
+### 13.5 与 trace 文件关系
+
+如果指定 `trace_out`（或使用默认 `trace_dir/TASK-xxx.jsonl`）：
+
+- JSONL 仍按原格式落盘（可离线审计）
+- 同时同内容推送到事件流（用于 dashboard 实时展示）
+
+即：**一份事实来源，两个消费通道（离线文件 + 在线事件）**。
+
+### 13.6 制度映射（Institution Registry）
+
+新增 `systems/institutions.yaml` 作为制度目录层，避免前端直接暴露文件路径：
+
+- `institution_id / institution_name / description`
+- `default_spec_id`
+- `specs[]`：`spec_id/spec_name/path`
+
+典型调用：
+
+- `GET /api/institutions`：制度列表（给下拉框）
+- `GET /api/institutions/{id}`：制度详情 + spec 版本列表
+- `GET /api/specs/{spec_id}`：spec 文本 + topology + spec_ir
+
+### 13.7 Dashboard 自定义 YAML
+
+Dashboard 支持两种来源：
+
+1. 从制度目录加载既有 spec（最直观）  
+2. 通过 Builder 生成/修改 spec（pattern + feature + stages）
+
+Builder 生成流程：
+
+1. 选择 `pattern`
+2. 勾选 `features`
+3. 添加/编辑 stage（`id/kind/agent/transitions`）
+4. `Builder -> YAML`（调用 `POST /api/specs/to-yaml`）
+5. `校验当前YAML`（调用 `POST /api/specs/validate`）
+6. `运行当前YAML`（`POST /api/runs` with `spec_inline`）
+
+最新 Dashboard 还支持：
+
+- 交互式 SVG 拓扑图（节点/边/decision 标签）
+- 节点-事件-trace 联动（点击任一处可聚焦 stage）
+- Event/Trace 实时过滤和关键词搜索
+- Stage Inspector：
+  - `consensus` 的 voters/algorithm/threshold/tie_breaker
+  - `cluster` 的成员列表（`agent|role|required`）
+
+### 13.8 inline spec 运行
+
+`POST /api/runs` 支持：
+
+- `spec_inline + spec_format`（`yaml/json`）
+- `spec_id`
+- `institution_id`（自动取默认 spec）
+- `spec`/`spec_path`（兼容旧方式）
+
+优先级：`spec_obj` > `spec_inline` > `spec_id` > `institution_id` > `spec_path`。

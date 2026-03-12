@@ -8,6 +8,7 @@ This repository now contains a **new implementation** (independent from `sample/
 - Feature plugins: `monitor`, `shared_state`, `system_protocol`, `emergency_handler`, `human_confirmation`
 - Spec compiler: `CUE/JSON/YAML -> normalized JSON IR`
 - Adapter layer: `PcAgentLoopAdapter`, `OpenClawAdapter`, `MockAdapter`
+- Dashboard backend: HTTP API + SSE event stream + real-time topology view
 
 ## Structure
 
@@ -15,9 +16,13 @@ This repository now contains a **new implementation** (independent from `sample/
 - `mas_engine/spec/`: spec system (`templates/compiler/validators`)
 - `mas_engine/storage/`: trace storage backends
 - `mas_engine/adapters/`: runtime adapter implementations
+- `mas_engine/observability/`: event stream + async task manager
+- `mas_engine/web/`: dashboard frontend
+- `mas_engine/dashboard_server.py`: API/SSE server
 - `mas_engine/cli.py`: CLI entry
 - `dsl/`: CUE schema
 - `systems/`: institution specs (JSON/CUE/YAML)
+- `systems/institutions.yaml`: institution -> spec mapping registry
 - `tests/`: unit tests
 - `third_party/pc-agent-loop`: git submodule backend runtime used by `PcAgentLoopAdapter`
 
@@ -115,6 +120,43 @@ python -m mas_engine.cli run \
 - `auto`: try `--deliver`, fallback if CLI does not support it
 - `always`: always append `--deliver`
 - `never`: never append `--deliver`
+
+### 6) Start Dashboard + event backend
+
+```bash
+python -m mas_engine.cli serve \
+  --host 127.0.0.1 \
+  --port 8787 \
+  --trace-dir traces/dashboard \
+  --institutions systems/institutions.yaml
+```
+
+Then open: `http://127.0.0.1:8787`
+
+Dashboard capabilities:
+- Choose by institution name instead of raw file path
+- Switch spec versions under one institution
+- Customize spec in Builder (`pattern + features + stages`) and generate YAML
+- Advanced Stage Inspector for `consensus` voters and `cluster` members
+- Submit tasks from UI (`institution/spec + adapter + input`)
+- Live stream per-task events via SSE
+- Visualize topology as interactive SVG graph with node-edge labels
+- Stage-event-trace linkage: click node/event/trace to focus by stage
+- Filter/search events and traces in real time
+- Show per-agent trace rows (`sequential_id`, `agent_id`, `decision`, `summary`)
+
+Core API endpoints:
+- `POST /api/runs`
+- `GET /api/tasks`
+- `GET /api/tasks/{task_id}`
+- `GET /api/tasks/{task_id}/topology`
+- `GET /api/tasks/{task_id}/events?since=0&limit=200`
+- `GET /api/tasks/{task_id}/stream?since=0` (SSE)
+- `GET /api/institutions`
+- `GET /api/institutions/{institution_id}`
+- `GET /api/specs/{spec_id}`
+- `POST /api/specs/validate`
+- `POST /api/specs/to-yaml`
 
 ## Built-in sample specs
 

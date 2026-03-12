@@ -1,0 +1,104 @@
+institutions:
+  - id: athens_democracy
+    name: 雅典民主
+    name_en: Athens Democracy
+    description: 公民共识投票驱动的直接民主协作流程
+    description_en: Citizen consensus voting driven direct democracy workflow
+    default_spec_id: athens_yaml
+    specs:
+      - id: athens_yaml
+        name: 雅典民主（YAML）
+        name_en: Athens Democracy (YAML)
+        path: systems/athens_democracy.yaml
+      - id: athens_json
+        name: 雅典民主（JSON）
+        name_en: Athens Democracy (JSON)
+        path: systems/athens_consensus.json
+
+  - id: qinhan_junxian
+    name: 秦汉郡县
+    name_en: Qin-Han Commandery-County
+    description: 自上而下分层治理并带监察特性
+    description_en: Top-down layered governance with supervisory features
+    default_spec_id: qinhan_yaml
+    specs:
+      - id: qinhan_yaml
+        name: 秦汉郡县（YAML）
+        name_en: Qin-Han Commandery-County (YAML)
+        path: systems/qinhan_junxian.yaml
+      - id: qinhan_json
+        name: 秦汉郡县（JSON）
+        name_en: Qin-Han Commandery-County (JSON)
+        path: systems/qinhan_junxian.json
+
+  - id: tang_sanshengliubu
+    name: 唐朝三省六部
+    name_en: Tang Three Departments and Six Ministries
+    description: 中书起草、门下审议、尚书统筹六部执行
+    description_en: Secretariat drafts, Chancellery reviews, Department of State Affairs coordinates six ministries
+    default_spec_id: tang_yaml
+    specs:
+      - id: tang_yaml
+        name: 唐朝三省六部（YAML）
+        name_en: Tang Three Departments and Six Ministries (YAML)
+        path: systems/tang_sanshengliubu.yaml
+      - id: tang_json
+        name: 唐朝三省六部（JSON）
+        name_en: Tang Three Departments and Six Ministries (JSON)
+        path: systems/tang_sanshengliubu.json
+
+  - id: mongol_empire
+    name: 蒙古帝国
+    name_en: Mongol Empire
+    description: 大汗到万户/千户/百户/十户的层级执行链
+    description_en: Hierarchical execution chain from Great Khan to tumen, mingghan, jaghun, arban
+    default_spec_id: mongol_yaml
+    specs:
+      - id: mongol_yaml
+        name: 蒙古帝国（YAML）
+        name_en: Mongol Empire (YAML)
+        path: systems/mongol_empire.yaml
+
+  - id: us_federal
+    name: 美国联邦
+    name_en: United States Federal System
+    description: 多重关卡审议与行政执行相结合
+    description_en: Multi-gate deliberation combined with executive execution
+    default_spec_id: us_yaml
+    specs:
+      - id: us_yaml
+        name: 美国联邦（YAML）
+        name_en: United States Federal System (YAML)
+        path: systems/us_federal_gated.yaml
+      - id: us_json
+        name: 美国联邦（JSON）
+        name_en: United States Federal System (JSON)
+        path: systems/us_federal_gated.json
+
+  - id: soviet_party_state
+    name: 苏联党国体制
+    name_en: Soviet Party-State System
+    description: 党政中枢规划后向各执行体系下达
+    description_en: Party-state core planning followed by execution across subsystems
+    default_spec_id: soviet_yaml
+    specs:
+      - id: soviet_yaml
+        name: 苏联党国体制（YAML）
+        name_en: Soviet Party-State System (YAML)
+        path: systems/soviet_party_state.yaml
+
+  - id: egypt_pipeline
+    name: 古埃及法老制
+    name_en: Ancient Egyptian Pharaoh System
+    description: 简单线性命令链
+    description_en: Simple linear command chain
+    default_spec_id: egypt_yaml
+    specs:
+      - id: egypt_yaml
+        name: 古埃及法老制（YAML）
+        name_en: Ancient Egyptian Pharaoh System (YAML)
+        path: systems/egypt_pipeline.yaml
+      - id: egypt_json
+        name: 古埃及法老制（JSON）
+        name_en: Ancient Egyptian Pharaoh System (JSON)
+        path: systems/egypt_pipeline.json
