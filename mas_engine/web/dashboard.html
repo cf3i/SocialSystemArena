@@ -10,6 +10,8 @@
     :root {
       --bg: #f4eee3;
       --bg-noise: rgba(15, 56, 66, 0.03);
+      --bg-glow-a: #efe3cf;
+      --bg-glow-b: #dfedf1;
       --panel: #fffdf8;
       --panel-elevated: #ffffff;
       --line: #d9cdb8;
@@ -33,6 +35,8 @@
     body[data-theme="slate"] {
       --bg: #e8edf4;
       --bg-noise: rgba(32, 51, 92, 0.04);
+      --bg-glow-a: #d9e0ee;
+      --bg-glow-b: #e6eef9;
       --panel: #fdfefe;
       --panel-elevated: #ffffff;
       --line: #ccd4e2;
@@ -50,6 +54,8 @@
     body[data-theme="citrus"] {
       --bg: #f5f3e5;
       --bg-noise: rgba(61, 88, 35, 0.03);
+      --bg-glow-a: #ebe7cc;
+      --bg-glow-b: #e2edd6;
       --panel: #fffef8;
       --panel-elevated: #ffffff;
       --line: #d9d8bf;
@@ -70,8 +76,8 @@
     body {
       margin: 0;
       background:
-        radial-gradient(circle at 14% 10%, #efe3cf 0%, transparent 36%),
-        radial-gradient(circle at 88% 80%, #dfedf1 0%, transparent 32%),
+        radial-gradient(circle at 14% 10%, var(--bg-glow-a) 0%, transparent 36%),
+        radial-gradient(circle at 88% 80%, var(--bg-glow-b) 0%, transparent 32%),
         linear-gradient(120deg, transparent 0%, var(--bg-noise) 100%),
         var(--bg);
       color: var(--ink);
@@ -193,9 +199,9 @@
       grid-template-areas: "builder yaml";
     }
     .wrap[data-active-tab="monitor"] {
-      grid-template-columns: minmax(360px, 1fr) minmax(360px, 1fr) minmax(380px, 1.1fr);
+      grid-template-columns: minmax(360px, 1fr) minmax(360px, 1fr) minmax(360px, 1fr);
       grid-template-areas:
-        "topology topology events"
+        "topology topology topology"
         "agents agents events";
     }
     .card.tab-hidden {
@@ -246,6 +252,9 @@
     #topology { grid-area: topology; min-height: 280px; }
     #agents { grid-area: agents; min-height: 270px; }
     #events { grid-area: events; min-height: 760px; }
+    .wrap[data-active-tab="monitor"] #topology {
+      min-height: 600px;
+    }
     h1, h2 {
       margin: 0;
       font-family: "Space Grotesk", "Manrope", sans-serif;
@@ -486,23 +495,80 @@
       margin-bottom: 3px;
       font-size: 11px;
     }
-    .toolbar .tool-opt {
+    .tool-opt {
       display: inline-flex;
       align-items: center;
       gap: 6px;
       font-size: 12px;
       color: var(--muted);
-      padding: 0 4px 6px 4px;
+      border: 1px solid var(--line-soft);
+      border-radius: 999px;
+      padding: 4px 10px;
+      background: #fff;
       white-space: nowrap;
     }
-    .toolbar .tool-opt input[type="checkbox"] {
+    .tool-opt input[type="checkbox"] {
       accent-color: var(--accent);
+    }
+    .toolbar .tool-opt {
+      padding: 0 4px 6px 4px;
+      border: none;
+      border-radius: 0;
+      background: transparent;
+    }
+
+    .builder-group {
+      margin-top: 10px;
+      border: 1px solid var(--line-soft);
+      border-radius: var(--radius-m);
+      background: linear-gradient(180deg, #ffffff, color-mix(in srgb, #fff 70%, var(--accent-soft)));
+      overflow: hidden;
+    }
+    .builder-group:first-of-type {
+      margin-top: 0;
+    }
+    .builder-group > summary {
+      cursor: pointer;
+      list-style: none;
+      user-select: none;
+      font-family: "Space Grotesk", "Manrope", sans-serif;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: var(--muted);
+      padding: 10px 12px;
+      background: color-mix(in srgb, #fff 58%, var(--accent-soft));
+      border-bottom: 1px dashed transparent;
+    }
+    .builder-group > summary::-webkit-details-marker {
+      display: none;
+    }
+    .builder-group > summary::after {
+      content: "▸";
+      float: right;
+      font-size: 11px;
+      transform: translateY(1px);
+      transition: transform var(--ease);
+    }
+    .builder-group[open] > summary::after {
+      transform: rotate(90deg) translateX(2px);
+    }
+    .builder-group[open] > summary {
+      border-bottom-color: var(--line-soft);
+      margin-bottom: 10px;
+    }
+    .builder-group > :not(summary) {
+      padding: 0 12px 12px 12px;
     }
 
     .builder-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 10px;
+    }
+    .wrap[data-active-tab="builder"] #builder .builder-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
     }
     .feature-row {
       margin-top: 10px;
@@ -637,8 +703,14 @@
       flex-wrap: wrap;
       margin-top: 8px;
     }
-    .topology-canvas-wrap {
+    .topology-main {
       margin-top: 10px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 320px;
+      gap: 10px;
+      align-items: start;
+    }
+    .topology-canvas-wrap {
       border: 1px solid var(--line-soft);
       border-radius: var(--radius-m);
       background:
@@ -648,10 +720,18 @@
       max-height: 360px;
       box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
     }
+    .wrap[data-active-tab="monitor"] .topology-canvas-wrap {
+      min-height: 460px;
+      max-height: 760px;
+    }
     #topoSvg {
       min-width: 760px;
-      width: 100%;
+      width: auto;
+      height: auto;
       display: block;
+    }
+    .wrap[data-active-tab="monitor"] #topoSvg {
+      min-width: 1280px;
     }
     .topo-edge {
       fill: none;
@@ -659,10 +739,41 @@
       stroke-opacity: 0.68;
       stroke-width: 1.8;
     }
+    .topo-edge.focus {
+      stroke-opacity: 0.9;
+      stroke-width: 2.1;
+    }
+    .topo-edge.dim {
+      stroke-opacity: 0.16;
+      stroke-dasharray: 4 4;
+    }
+    .topo-edge.selected {
+      stroke: color-mix(in srgb, var(--warn) 82%, var(--accent));
+      stroke-opacity: 0.98;
+      stroke-width: 2.8;
+    }
+    .topo-edge-hit {
+      fill: none;
+      stroke: rgba(0, 0, 0, 0);
+      stroke-width: 16;
+      cursor: pointer;
+      pointer-events: stroke;
+    }
     .topo-label {
       font-family: "JetBrains Mono", "SFMono-Regular", monospace;
       font-size: 10px;
       fill: #5c6d79;
+      paint-order: stroke;
+      stroke: rgba(255, 255, 255, 0.9);
+      stroke-width: 3px;
+      stroke-linejoin: round;
+    }
+    .topo-label.dim {
+      opacity: 0.42;
+    }
+    .topo-label.selected {
+      fill: color-mix(in srgb, var(--warn) 80%, #40301f);
+      font-weight: 700;
     }
     .topo-node {
       fill: #fff;
@@ -671,6 +782,11 @@
       rx: 12;
       ry: 12;
       filter: drop-shadow(0 3px 7px rgba(13, 34, 44, 0.12));
+    }
+    .topo-node.edge-related {
+      stroke: color-mix(in srgb, var(--warn) 76%, var(--accent));
+      stroke-width: 2.2;
+      fill: color-mix(in srgb, #fff 72%, #fff3ea);
     }
     .topo-node-group {
       cursor: pointer;
@@ -746,6 +862,14 @@
       font-size: 11px;
       color: var(--muted);
     }
+    .topo-edge-panel {
+      margin-top: 0;
+      min-height: 180px;
+    }
+    #topoEdgeDetail {
+      max-height: 360px;
+      min-height: 128px;
+    }
 
     .events {
       max-height: 720px;
@@ -753,6 +877,10 @@
       border-top: 1px solid var(--line-soft);
       margin-top: 8px;
       padding-top: 9px;
+    }
+    body.compact-monitor .events {
+      max-height: 760px;
+      padding-top: 6px;
     }
     .ev {
       border-left: 3px solid #d9d1c4;
@@ -804,6 +932,20 @@
       line-height: 1.4;
       word-break: break-word;
     }
+    body.compact-monitor .ev {
+      padding: 6px 8px;
+      margin-bottom: 6px;
+      border-radius: 7px;
+    }
+    body.compact-monitor .ev .head {
+      font-size: 9px;
+      margin-bottom: 2px;
+      letter-spacing: 0.02em;
+    }
+    body.compact-monitor .ev .body {
+      font-size: 11px;
+      line-height: 1.32;
+    }
 
     table.trace {
       width: 100%;
@@ -842,6 +984,11 @@
       top: 0;
       z-index: 1;
     }
+    body.compact-monitor .trace th,
+    body.compact-monitor .trace td {
+      padding: 5px 6px;
+      font-size: 11px;
+    }
     .mono { font-family: "JetBrains Mono", "SFMono-Regular", monospace; }
     .detail-panel {
       margin-top: 8px;
@@ -865,6 +1012,10 @@
       font-size: 11px;
       color: #1f3340;
       line-height: 1.4;
+    }
+    body.compact-monitor .detail-panel pre {
+      max-height: 100px;
+      font-size: 10px;
     }
 
     #validateMsg {
@@ -902,6 +1053,28 @@
         grid-template-areas:
           "builder"
           "yaml";
+      }
+      .wrap[data-active-tab="monitor"] {
+        grid-template-columns: 1fr 1fr;
+        grid-template-areas:
+          "topology topology"
+          "agents events";
+      }
+      .topology-main {
+        grid-template-columns: 1fr;
+      }
+      .wrap[data-active-tab="monitor"] #topology {
+        min-height: 520px;
+      }
+      .wrap[data-active-tab="monitor"] .topology-canvas-wrap {
+        min-height: 400px;
+        max-height: 680px;
+      }
+      .wrap[data-active-tab="monitor"] #topoSvg {
+        min-width: 1080px;
+      }
+      .wrap[data-active-tab="builder"] #builder .builder-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
       }
     }
 
@@ -945,6 +1118,19 @@
           "agents"
           "events";
       }
+      .topology-main {
+        grid-template-columns: 1fr;
+      }
+      .wrap[data-active-tab="monitor"] #topology {
+        min-height: 430px;
+      }
+      .wrap[data-active-tab="monitor"] .topology-canvas-wrap {
+        min-height: 330px;
+        max-height: 560px;
+      }
+      .wrap[data-active-tab="monitor"] #topoSvg {
+        min-width: 900px;
+      }
       .grid,
       .grid-run {
         grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -959,6 +1145,9 @@
         min-height: 460px;
       }
       .toolbar {
+        grid-template-columns: 1fr;
+      }
+      .wrap[data-active-tab="builder"] #builder .builder-grid {
         grid-template-columns: 1fr;
       }
     }
@@ -1113,6 +1302,8 @@
       <div class="section-head">
         <h2 data-i18n="builder.title">Spec Builder</h2>
       </div>
+      <details class="builder-group" open>
+        <summary data-i18n="builder.groupRegistry">制度与Spec映射</summary>
       <div class="builder-grid">
         <div class="field">
           <label data-i18n="builder.institutionId">institution.id</label>
@@ -1158,6 +1349,14 @@
       <div class="row" style="margin-top:8px;">
         <label class="tool-opt"><input type="checkbox" id="save_set_default" checked><span data-i18n="builder.setDefault">设为默认Spec</span></label>
       </div>
+      <div class="row">
+        <button class="primary" id="saveSpecBtn" data-i18n="builder.save">保存制度+Spec</button>
+        <button class="secondary" id="saveAndBackBtn" data-i18n="builder.saveBack">保存并返回</button>
+      </div>
+      </details>
+
+      <details class="builder-group" open>
+        <summary data-i18n="builder.groupTopology">拓扑编辑</summary>
       <div class="builder-grid">
         <div class="field">
           <label>meta.id</label>
@@ -1205,9 +1404,11 @@
         <button class="secondary" id="addStageBtn" data-i18n="builder.addStage">添加节点</button>
         <button class="secondary" id="builderToYamlBtn">Builder -> YAML</button>
         <button class="secondary" id="yamlToBuilderBtn">YAML -> Builder</button>
-        <button class="primary" id="saveSpecBtn" data-i18n="builder.save">保存制度+Spec</button>
-        <button class="secondary" id="saveAndBackBtn" data-i18n="builder.saveBack">保存并返回</button>
       </div>
+      </details>
+
+      <details class="builder-group">
+        <summary data-i18n="builder.groupInspector">Stage Inspector</summary>
       <div class="inspector">
         <h3 data-i18n="builder.inspectorTitle">Stage Inspector</h3>
         <div class="inspector-grid">
@@ -1252,6 +1453,7 @@
           仅当节点类型为 <code>consensus</code> 或 <code>cluster</code> 时会写入对应高级配置。其余类型会忽略这些字段。
         </div>
       </div>
+      </details>
     </section>
 
     <section class="card" id="yaml" data-tab-group="builder">
@@ -1272,9 +1474,18 @@
       <div class="row" style="margin-top:8px;">
         <span class="chip" id="focusStageChip">focus: all</span>
         <button class="secondary" id="clearFocusBtn" data-i18n="monitor.clearFocus">清除Stage聚焦</button>
+        <label class="tool-opt"><input type="checkbox" id="topoSimplifyToggle" checked><span data-i18n="monitor.topoSimplify">简洁连线</span></label>
+        <label class="tool-opt"><input type="checkbox" id="topoShowLabelsToggle"><span data-i18n="monitor.topoLabels">显示完整标签</span></label>
+        <label class="tool-opt"><input type="checkbox" id="compactMonitorToggle"><span data-i18n="monitor.compact">紧凑视图</span></label>
       </div>
-      <div class="topology-canvas-wrap">
-        <svg id="topoSvg" viewBox="0 0 900 280" preserveAspectRatio="xMidYMin meet"></svg>
+      <div class="topology-main">
+        <div class="topology-canvas-wrap">
+          <svg id="topoSvg" viewBox="0 0 900 280" preserveAspectRatio="xMidYMin meet"></svg>
+        </div>
+        <div class="detail-panel topo-edge-panel">
+          <div class="title" data-i18n="monitor.edgeDetailTitle">Edge Detail</div>
+          <pre id="topoEdgeDetail">点击一条简洁连线查看关系详情</pre>
+        </div>
       </div>
       <div id="topoStages" class="stages"></div>
       <div id="topoEdges" class="edges"></div>
@@ -1388,6 +1599,9 @@
         "builder.institutionDescEn": "institution.description_en",
         "builder.specDesc": "spec.description",
         "builder.specDescEn": "spec.description_en",
+        "builder.groupRegistry": "制度与Spec映射",
+        "builder.groupTopology": "拓扑编辑",
+        "builder.groupInspector": "Stage Inspector",
         "builder.setDefault": "设为默认Spec",
         "builder.addStage": "添加节点",
         "builder.inspectorTitle": "Stage Inspector",
@@ -1403,6 +1617,12 @@
         "monitor.traceDetailTitle": "Trace Detail",
         "monitor.eventSubtitle": "实时SSE",
         "monitor.eventDetailTitle": "Event Detail",
+        "monitor.edgeDetailTitle": "连线详情",
+        "monitor.edgeDecisions": "决策",
+        "monitor.edgeCount": "关系数",
+        "monitor.topoSimplify": "简洁连线",
+        "monitor.topoLabels": "显示完整标签",
+        "monitor.compact": "紧凑视图",
         "monitor.autoScroll": "自动滚动",
         "monitor.clearView": "清空视图",
         "msg.idle": "idle",
@@ -1417,6 +1637,8 @@
         "msg.saved": "已保存",
         "msg.clickEvent": "点击一条事件查看详情",
         "msg.clickTrace": "点击一条 agent trace 查看详情",
+        "msg.clickEdge": "点击一条简洁连线查看关系详情",
+        "msg.edgeDisabled": "当前关闭了简洁连线，只有开启后才能点击线查看关系。",
         "msg.saveAndBackHint": "已切换到 Builder，可创建新制度并保存后返回",
         "ph.taskId": "TASK-xxxxxx",
         "ph.saveInstitutionId": "qinhan_junxian",
@@ -1473,6 +1695,9 @@
         "builder.institutionDescEn": "institution.description_en",
         "builder.specDesc": "spec.description",
         "builder.specDescEn": "spec.description_en",
+        "builder.groupRegistry": "Institution + Spec Registry",
+        "builder.groupTopology": "Topology Editor",
+        "builder.groupInspector": "Stage Inspector",
         "builder.setDefault": "Set as default spec",
         "builder.addStage": "Add Stage",
         "builder.inspectorTitle": "Stage Inspector",
@@ -1488,6 +1713,12 @@
         "monitor.traceDetailTitle": "Trace Detail",
         "monitor.eventSubtitle": "Live SSE",
         "monitor.eventDetailTitle": "Event Detail",
+        "monitor.edgeDetailTitle": "Edge Detail",
+        "monitor.edgeDecisions": "Decisions",
+        "monitor.edgeCount": "Relation Count",
+        "monitor.topoSimplify": "Simplify Edges",
+        "monitor.topoLabels": "Show Full Labels",
+        "monitor.compact": "Compact Density",
         "monitor.autoScroll": "Auto Scroll",
         "monitor.clearView": "Clear View",
         "msg.idle": "idle",
@@ -1502,6 +1733,8 @@
         "msg.saved": "Saved",
         "msg.clickEvent": "Click an event to view details",
         "msg.clickTrace": "Click an agent trace to view details",
+        "msg.clickEdge": "Click a simplified edge to inspect relations",
+        "msg.edgeDisabled": "Enable Simplify Edges to click lines and inspect relations.",
         "msg.saveAndBackHint": "Switched to Builder. Create a new institution and save, then return.",
         "ph.taskId": "TASK-xxxxxx",
         "ph.saveInstitutionId": "qinhan_junxian",
@@ -1538,6 +1771,11 @@
       selectedEventSeq: 0,
       selectedTraceSeq: 0,
       autoScrollEvents: true,
+      topoSimplify: true,
+      topoShowAllLabels: false,
+      topoEdgeDetails: [],
+      selectedTopoEdgeKey: "",
+      compactMonitor: false,
       status: "idle",
       events: [],
       traces: [],
@@ -1585,6 +1823,7 @@
       renderRuntimeStats();
       renderInstitutionMeta();
       renderValidateHint();
+      renderTopologyEdgeDetail();
       const selectedEvent = state.events.find(
         (x) => Number(x.stream_seq || 0) === Number(state.selectedEventSeq || 0)
       );
@@ -1624,6 +1863,47 @@
       try {
         localStorage.setItem("mas_dashboard_theme", state.theme);
       } catch (_) {}
+    }
+
+    function applyCompactMonitor(enabled) {
+      const compact = !!enabled;
+      state.compactMonitor = compact;
+      const body = document.body;
+      if (body) body.classList.toggle("compact-monitor", compact);
+      const toggle = el("compactMonitorToggle");
+      if (toggle) toggle.checked = compact;
+    }
+
+    function switchCompactMonitor(enabled) {
+      applyCompactMonitor(enabled);
+      try {
+        localStorage.setItem("mas_dashboard_compact_monitor", state.compactMonitor ? "1" : "0");
+      } catch (_) {}
+    }
+
+    function applyTopologyDisplayOptions(opts = {}) {
+      if (Object.prototype.hasOwnProperty.call(opts, "simplify")) {
+        state.topoSimplify = !!opts.simplify;
+      }
+      if (Object.prototype.hasOwnProperty.call(opts, "showAllLabels")) {
+        state.topoShowAllLabels = !!opts.showAllLabels;
+      }
+      const simplifyToggle = el("topoSimplifyToggle");
+      if (simplifyToggle) simplifyToggle.checked = !!state.topoSimplify;
+      const labelsToggle = el("topoShowLabelsToggle");
+      if (labelsToggle) labelsToggle.checked = !!state.topoShowAllLabels;
+    }
+
+    function switchTopologyDisplayOptions(opts = {}) {
+      applyTopologyDisplayOptions(opts);
+      if (!state.topoSimplify) {
+        state.selectedTopoEdgeKey = "";
+      }
+      try {
+        localStorage.setItem("mas_dashboard_topo_simplify", state.topoSimplify ? "1" : "0");
+        localStorage.setItem("mas_dashboard_topo_labels", state.topoShowAllLabels ? "1" : "0");
+      } catch (_) {}
+      renderTopology();
     }
 
     function switchTab(tabName) {
@@ -1994,9 +2274,83 @@
       });
     }
 
+    function topoEdgeKey(from, to) {
+      return `${String(from || "").trim()}=>${String(to || "").trim()}`;
+    }
+
+    function renderTopologyEdgeDetail() {
+      const box = el("topoEdgeDetail");
+      if (!box) return;
+      if (!state.topoSimplify) {
+        box.textContent = t("msg.edgeDisabled", "Enable Simplify Edges to click lines and inspect relations.");
+        return;
+      }
+      const all = Array.isArray(state.topoEdgeDetails) ? state.topoEdgeDetails : [];
+      if (!all.length) {
+        box.textContent = t("msg.clickEdge", "Click a simplified edge to inspect relations");
+        return;
+      }
+      const key = String(state.selectedTopoEdgeKey || "");
+      if (!key) {
+        box.textContent = t("msg.clickEdge", "Click a simplified edge to inspect relations");
+        return;
+      }
+      const edge = all.find((x) => String(x.key || "") === key);
+      if (!edge) {
+        box.textContent = t("msg.clickEdge", "Click a simplified edge to inspect relations");
+        return;
+      }
+      const decisions = Array.isArray(edge.decisions) ? edge.decisions : [];
+      const decisionText = decisions.length ? decisions.join(", ") : "next";
+      const relation = `${edge.from} -> ${edge.to} (${decisionText})`;
+      box.textContent =
+        `${edge.from} -> ${edge.to}\n` +
+        `${t("monitor.edgeDecisions", "Decisions")}: ${decisionText}\n` +
+        `${t("monitor.edgeCount", "Relation Count")}: ${Number(edge.count || decisions.length || 1)}\n\n` +
+        relation;
+    }
+
+    function summarizeTopologyEdges(edges) {
+      const list = Array.isArray(edges) ? edges : [];
+      const normalized = list
+        .map((e, idx) => ({
+          from: String((e && e.from) || "").trim(),
+          to: String((e && e.to) || "").trim(),
+          decision: String((e && e.decision) || "next").trim() || "next",
+          __idx: idx,
+        }))
+        .filter((e) => e.from && e.to);
+      if (!state.topoSimplify) {
+        return normalized
+          .sort((a, b) => a.__idx - b.__idx)
+          .map((e) => `${e.from} --${e.decision}--> ${e.to}`);
+      }
+      const buckets = {};
+      normalized.forEach((e) => {
+        const key = `${e.from}=>${e.to}`;
+        if (!buckets[key]) buckets[key] = [];
+        buckets[key].push(e);
+      });
+      return Object.values(buckets)
+        .sort((a, b) => (a[0].__idx || 0) - (b[0].__idx || 0))
+        .map((bucket) => {
+          const first = bucket[0];
+          const uniq = Array.from(new Set(bucket.map((x) => x.decision)));
+          const label = state.topoShowAllLabels
+            ? (uniq.length <= 3 ? uniq.join(" | ") : `${uniq.slice(0, 2).join(" | ")} +${uniq.length - 2}`)
+            : (uniq.length > 1 ? `×${uniq.length}` : uniq[0]);
+          return `${first.from} --${label}--> ${first.to}`;
+        });
+    }
+
     function renderTopology() {
       const top = state.topology;
-      if (!top) return;
+      if (!top) {
+        state.topoEdgeDetails = [];
+        state.selectedTopoEdgeKey = "";
+        renderTopologyEdgeDetail();
+        return;
+      }
       const meta = top.meta || {};
       el("topologyMeta").textContent = `${meta.id || "-"} · ${meta.pattern || "-"} · entry=${top.entry_stage || "-"}`;
 
@@ -2013,8 +2367,9 @@
         d.addEventListener("click", () => setFocusStage(n.id || ""));
         stages.appendChild(d);
       });
-      const lines = (top.edges || []).map((e) => `${e.from} --${e.decision || "next"}--> ${e.to}`);
+      const lines = summarizeTopologyEdges(top.edges || []);
       el("topoEdges").innerHTML = lines.map((x) => `<div>${esc(x)}</div>`).join("");
+      renderTopologyEdgeDetail();
     }
 
     function renderTopologySvg(top) {
@@ -2023,7 +2378,11 @@
       const nodes = Array.isArray(top.nodes) ? top.nodes : [];
       const edges = Array.isArray(top.edges) ? top.edges : [];
       if (!nodes.length) {
+        state.topoEdgeDetails = [];
+        state.selectedTopoEdgeKey = "";
         svg.setAttribute("viewBox", "0 0 900 180");
+        svg.setAttribute("width", "900");
+        svg.setAttribute("height", "180");
         return;
       }
 
@@ -2050,20 +2409,25 @@
         .sort((a, b) => a - b)
         .map((k) => layers[k]);
 
-      const nodeW = 170;
-      const nodeH = 56;
-      const colGap = 74;
-      const rowGap = 34;
-      const marginX = 34;
-      const marginY = 24;
+      const monitorWide = state.activeTab === "monitor";
+      const nodeW = monitorWide ? 186 : 170;
+      const nodeH = monitorWide ? 62 : 56;
+      const colGap = monitorWide ? 150 : 74;
+      const rowGap = monitorWide ? 56 : 34;
+      const marginX = monitorWide ? 36 : 34;
+      const marginY = monitorWide ? 36 : 24;
 
       let maxRows = 1;
       for (const layer of orderedLayers) {
         maxRows = Math.max(maxRows, layer.length);
       }
-      const width = Math.max(900, marginX * 2 + orderedLayers.length * nodeW + Math.max(0, orderedLayers.length - 1) * colGap);
-      const height = Math.max(280, marginY * 2 + maxRows * nodeH + Math.max(0, maxRows - 1) * rowGap);
+      const minWidth = monitorWide ? 1320 : 900;
+      const width = Math.max(minWidth, marginX * 2 + orderedLayers.length * nodeW + Math.max(0, orderedLayers.length - 1) * colGap);
+      const minHeight = monitorWide ? 480 : 280;
+      const height = Math.max(minHeight, marginY * 2 + maxRows * nodeH + Math.max(0, maxRows - 1) * rowGap);
       svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+      svg.setAttribute("width", String(width));
+      svg.setAttribute("height", String(height));
 
       const pos = {};
       orderedLayers.forEach((layer, cIdx) => {
@@ -2077,31 +2441,240 @@
         });
       });
 
-      edges.forEach((edge) => {
+      const normalizedEdges = edges
+        .map((edge, idx) => {
+          const from = String((edge && edge.from) || "").trim();
+          const to = String((edge && edge.to) || "").trim();
+          const decision = String((edge && edge.decision) || "next").trim() || "next";
+          return {
+            from,
+            to,
+            decisions: [decision],
+            __edgeIndex: idx,
+            __edgeKey: topoEdgeKey(from, to),
+          };
+        })
+        .filter((e) => e.from && e.to);
+
+      const pairBuckets = {};
+      normalizedEdges.forEach((edge) => {
+        const key = topoEdgeKey(edge.from, edge.to);
+        if (!pairBuckets[key]) pairBuckets[key] = [];
+        pairBuckets[key].push(edge);
+      });
+
+      let edgeDrawList = [];
+      if (state.topoSimplify) {
+        edgeDrawList = Object.values(pairBuckets).map((bucket) => {
+          const first = bucket[0];
+          const minIdx = Math.min(...bucket.map((x) => x.__edgeIndex || 0));
+          const decisions = Array.from(
+            new Set(
+              bucket
+                .flatMap((x) => Array.isArray(x.decisions) ? x.decisions : [])
+                .map((x) => String(x || "").trim())
+                .filter(Boolean)
+            )
+          );
+          return {
+            from: first.from,
+            to: first.to,
+            decisions: decisions.length ? decisions : ["next"],
+            __edgeIndex: minIdx,
+            __edgeKey: topoEdgeKey(first.from, first.to),
+          };
+        });
+      } else {
+        edgeDrawList = normalizedEdges.map((edge, idx) => ({
+          ...edge,
+          __edgeKey: `${edge.__edgeKey}#${idx}`,
+        }));
+      }
+
+      if (state.topoSimplify) {
+        state.topoEdgeDetails = edgeDrawList
+          .slice()
+          .sort((a, b) => (a.__edgeIndex || 0) - (b.__edgeIndex || 0))
+          .map((edge) => ({
+            key: String(edge.__edgeKey || ""),
+            from: String(edge.from || ""),
+            to: String(edge.to || ""),
+            decisions: Array.isArray(edge.decisions) ? edge.decisions.slice() : [],
+            count: Array.isArray(edge.decisions) ? edge.decisions.length : 1,
+          }));
+        const valid = new Set(state.topoEdgeDetails.map((x) => String(x.key || "")));
+        if (state.selectedTopoEdgeKey && !valid.has(String(state.selectedTopoEdgeKey || ""))) {
+          state.selectedTopoEdgeKey = "";
+        }
+      } else {
+        state.topoEdgeDetails = [];
+        state.selectedTopoEdgeKey = "";
+      }
+      const selectedEdgeKey = state.topoSimplify ? String(state.selectedTopoEdgeKey || "") : "";
+      const selectedEdgeInfo = state.topoEdgeDetails.find((x) => String(x.key || "") === selectedEdgeKey) || null;
+
+      const drawPairBuckets = {};
+      edgeDrawList.forEach((edge, idx) => {
+        const key = topoEdgeKey(edge.from, edge.to);
+        if (!drawPairBuckets[key]) drawPairBuckets[key] = [];
+        drawPairBuckets[key].push({ ...edge, __drawIdx: idx });
+      });
+      edgeDrawList = [];
+      Object.values(drawPairBuckets).forEach((bucket) => {
+        const total = bucket.length;
+        bucket.forEach((edge, idx) => {
+          edgeDrawList.push({
+            ...edge,
+            __pairOffset: idx - (total - 1) / 2,
+          });
+        });
+      });
+      edgeDrawList.sort((a, b) => (a.__edgeIndex || 0) - (b.__edgeIndex || 0));
+
+      const outgoing = {};
+      const incoming = {};
+      edgeDrawList.forEach((edge) => {
+        if (!outgoing[edge.from]) outgoing[edge.from] = [];
+        if (!incoming[edge.to]) incoming[edge.to] = [];
+        outgoing[edge.from].push(edge);
+        incoming[edge.to].push(edge);
+      });
+      Object.values(outgoing).forEach((bucket) => {
+        bucket.sort((a, b) => ((pos[a.to] && pos[a.to].y) || 0) - ((pos[b.to] && pos[b.to].y) || 0));
+        const total = bucket.length;
+        bucket.forEach((edge, idx) => {
+          edge.__outOffset = idx - (total - 1) / 2;
+        });
+      });
+      Object.values(incoming).forEach((bucket) => {
+        bucket.sort((a, b) => ((pos[a.from] && pos[a.from].y) || 0) - ((pos[b.from] && pos[b.from].y) || 0));
+        const total = bucket.length;
+        bucket.forEach((edge, idx) => {
+          edge.__inOffset = idx - (total - 1) / 2;
+        });
+      });
+
+      const labelSlots = [];
+      function reserveLabelY(x, baseY) {
+        const minDx = 40;
+        const minDy = 13;
+        const step = 12;
+        let y = baseY;
+        let tries = 0;
+        while (
+          tries < 12 &&
+          labelSlots.some((p) => Math.abs(p.x - x) < minDx && Math.abs(p.y - y) < minDy)
+        ) {
+          const direction = tries % 2 === 0 ? -1 : 1;
+          const magnitude = Math.floor(tries / 2) + 1;
+          y = baseY + direction * magnitude * step;
+          tries += 1;
+        }
+        labelSlots.push({ x, y });
+        return y;
+      }
+
+      function labelForEdge(edge, relatedFocus) {
+        const raw = Array.isArray(edge.decisions) ? edge.decisions : ["next"];
+        const decisions = Array.from(new Set(raw.map((x) => String(x || "").trim()).filter(Boolean)));
+        const safe = decisions.length ? decisions : ["next"];
+        if (state.topoShowAllLabels) {
+          if (safe.length <= 3) return safe.join(" | ");
+          return `${safe.slice(0, 2).join(" | ")} +${safe.length - 2}`;
+        }
+        if (state.topoSimplify) {
+          if (safe.length > 1) return `×${safe.length}`;
+          return relatedFocus ? safe[0] : "";
+        }
+        return relatedFocus ? safe[0] : "";
+      }
+
+      if (state.topoSimplify) {
+        svg.addEventListener("click", (evt) => {
+          const target = evt.target;
+          const hasClosest = target && typeof target.closest === "function";
+          if (hasClosest && (target.closest(".topo-edge-hit") || target.closest(".topo-node-group"))) {
+            return;
+          }
+          if (state.selectedTopoEdgeKey) {
+            state.selectedTopoEdgeKey = "";
+            renderTopology();
+          }
+        });
+      }
+
+      edgeDrawList.forEach((edge) => {
         const a = pos[edge.from];
         const b = pos[edge.to];
         if (!a || !b) return;
-        const sx = a.x + nodeW;
-        const sy = a.y + nodeH / 2;
-        const tx = b.x;
-        const ty = b.y + nodeH / 2;
-        const c1x = sx + 28;
-        const c2x = tx - 28;
 
+        const sx = a.x + nodeW;
+        const sy = a.y + nodeH / 2 + Number(edge.__outOffset || 0) * 6;
+        const tx = b.x;
+        const ty = b.y + nodeH / 2 + Number(edge.__inOffset || 0) * 6;
+        const pairOffset = Number(edge.__pairOffset || 0);
+        const backEdge = tx <= sx + 2;
+        const focusStage = String(state.focusStage || "").trim();
+        const relatedFocus = !focusStage || edge.from === focusStage || edge.to === focusStage;
+        const edgeIsSelected = !!(state.topoSimplify && selectedEdgeKey && String(edge.__edgeKey || "") === selectedEdgeKey);
+
+        let c1x;
+        let c1y;
+        let c2x;
+        let c2y;
+        let labelY;
+        const labelX = (sx + tx) / 2;
+
+        if (backEdge) {
+          const lift = 44 + Math.abs(pairOffset) * 16;
+          const sway = pairOffset * 12 + (Number(edge.__outOffset || 0) - Number(edge.__inOffset || 0)) * 5;
+          c1x = sx + 42;
+          c1y = sy - lift + sway;
+          c2x = tx - 42;
+          c2y = ty - lift + sway;
+          labelY = Math.min(c1y, c2y) - 8;
+        } else {
+          const fanY = pairOffset * 14 + (Number(edge.__outOffset || 0) - Number(edge.__inOffset || 0)) * 5;
+          const fanX = pairOffset * 9;
+          c1x = sx + 28 + Math.max(0, fanX);
+          c1y = sy + fanY;
+          c2x = tx - 28 + Math.min(0, fanX);
+          c2y = ty + fanY;
+          labelY = (sy + ty) / 2 - 6 + fanY;
+        }
+
+        const dAttr = `M ${sx} ${sy} C ${c1x} ${c1y}, ${c2x} ${c2y}, ${tx} ${ty}`;
         const path = document.createElementNS(ns, "path");
-        path.setAttribute("d", `M ${sx} ${sy} C ${c1x} ${sy}, ${c2x} ${ty}, ${tx} ${ty}`);
-        path.setAttribute("class", "topo-edge");
+        path.setAttribute("d", dAttr);
+        path.setAttribute(
+          "class",
+          `topo-edge${focusStage && !relatedFocus ? " dim" : ""}${focusStage && relatedFocus ? " focus" : ""}${edgeIsSelected ? " selected" : ""}`
+        );
         path.setAttribute("marker-end", "url(#arrow)");
         svg.appendChild(path);
 
-        const lx = (sx + tx) / 2;
-        const ly = (sy + ty) / 2 - 6;
+        if (state.topoSimplify) {
+          const hit = document.createElementNS(ns, "path");
+          hit.setAttribute("d", dAttr);
+          hit.setAttribute("class", "topo-edge-hit");
+          hit.addEventListener("click", (evt) => {
+            evt.stopPropagation();
+            const key = String(edge.__edgeKey || "");
+            state.selectedTopoEdgeKey = state.selectedTopoEdgeKey === key ? "" : key;
+            renderTopology();
+          });
+          svg.appendChild(hit);
+        }
+
+        const text = labelForEdge(edge, relatedFocus);
+        if (!text) return;
+        const ly = reserveLabelY(labelX, labelY);
         const label = document.createElementNS(ns, "text");
-        label.setAttribute("x", String(lx));
+        label.setAttribute("x", String(labelX));
         label.setAttribute("y", String(ly));
         label.setAttribute("text-anchor", "middle");
-        label.setAttribute("class", "topo-label");
-        label.textContent = String(edge.decision || "next");
+        label.setAttribute("class", `topo-label${focusStage && !relatedFocus ? " dim" : ""}${edgeIsSelected ? " selected" : ""}`);
+        label.textContent = text;
         svg.appendChild(label);
       });
 
@@ -2120,7 +2693,11 @@
         rect.setAttribute("width", String(nodeW));
         rect.setAttribute("height", String(nodeH));
         const focused = state.focusStage && state.focusStage === node.id ? " focused" : "";
-        rect.setAttribute("class", "topo-node" + (state.currentStage === node.id ? " active" : "") + focused);
+        const edgeRelated =
+          selectedEdgeInfo && (node.id === selectedEdgeInfo.from || node.id === selectedEdgeInfo.to)
+            ? " edge-related"
+            : "";
+        rect.setAttribute("class", "topo-node" + (state.currentStage === node.id ? " active" : "") + focused + edgeRelated);
         group.appendChild(rect);
 
         const title = document.createElementNS(ns, "text");
@@ -2434,6 +3011,8 @@
       state.topology = spec.topology || null;
       state.currentStage = state.topology && state.topology.entry_stage || "";
       state.focusStage = "";
+      state.topoEdgeDetails = [];
+      state.selectedTopoEdgeKey = "";
       state.selectedEventSeq = 0;
       state.selectedTraceSeq = 0;
       renderFocusStageChip();
@@ -2923,6 +3502,8 @@
       state.selectedEventSeq = 0;
       state.selectedTraceSeq = 0;
       state.focusStage = "";
+      state.topoEdgeDetails = [];
+      state.selectedTopoEdgeKey = "";
       renderFocusStageChip();
       renderEvents();
       renderTraces();
@@ -2971,10 +3552,27 @@
         if (savedTheme) {
           state.theme = savedTheme;
         }
+        const savedCompact = localStorage.getItem("mas_dashboard_compact_monitor");
+        if (savedCompact === "1" || savedCompact === "0") {
+          state.compactMonitor = savedCompact === "1";
+        }
+        const savedTopoSimplify = localStorage.getItem("mas_dashboard_topo_simplify");
+        if (savedTopoSimplify === "1" || savedTopoSimplify === "0") {
+          state.topoSimplify = savedTopoSimplify === "1";
+        }
+        const savedTopoLabels = localStorage.getItem("mas_dashboard_topo_labels");
+        if (savedTopoLabels === "1" || savedTopoLabels === "0") {
+          state.topoShowAllLabels = savedTopoLabels === "1";
+        }
       } catch (_) {}
 
       bindBuilderInputs();
       applyTheme(state.theme || "atelier");
+      applyCompactMonitor(state.compactMonitor);
+      applyTopologyDisplayOptions({
+        simplify: state.topoSimplify,
+        showAllLabels: state.topoShowAllLabels,
+      });
       applyI18nText();
       switchTab("run");
       await loadInstitutions();
@@ -3083,6 +3681,27 @@
         state.autoScrollEvents = !!autoScroll.checked;
         autoScroll.addEventListener("change", () => {
           state.autoScrollEvents = !!autoScroll.checked;
+        });
+      }
+      const compactToggle = el("compactMonitorToggle");
+      if (compactToggle) {
+        compactToggle.checked = !!state.compactMonitor;
+        compactToggle.addEventListener("change", () => {
+          switchCompactMonitor(compactToggle.checked);
+        });
+      }
+      const topoSimplifyToggle = el("topoSimplifyToggle");
+      if (topoSimplifyToggle) {
+        topoSimplifyToggle.checked = !!state.topoSimplify;
+        topoSimplifyToggle.addEventListener("change", () => {
+          switchTopologyDisplayOptions({ simplify: topoSimplifyToggle.checked });
+        });
+      }
+      const topoShowLabelsToggle = el("topoShowLabelsToggle");
+      if (topoShowLabelsToggle) {
+        topoShowLabelsToggle.checked = !!state.topoShowAllLabels;
+        topoShowLabelsToggle.addEventListener("change", () => {
+          switchTopologyDisplayOptions({ showAllLabels: topoShowLabelsToggle.checked });
         });
       }
       const clearFocusBtn = el("clearFocusBtn");
