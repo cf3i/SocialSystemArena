@@ -24,6 +24,7 @@ stages:
   - id: a
     kind: planner
     agent: x
+    prompt_template: legacy prompt
     transitions:
       - decision: next
         to: done
@@ -45,7 +46,13 @@ stages:
             "entry_stage": "a",
             "agents": {"x": {"runtime_id": "x"}},
             "stages": [
-                {"id": "a", "kind": "planner", "agent": "x", "transitions": [{"decision": "next", "to": "done"}]},
+                {
+                    "id": "a",
+                    "kind": "planner",
+                    "agent": "x",
+                    "prompt_template": "legacy prompt",
+                    "transitions": [{"decision": "next", "to": "done"}],
+                },
                 {"id": "done", "kind": "terminal"},
             ],
         }
@@ -60,4 +67,3 @@ stages:
 
 if __name__ == "__main__":
     unittest.main()
-

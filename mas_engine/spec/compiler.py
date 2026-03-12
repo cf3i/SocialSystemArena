@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import subprocess
 from pathlib import Path
 from typing import Any
@@ -16,10 +17,13 @@ from ..core.types import (
     GovernanceSpec,
     MetaSpec,
     PolicySpec,
+    StageSopSpec,
     StageSpec,
     TransitionSpec,
 )
 from .validators import validate_spec
+
+_LOG = logging.getLogger("mas_engine.compiler")
 
 
 def compile_spec(path: str | Path) -> GovernanceSpec:
@@ -28,13 +32,23 @@ def compile_spec(path: str | Path) -> GovernanceSpec:
         raise SpecError(f"Spec not found: {src}")
     src = src.resolve()
 
+    _LOG.info("compile spec file: %s", src)
     raw = _load_raw_from_path(src)
-    return compile_spec_obj(raw)
+    spec = compile_spec_obj(raw)
+    spec.source_path = str(src)
+    return spec
 
 
 def compile_spec_obj(raw: dict[str, Any]) -> GovernanceSpec:
     spec = _parse_raw(raw)
     validate_spec(spec)
+    _LOG.info(
+        "spec compiled: id=%s pattern=%s stages=%s agents=%s",
+        spec.meta.id,
+        spec.meta.pattern,
+        len(spec.stages),
+        len(spec.agents),
+    )
     return spec
 
 
@@ -100,6 +114,7 @@ def export_ir_json(spec: GovernanceSpec) -> dict[str, Any]:
                 "kind": s.kind,
                 "agent": s.agent,
                 "description": s.description,
+                "soul_file_path": s.soul_file_path,
                 "prompt_template": s.prompt_template,
                 "default_decision": s.default_decision,
                 "transitions": [
@@ -124,6 +139,15 @@ def export_ir_json(spec: GovernanceSpec) -> dict[str, Any]:
                     }
                     for m in s.cluster_members
                 ],
+                "sop": (
+                    {
+                        "required_patterns": s.sop.required_patterns,
+                        "forbidden_patterns": s.sop.forbidden_patterns,
+                        "on_violation": s.sop.on_violation,
+                    }
+                    if s.sop
+                    else None
+                ),
             }
             for s in spec.stages
         ],
@@ -270,16 +294,34 @@ def _parse_raw(raw: dict[str, Any]) -> GovernanceSpec:
                     )
                 )
 
+        sop = None
+        sop_obj = item_obj.get("sop")
+        if sop_obj is not None:
+            s = _as_obj(sop_obj, f"stages[{idx}].sop")
+            required_patterns = s.get("required_patterns", [])
+            forbidden_patterns = s.get("forbidden_patterns", [])
+            if not isinstance(required_patterns, list):
+                raise SpecError(f"stages[{idx}].sop.required_patterns must be list")
+            if not isinstance(forbidden_patterns, list):
+                raise SpecError(f"stages[{idx}].sop.forbidden_patterns must be list")
+            sop = StageSopSpec(
+                required_patterns=[str(x) for x in required_patterns],
+                forbidden_patterns=[str(x) for x in forbidden_patterns],
+                on_violation=str(s.get("on_violation", "error")),
+            )
+
         stages.append(
             StageSpec(
                 id=_require_str(item_obj, "id"),
                 kind=_require_str(item_obj, "kind"),
                 agent=(str(item_obj["agent"]) if "agent" in item_obj else None),
                 description=str(item_obj.get("description", "")),
+                soul_file_path=str(item_obj.get("soul_file_path", "")),
                 prompt_template=str(item_obj.get("prompt_template", "")),
                 transitions=transitions,
                 consensus=consensus,
                 cluster_members=members,
+                sop=sop,
                 default_decision=str(item_obj.get("default_decision", "next")),
             )
         )

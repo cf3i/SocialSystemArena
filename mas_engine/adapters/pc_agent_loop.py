@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import logging
 import queue
 import re
 import sys
@@ -16,6 +17,8 @@ from typing import Any
 
 from ..core.errors import AdapterError
 from ..core.types import AgentResult
+
+_LOG = logging.getLogger("mas_engine.adapter.pc_agent_loop")
 
 
 @dataclass
@@ -45,12 +48,20 @@ class PcAgentLoopAdapter:
         timeout_sec: int = 300,
         retries: int = 1,
     ) -> AgentResult:
+        _LOG.info(
+            "dispatch runtime=%s shared_instance=%s timeout=%s retries=%s",
+            runtime_id,
+            self.shared_instance,
+            timeout_sec,
+            retries,
+        )
         err = ""
         for _ in range(max(1, retries)):
             try:
                 return self._dispatch_once(runtime_id, message, timeout_sec)
             except AdapterError as exc:
                 err = str(exc)
+                _LOG.warning("dispatch retry runtime=%s error=%s", runtime_id, err)
         raise AdapterError(f"pc-agent-loop dispatch failed for {runtime_id}: {err}")
 
     def _dispatch_once(self, runtime_id: str, message: str, timeout_sec: int) -> AgentResult:
@@ -106,6 +117,7 @@ class PcAgentLoopAdapter:
 
             context = self._create_context(runtime_key)
             self._contexts[runtime_key] = context
+            _LOG.info("created runtime context: %s", runtime_key)
             return context
 
     def _create_context(self, runtime_key: str) -> _AgentContext:

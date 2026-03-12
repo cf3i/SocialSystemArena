@@ -29,6 +29,7 @@ class CompilerCueTests(TestCase):
                     "id": "a",
                     "kind": "planner",
                     "agent": "x",
+                    "prompt_template": "legacy prompt",
                     "transitions": [{"decision": "next", "to": "done"}],
                 },
                 {"id": "done", "kind": "terminal"},

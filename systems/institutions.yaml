@@ -9,11 +9,11 @@ institutions:
       - id: athens_yaml
         name: 雅典民主（YAML）
         name_en: Athens Democracy (YAML)
-        path: systems/athens_democracy.yaml
+        path: systems/institutions/athens_democracy/athens_democracy.yaml
       - id: athens_json
         name: 雅典民主（JSON）
         name_en: Athens Democracy (JSON)
-        path: systems/athens_consensus.json
+        path: systems/institutions/athens_democracy/athens_consensus.json
 
   - id: qinhan_junxian
     name: 秦汉郡县
@@ -25,11 +25,11 @@ institutions:
       - id: qinhan_yaml
         name: 秦汉郡县（YAML）
         name_en: Qin-Han Commandery-County (YAML)
-        path: systems/qinhan_junxian.yaml
+        path: systems/institutions/qinhan_junxian/qinhan_junxian.yaml
       - id: qinhan_json
         name: 秦汉郡县（JSON）
         name_en: Qin-Han Commandery-County (JSON)
-        path: systems/qinhan_junxian.json
+        path: systems/institutions/qinhan_junxian/qinhan_junxian.json
 
   - id: tang_sanshengliubu
     name: 唐朝三省六部
@@ -41,11 +41,11 @@ institutions:
       - id: tang_yaml
         name: 唐朝三省六部（YAML）
         name_en: Tang Three Departments and Six Ministries (YAML)
-        path: systems/tang_sanshengliubu.yaml
+        path: systems/institutions/tang_sanshengliubu/tang_sanshengliubu.yaml
       - id: tang_json
         name: 唐朝三省六部（JSON）
         name_en: Tang Three Departments and Six Ministries (JSON)
-        path: systems/tang_sanshengliubu.json
+        path: systems/institutions/tang_sanshengliubu/tang_sanshengliubu.json
 
   - id: mongol_empire
     name: 蒙古帝国
@@ -57,7 +57,7 @@ institutions:
       - id: mongol_yaml
         name: 蒙古帝国（YAML）
         name_en: Mongol Empire (YAML)
-        path: systems/mongol_empire.yaml
+        path: systems/institutions/mongol_empire/mongol_empire.yaml
 
   - id: us_federal
     name: 美国联邦
@@ -69,11 +69,11 @@ institutions:
       - id: us_yaml
         name: 美国联邦（YAML）
         name_en: United States Federal System (YAML)
-        path: systems/us_federal_gated.yaml
+        path: systems/institutions/us_federal/us_federal_gated.yaml
       - id: us_json
         name: 美国联邦（JSON）
         name_en: United States Federal System (JSON)
-        path: systems/us_federal_gated.json
+        path: systems/institutions/us_federal/us_federal_gated.json
 
   - id: soviet_party_state
     name: 苏联党国体制
@@ -85,7 +85,7 @@ institutions:
       - id: soviet_yaml
         name: 苏联党国体制（YAML）
         name_en: Soviet Party-State System (YAML)
-        path: systems/soviet_party_state.yaml
+        path: systems/institutions/soviet_party_state/soviet_party_state.yaml
 
   - id: egypt_pipeline
     name: 古埃及法老制
@@ -97,8 +97,8 @@ institutions:
       - id: egypt_yaml
         name: 古埃及法老制（YAML）
         name_en: Ancient Egyptian Pharaoh System (YAML)
-        path: systems/egypt_pipeline.yaml
+        path: systems/institutions/egypt_pipeline/egypt_pipeline.yaml
       - id: egypt_json
         name: 古埃及法老制（JSON）
         name_en: Ancient Egyptian Pharaoh System (JSON)
-        path: systems/egypt_pipeline.json
+        path: systems/institutions/egypt_pipeline/egypt_pipeline.json

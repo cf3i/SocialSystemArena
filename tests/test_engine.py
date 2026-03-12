@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import tempfile
 import unittest
 from pathlib import Path
@@ -15,23 +16,23 @@ from mas_engine.storage.jsonl import JsonlStore
 
 ROOT = Path(__file__).resolve().parent.parent
 SYSTEMS = ROOT / "systems"
+INSTITUTION_SPECS = SYSTEMS / "institutions"
 
 
 class EngineTests(unittest.TestCase):
     def test_all_sample_specs_compile(self) -> None:
         spec_files = [
-            SYSTEMS / "egypt_pipeline.json",
-            SYSTEMS / "qinhan_junxian.json",
-            SYSTEMS / "tang_sanshengliubu.json",
-            SYSTEMS / "edo_cluster.json",
-            SYSTEMS / "athens_consensus.json",
-            SYSTEMS / "us_federal_gated.json",
-            SYSTEMS / "athens_democracy.yaml",
-            SYSTEMS / "qinhan_junxian.yaml",
-            SYSTEMS / "tang_sanshengliubu.yaml",
-            SYSTEMS / "mongol_empire.yaml",
-            SYSTEMS / "us_federal_gated.yaml",
-            SYSTEMS / "soviet_party_state.yaml",
+            INSTITUTION_SPECS / "egypt_pipeline" / "egypt_pipeline.json",
+            INSTITUTION_SPECS / "qinhan_junxian" / "qinhan_junxian.json",
+            INSTITUTION_SPECS / "tang_sanshengliubu" / "tang_sanshengliubu.json",
+            INSTITUTION_SPECS / "athens_democracy" / "athens_consensus.json",
+            INSTITUTION_SPECS / "us_federal" / "us_federal_gated.json",
+            INSTITUTION_SPECS / "athens_democracy" / "athens_democracy.yaml",
+            INSTITUTION_SPECS / "qinhan_junxian" / "qinhan_junxian.yaml",
+            INSTITUTION_SPECS / "tang_sanshengliubu" / "tang_sanshengliubu.yaml",
+            INSTITUTION_SPECS / "mongol_empire" / "mongol_empire.yaml",
+            INSTITUTION_SPECS / "us_federal" / "us_federal_gated.yaml",
+            INSTITUTION_SPECS / "soviet_party_state" / "soviet_party_state.yaml",
         ]
         for f in spec_files:
             spec = compile_spec(f)
@@ -39,7 +40,9 @@ class EngineTests(unittest.TestCase):
             self.assertTrue(spec.stages)
 
     def test_tang_gated_pipeline_reject_then_approve(self) -> None:
-        spec = compile_spec(SYSTEMS / "tang_sanshengliubu.json")
+        spec = compile_spec(
+            INSTITUTION_SPECS / "tang_sanshengliubu" / "tang_sanshengliubu.json"
+        )
         adapter = MockAdapter(
             scripted_decisions={
                 "taizi": ["work_order"],
@@ -66,7 +69,9 @@ class EngineTests(unittest.TestCase):
         self.assertEqual(decisions[:2], ["reject", "approve"])
 
     def test_consensus_reject_path(self) -> None:
-        spec = compile_spec(SYSTEMS / "athens_consensus.json")
+        spec = compile_spec(
+            INSTITUTION_SPECS / "athens_democracy" / "athens_consensus.json"
+        )
         adapter = MockAdapter(
             scripted_decisions={
                 "boule": ["next"],
@@ -104,6 +109,7 @@ class EngineTests(unittest.TestCase):
                     "id": "a",
                     "kind": "gate",
                     "agent": "x",
+                    "prompt_template": "legacy prompt",
                     "transitions": [{"decision": "next", "to": "b"}],
                 },
                 {"id": "b", "kind": "terminal"},
@@ -116,7 +122,9 @@ class EngineTests(unittest.TestCase):
                 compile_spec(path)
 
     def test_qinhan_pipeline_with_monitor_feature(self) -> None:
-        spec = compile_spec(SYSTEMS / "qinhan_junxian.json")
+        spec = compile_spec(
+            INSTITUTION_SPECS / "qinhan_junxian" / "qinhan_junxian.json"
+        )
         rt = GovernanceRuntime(spec=spec, adapter=MockAdapter())
         state = rt.run(
             task_id="QH-001",
@@ -135,7 +143,9 @@ class EngineTests(unittest.TestCase):
             self.assertEqual(monitor[0].get("stage"), event.stage_id)
 
     def test_prompt_contains_topology_context(self) -> None:
-        spec = compile_spec(SYSTEMS / "tang_sanshengliubu.json")
+        spec = compile_spec(
+            INSTITUTION_SPECS / "tang_sanshengliubu" / "tang_sanshengliubu.json"
+        )
         rt = GovernanceRuntime(spec=spec, adapter=MockAdapter())
         stage = next(s for s in spec.stages if s.id == spec.entry_stage)
         task = TaskState(
@@ -145,12 +155,14 @@ class EngineTests(unittest.TestCase):
             current_stage=spec.entry_stage,
             shared_state={"banned_terms": []},
         )
-        prompt = rt._build_prompt(task, stage)
+        prompt, _meta = rt._build_prompt(task, stage)
         self.assertIn("transitions", prompt)
         self.assertIn("allowed_decisions", prompt)
 
     def test_trace_has_agent_rows_with_sequential_id(self) -> None:
-        spec = compile_spec(SYSTEMS / "egypt_pipeline.json")
+        spec = compile_spec(
+            INSTITUTION_SPECS / "egypt_pipeline" / "egypt_pipeline.json"
+        )
         with tempfile.TemporaryDirectory() as td:
             trace_path = Path(td) / "trace.jsonl"
             rt = GovernanceRuntime(
@@ -183,7 +195,9 @@ class EngineTests(unittest.TestCase):
         )
 
     def test_consensus_trace_contains_each_voter(self) -> None:
-        spec = compile_spec(SYSTEMS / "athens_consensus.json")
+        spec = compile_spec(
+            INSTITUTION_SPECS / "athens_democracy" / "athens_consensus.json"
+        )
         adapter = MockAdapter(
             scripted_decisions={
                 "boule": ["next"],
@@ -218,6 +232,123 @@ class EngineTests(unittest.TestCase):
             [r["agent_trace"]["sequential_id"] for r in agent_rows],
             [1, 2, 3, 4],
         )
+
+    def test_soul_file_path_loaded_and_traced(self) -> None:
+        old_cwd = Path.cwd()
+        os.chdir(ROOT)
+        try:
+            with tempfile.TemporaryDirectory() as td:
+                base = Path(td)
+                (base / "souls").mkdir(parents=True, exist_ok=True)
+                (base / "souls" / "planner.md").write_text(
+                    "你是规划官。任务:{title}",
+                    encoding="utf-8",
+                )
+                spec_path = base / "demo.yaml"
+                spec_path.write_text(
+                    """
+meta:
+  id: soul_demo
+  name: Soul Demo
+  version: "0.1.0"
+  pattern: pipeline
+entry_stage: plan
+agents:
+  planner:
+    runtime_id: planner
+stages:
+  - id: plan
+    kind: planner
+    agent: planner
+    description: 请先给出计划，再执行。
+    soul_file_path: souls/planner.md
+    transitions:
+      - decision: next
+        to: done
+  - id: done
+    kind: terminal
+""",
+                    encoding="utf-8",
+                )
+                spec = compile_spec(spec_path)
+                trace_path = base / "trace.jsonl"
+                rt = GovernanceRuntime(
+                    spec=spec,
+                    adapter=MockAdapter(),
+                    store=JsonlStore(trace_path),
+                )
+                state = rt.run(
+                    task_id="SOUL-001",
+                    title="测试",
+                    input_text="输入",
+                    max_steps=4,
+                )
+                self.assertEqual(state.status, "done")
+                rows = [
+                    json.loads(line)
+                    for line in trace_path.read_text(encoding="utf-8").splitlines()
+                    if line.strip()
+                ]
+                agent_rows = [r for r in rows if r.get("record_type") == "agent_trace"]
+                self.assertEqual(len(agent_rows), 1)
+                meta = agent_rows[0]["agent_trace"]["meta"]
+                self.assertEqual(meta.get("prompt_mode"), "pattern_plus_soul")
+                self.assertTrue(str(meta.get("soul_path", "")).endswith("souls/planner.md"))
+                self.assertIn("pattern_soul_path", meta)
+                self.assertIn("stage_description", meta)
+                sections = meta.get("prompt_sections", [])
+                self.assertIn("Prompt Precedence", sections)
+                self.assertIn("Stage Objective", sections)
+                self.assertIn("Pattern Rules", sections)
+                self.assertIn("Institution SOP", sections)
+        finally:
+            os.chdir(old_cwd)
+
+    def test_sop_violation_causes_error(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            path = Path(td) / "bad_sop.json"
+            path.write_text(
+                json.dumps(
+                    {
+                        "meta": {
+                            "id": "bad_sop",
+                            "name": "Bad SOP",
+                            "version": "0.1.0",
+                            "pattern": "pipeline",
+                        },
+                        "entry_stage": "plan",
+                        "agents": {"planner": {"runtime_id": "planner"}},
+                        "stages": [
+                            {
+                                "id": "plan",
+                                "kind": "planner",
+                                "agent": "planner",
+                                "prompt_template": "普通提示词",
+                                "sop": {
+                                    "required_patterns": ["MUST_CLI_MARKER"],
+                                    "on_violation": "error",
+                                },
+                                "transitions": [{"decision": "next", "to": "done"}],
+                            },
+                            {"id": "done", "kind": "terminal"},
+                        ],
+                    },
+                    ensure_ascii=False,
+                ),
+                encoding="utf-8",
+            )
+            spec = compile_spec(path)
+            rt = GovernanceRuntime(spec=spec, adapter=MockAdapter())
+            state = rt.run(
+                task_id="SOP-001",
+                title="测试",
+                input_text="输入",
+                max_steps=4,
+            )
+            self.assertEqual(state.status, "error")
+            self.assertEqual(state.history[0].decision, "error")
+            sop_check = state.history[0].meta.get("sop_check", {})
+            self.assertFalse(sop_check.get("passed", True))
 
 
 if __name__ == "__main__":

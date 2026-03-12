@@ -3317,6 +3317,9 @@
         stages: stageObjs.map((s) => {
           const o = { id: s.id, kind: s.kind };
           if (s.agent) o.agent = s.agent;
+          if (s.kind !== "terminal") {
+            o.prompt_template = `你是${s.kind}节点。任务:{title}`;
+          }
           if (s.transitions && s.transitions.length) o.transitions = s.transitions;
           if (s.kind === "consensus" && s.consensus && Array.isArray(s.consensus.voters) && s.consensus.voters.length) {
             o.consensus = {

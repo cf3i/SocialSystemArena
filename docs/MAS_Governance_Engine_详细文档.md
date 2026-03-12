@@ -114,7 +114,8 @@
 - `id`
 - `kind`
 - `agent`（`cluster/consensus` 可不填）
-- `prompt_template`
+- `soul_file_path`（推荐，读取外部 `soul.md`）
+- `prompt_template`（兼容旧写法，建议迁移）
 - `default_decision`
 - `transitions`
 
@@ -122,6 +123,7 @@
 
 - `consensus`：仅 `kind=consensus` 使用
 - `cluster_members`：仅 `kind=cluster` 使用
+- `sop`：可选 SOP 校验规则（`required_patterns` / `forbidden_patterns` / `on_violation`）
 
 ### 4.3 `transitions`
 
@@ -138,7 +140,15 @@
 3. 若 decision 为 `next` 且 transitions 只有一条，则自动走该条
 4. 否则标记运行错误
 
-### 4.4 `policy`
+### 4.4 `sop`
+
+用于约束阶段输出必须满足某些规则（例如必须出现某条 CLI 证据）：
+
+- `required_patterns`：必须命中的正则数组
+- `forbidden_patterns`：禁止命中的正则数组
+- `on_violation`：违规处理策略，支持 `error|retry|force_decision`
+
+### 4.5 `policy`
 
 - `banned_terms`：禁词
 - `require_json_decision`：是否强制 agent 返回结构化 decision
@@ -160,7 +170,34 @@
 5. 解析下一跳并记录 `TaskEvent`
 6. 到达 `terminal` 时结束
 
-### 5.1 Consensus 聚合
+### 5.1 Prompt 组装顺序
+
+每个 stage 的 prompt 由以下层次拼接而成（从上到下）：
+
+1. `stage.description`（节点目标）
+2. `systems/pattern_souls/<pattern>/<stage.kind>.md`（pattern 级节点职责，可选）
+3. `stage.soul_file_path`（制度级节点 SOUL）
+
+冲突优先级：
+
+- `Stage Objective > Institution SOP > Pattern Rules`
+
+运行时会把三层内容渲染为固定标签段：
+
+- `[Stage Objective]`
+- `[Pattern Rules]`
+- `[Institution SOP]`
+
+并对 prompt 做两种约束：
+
+- 行级去重（减少重复规则）
+- 长度裁剪（单段与整体上限）
+
+最后统一附加 topology contract（`transitions` / `allowed_decisions` / JSON 输出 schema）。
+
+当 `stage.soul_file_path` 未配置时，才会回退到 `prompt_template`（兼容模式）。
+
+### 5.2 Consensus 聚合
 
 支持算法：
 
@@ -170,7 +207,7 @@
 
 正向票集合：`approve/approved/yes/pass/accepted/success`
 
-### 5.2 Cluster 聚合
+### 5.3 Cluster 聚合
 
 失败判定集合：`error/failed/reject/rejected/veto/cancel/cancelled`
 
@@ -306,15 +343,19 @@ python -m mas_engine.cli run \
 
 ## 8. 现有制度样例
 
-当前 `systems/` 已落地：
+当前 `systems/` 结构：
 
-- `egypt_pipeline.json`
-- `qinhan_junxian.json`
-- `tang_sanshengliubu.json`
-- `us_federal_gated.json`
-- `edo_cluster.json`
-- `athens_consensus.json`
-- `egypt_pipeline.yaml`（YAML 版本示例）
+- `systems/pattern_souls/`：pattern 级通用 SOUL
+- `systems/institutions/<institution_id>/`：制度 spec 与制度 SOUL
+
+已落地制度示例：
+
+- `systems/institutions/egypt_pipeline/egypt_pipeline.json`
+- `systems/institutions/qinhan_junxian/qinhan_junxian.json`
+- `systems/institutions/tang_sanshengliubu/tang_sanshengliubu.json`
+- `systems/institutions/us_federal/us_federal_gated.json`
+- `systems/institutions/athens_democracy/athens_consensus.json`
+- `systems/institutions/egypt_pipeline/egypt_pipeline.yaml`（YAML 版本示例）
 
 说明：
 

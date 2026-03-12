@@ -3,8 +3,11 @@
 from __future__ import annotations
 
 import json
+import logging
+import re
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Callable
 
 from ..adapters.base import AgentAdapter
@@ -16,6 +19,30 @@ from .types import AgentResult, GovernanceSpec, StageSpec, TaskEvent, TaskState
 
 _POSITIVE_DECISIONS = {"approve", "approved", "yes", "pass", "accepted", "success"}
 _FAILURE_DECISIONS = {"error", "failed", "reject", "rejected", "veto", "cancel", "cancelled"}
+_SECTION_MAX_CHARS = 3200
+_PROMPT_BODY_MAX_CHARS = 10000
+_PATTERN_STAGE_ALIAS: dict[str, dict[str, str]] = {
+    "pipeline": {
+        "planner": "plan",
+        "executor": "execute",
+    },
+    "gated_pipeline": {
+        "planner": "draft",
+        "gate": "review",
+        "executor": "execute",
+    },
+    "autonomous_cluster": {
+        "orchestrator": "orchestrate",
+        "cluster": "cluster_exec",
+        "auditor": "audit",
+    },
+    "consensus": {
+        "planner": "propose",
+        "consensus": "vote",
+        "executor": "execute",
+    },
+}
+_LOG = logging.getLogger("mas_engine.runtime")
 
 
 @dataclass
@@ -28,6 +55,27 @@ class GovernanceRuntime:
     def __post_init__(self) -> None:
         self._stage_map = {s.id: s for s in self.spec.stages}
         self._features = FeatureManager.from_specs(self.spec.features)
+        self._soul_cache: dict[str, tuple[float, str]] = {}
+        self._spec_path = (
+            Path(self.spec.source_path).expanduser().resolve()
+            if self.spec.source_path
+            else None
+        )
+        self._spec_dir = str(self._spec_path.parent) if self._spec_path else str(Path.cwd())
+        self._workspace_root = Path.cwd().resolve()
+        if self._spec_path:
+            for parent in [self._spec_path.parent, *self._spec_path.parents]:
+                if parent.name == "systems":
+                    self._workspace_root = parent.parent
+                    break
+        _LOG.info(
+            "runtime initialized: spec=%s entry=%s stages=%s source_dir=%s workspace_root=%s",
+            self.spec.meta.id,
+            self.spec.entry_stage,
+            len(self.spec.stages),
+            self._spec_dir,
+            self._workspace_root,
+        )
 
     def run(
         self,
@@ -52,7 +100,16 @@ class GovernanceRuntime:
 
             if stage.kind == "terminal":
                 task.status = "done"
+                _LOG.info("task=%s reached terminal stage=%s", task.task_id, stage.id)
                 break
+
+            _LOG.info(
+                "task=%s step=%s stage=%s kind=%s",
+                task.task_id,
+                idx,
+                stage.id,
+                stage.kind,
+            )
 
             ctx: dict[str, object] = {
                 "step": idx,
@@ -97,6 +154,15 @@ class GovernanceRuntime:
             if self.store:
                 self.store.append_event(task, event)
 
+            _LOG.info(
+                "task=%s step=%s stage=%s decision=%s next=%s",
+                task.task_id,
+                idx,
+                stage.id,
+                decision,
+                next_stage,
+            )
+
             if task.status == "error":
                 break
 
@@ -130,17 +196,56 @@ class GovernanceRuntime:
             )
 
         agent = self.spec.agents[stage.agent]
-        prompt = self._build_prompt(task, stage)
-        seq = task.next_agent_sequence()
-        try:
-            result = self.adapter.dispatch(
-                runtime_id=agent.runtime_id,
-                message=prompt,
-                timeout_sec=agent.timeout_sec,
-                retries=agent.retries,
-            )
-        except AdapterError as exc:
-            result = AgentResult(decision="error", summary=str(exc), raw_output=str(exc))
+        prompt, prompt_meta = self._build_prompt(task, stage)
+        sop_retry_enabled = bool(stage.sop and stage.sop.on_violation == "retry")
+        max_attempts = 2 if sop_retry_enabled else 1
+        result: AgentResult | None = None
+
+        for attempt in range(1, max_attempts + 1):
+            seq = task.next_agent_sequence()
+            message = prompt
+            if attempt > 1:
+                message = (
+                    f"{prompt}\n\n"
+                    "[SYSTEM] Previous output violated SOP rules. "
+                    "You must strictly follow SOP and return valid JSON."
+                )
+            try:
+                dispatch_result = self.adapter.dispatch(
+                    runtime_id=agent.runtime_id,
+                    message=message,
+                    timeout_sec=agent.timeout_sec,
+                    retries=agent.retries,
+                )
+            except AdapterError as exc:
+                result = AgentResult(
+                    decision="error",
+                    summary=str(exc),
+                    raw_output=str(exc),
+                    meta={**prompt_meta, "attempt": attempt},
+                )
+                self._append_agent_trace(
+                    ctx=ctx,
+                    sequential_id=seq,
+                    agent_id=stage.agent,
+                    runtime_id=agent.runtime_id,
+                    result=result,
+                )
+                _LOG.warning(
+                    "stage=%s agent=%s dispatch failed attempt=%s error=%s",
+                    stage.id,
+                    stage.agent,
+                    attempt,
+                    exc,
+                )
+                return result
+
+            result = dispatch_result
+            result.meta = {**result.meta, **prompt_meta, "attempt": attempt}
+            sop_check = self._evaluate_sop(stage, result)
+            if sop_check:
+                result.meta["sop_check"] = sop_check
+
             self._append_agent_trace(
                 ctx=ctx,
                 sequential_id=seq,
@@ -148,15 +253,49 @@ class GovernanceRuntime:
                 runtime_id=agent.runtime_id,
                 result=result,
             )
-            return result
 
-        self._append_agent_trace(
-            ctx=ctx,
-            sequential_id=seq,
-            agent_id=stage.agent,
-            runtime_id=agent.runtime_id,
-            result=result,
-        )
+            if not sop_check or sop_check.get("passed", True):
+                break
+
+            action = str(sop_check.get("on_violation", "error"))
+            _LOG.warning(
+                "stage=%s agent=%s sop_violation action=%s missing=%s forbidden=%s attempt=%s",
+                stage.id,
+                stage.agent,
+                action,
+                sop_check.get("missing_required", []),
+                sop_check.get("matched_forbidden", []),
+                attempt,
+            )
+            if action == "force_decision":
+                result.decision = stage.default_decision or result.decision or "next"
+                result.summary = (
+                    f"[SOP forced decision={result.decision}] " + (result.summary or "")
+                ).strip()
+                break
+
+            if action == "retry" and attempt < max_attempts:
+                continue
+
+            result = AgentResult(
+                decision="error",
+                summary=(
+                    f"SOP violation in stage '{stage.id}': "
+                    f"missing={sop_check.get('missing_required', [])}, "
+                    f"forbidden={sop_check.get('matched_forbidden', [])}"
+                ),
+                raw_output=result.raw_output,
+                updates=result.updates,
+                meta=result.meta,
+            )
+            break
+
+        if result is None:
+            result = AgentResult(
+                decision="error",
+                summary=f"stage '{stage.id}' execution produced no result",
+            )
+            _LOG.error("stage=%s produced no result", stage.id)
 
         if self.spec.policy.require_json_decision and not result.decision:
             return AgentResult(
@@ -176,7 +315,7 @@ class GovernanceRuntime:
         ctx: dict[str, object],
     ) -> AgentResult:
         assert stage.consensus is not None
-        prompt = self._build_prompt(task, stage)
+        prompt, prompt_meta = self._build_prompt(task, stage)
 
         ballots: dict[str, AgentResult] = {}
         with ThreadPoolExecutor(max_workers=len(stage.consensus.voters) or 1) as ex:
@@ -208,6 +347,22 @@ class GovernanceRuntime:
                         summary=f"voter {voter} failed: {exc}",
                         raw_output=str(exc),
                     )
+                result.meta = {**result.meta, **prompt_meta}
+                sop_check = self._evaluate_sop(stage, result)
+                if sop_check:
+                    result.meta["sop_check"] = sop_check
+                    if not sop_check.get("passed", True):
+                        result = AgentResult(
+                            decision="error",
+                            summary=(
+                                f"voter {voter} failed SOP: "
+                                f"missing={sop_check.get('missing_required', [])}, "
+                                f"forbidden={sop_check.get('matched_forbidden', [])}"
+                            ),
+                            raw_output=result.raw_output,
+                            updates=result.updates,
+                            meta=result.meta,
+                        )
                 ballots[voter] = result
                 self._append_agent_trace(
                     ctx=ctx,
@@ -222,6 +377,7 @@ class GovernanceRuntime:
             f"Consensus {decision}: "
             + "; ".join(f"{k}={v.decision}" for k, v in sorted(ballots.items()))
         )
+        _LOG.info("stage=%s consensus decision=%s", stage.id, decision)
         return AgentResult(
             decision=decision,
             summary=summary,
@@ -268,7 +424,7 @@ class GovernanceRuntime:
         stage: StageSpec,
         ctx: dict[str, object],
     ) -> AgentResult:
-        prompt = self._build_prompt(task, stage)
+        prompt, prompt_meta = self._build_prompt(task, stage)
 
         outputs: dict[str, AgentResult] = {}
         with ThreadPoolExecutor(max_workers=len(stage.cluster_members) or 1) as ex:
@@ -301,6 +457,22 @@ class GovernanceRuntime:
                         summary=f"member {member.agent} failed: {exc}",
                         raw_output=str(exc),
                     )
+                result.meta = {**result.meta, **prompt_meta}
+                sop_check = self._evaluate_sop(stage, result)
+                if sop_check:
+                    result.meta["sop_check"] = sop_check
+                    if not sop_check.get("passed", True):
+                        result = AgentResult(
+                            decision="failed",
+                            summary=(
+                                f"member {member.agent} failed SOP: "
+                                f"missing={sop_check.get('missing_required', [])}, "
+                                f"forbidden={sop_check.get('matched_forbidden', [])}"
+                            ),
+                            raw_output=result.raw_output,
+                            updates=result.updates,
+                            meta=result.meta,
+                        )
                 outputs[member.agent] = result
                 self._append_agent_trace(
                     ctx=ctx,
@@ -324,6 +496,7 @@ class GovernanceRuntime:
             + ": "
             + "; ".join(f"{k}={v.decision}" for k, v in sorted(outputs.items()))
         )
+        _LOG.info("stage=%s cluster decision=%s", stage.id, decision)
         return AgentResult(
             decision=decision,
             summary=summary,
@@ -372,7 +545,7 @@ class GovernanceRuntime:
 
         return None
 
-    def _build_prompt(self, task: TaskState, stage: StageSpec) -> str:
+    def _build_prompt(self, task: TaskState, stage: StageSpec) -> tuple[str, dict[str, object]]:
         transition_view = [{"decision": t.decision, "to": t.to} for t in stage.transitions]
         allowed_decisions = [t.decision for t in stage.transitions if t.decision != "default"]
         if not allowed_decisions and stage.default_decision:
@@ -400,7 +573,7 @@ class GovernanceRuntime:
             "allowed_decisions": json.dumps(allowed_decisions, ensure_ascii=False),
         }
         contract = (
-            "\n\nTopology context:\n"
+            "\n\n[Topology Contract]\n"
             f"- stage: {stage.id} ({stage.kind})\n"
             f"- transitions: {payload['transitions']}\n"
             f"- allowed_decisions: {payload['allowed_decisions']}\n"
@@ -408,24 +581,236 @@ class GovernanceRuntime:
             '{"decision":"...","summary":"...","updates":{}}'
         )
 
-        if stage.prompt_template:
-            try:
-                text = stage.prompt_template.format(**payload)
-            except KeyError as exc:
-                raise RuntimeErrorEngine(
-                    f"Stage '{stage.id}' prompt template missing key: {exc}"
-                )
-            return text + contract
+        prompt_meta: dict[str, object] = {}
+        sections: list[tuple[str, str]] = []
+        seen_lines: set[str] = set()
+        truncated_sections: list[str] = []
 
-        return (
-            "You are a stage worker in a governance engine. "
-            f"Stage={stage.id} ({stage.kind})\n"
-            f"TaskId={task.task_id}\n"
-            f"Title={task.title}\n"
-            f"Input={task.input_text}\n"
-            f"SharedState={payload['shared_state']}\n"
-            f"History={payload['history']}\n"
-            f"Transitions={payload['transitions']}\n"
-            f"AllowedDecisions={payload['allowed_decisions']}"
-            + contract
+        precedence = (
+            "1) [Stage Objective] is mandatory for this turn.\n"
+            "2) If [Institution SOP] conflicts with [Pattern Rules], follow [Institution SOP].\n"
+            "3) [Pattern Rules] defines default behavior constraints.\n"
+            "4) Never violate [Topology Contract] and JSON output schema."
         )
+        sections.append(("Prompt Precedence", precedence))
+
+        if stage.description:
+            desc_text = self._render_with_payload(stage.description, payload)
+            sections.append(("Stage Objective", desc_text))
+            prompt_meta["stage_description"] = desc_text
+
+        pattern_soul_path = self._resolve_pattern_soul_path(stage)
+        if pattern_soul_path:
+            pattern_text = self._read_soul_file(pattern_soul_path)
+            sections.append(("Pattern Rules", self._render_with_payload(pattern_text, payload)))
+            prompt_meta["pattern_soul_path"] = pattern_soul_path
+
+        if stage.soul_file_path:
+            soul_path = self._resolve_soul_path(stage.soul_file_path)
+            soul_text = self._read_soul_file(soul_path)
+            sections.append(("Institution SOP", self._render_with_payload(soul_text, payload)))
+            prompt_meta["soul_path"] = soul_path
+            prompt_meta["prompt_mode"] = (
+                "pattern_plus_soul" if pattern_soul_path else "soul_file_path"
+            )
+        elif stage.prompt_template:
+            text = self._render_with_payload(stage.prompt_template, payload)
+            sections.append(("Legacy Prompt Template", text))
+            prompt_meta["prompt_mode"] = (
+                "pattern_plus_prompt_template_legacy"
+                if pattern_soul_path
+                else "prompt_template_legacy"
+            )
+            _LOG.warning(
+                "stage=%s uses legacy prompt_template; consider migrating to soul_file_path",
+                stage.id,
+            )
+        else:
+            fallback = (
+                "You are a stage worker in a governance engine. "
+                f"Stage={stage.id} ({stage.kind})\n"
+                f"TaskId={task.task_id}\n"
+                f"Title={task.title}\n"
+                f"Input={task.input_text}\n"
+                f"SharedState={payload['shared_state']}\n"
+                f"History={payload['history']}\n"
+                f"Transitions={payload['transitions']}\n"
+                f"AllowedDecisions={payload['allowed_decisions']}"
+            )
+            sections.append(("Runtime Fallback", fallback))
+            prompt_meta["prompt_mode"] = (
+                "pattern_plus_runtime_fallback"
+                if pattern_soul_path
+                else "runtime_fallback"
+            )
+            _LOG.warning("stage=%s has no soul_file_path and no prompt_template", stage.id)
+
+        rendered_sections: list[str] = []
+        section_names: list[str] = []
+        for name, content in sections:
+            deduped = self._dedupe_text_lines(content, seen_lines)
+            clipped, clipped_flag = self._clip_text(deduped, _SECTION_MAX_CHARS)
+            if clipped_flag:
+                truncated_sections.append(name)
+            clean = clipped.strip()
+            if not clean:
+                continue
+            rendered_sections.append(f"[{name}]\n{clean}")
+            section_names.append(name)
+
+        body = "\n\n".join(rendered_sections)
+        body, body_clipped = self._clip_text(body, _PROMPT_BODY_MAX_CHARS)
+        if body_clipped:
+            truncated_sections.append("Prompt Body")
+            body = body + "\n\n[System Note]\nPrompt body truncated for length control."
+
+        prompt_meta["prompt_sections"] = section_names
+        prompt_meta["prompt_truncated_sections"] = truncated_sections
+        return body + contract, prompt_meta
+
+    def _render_with_payload(self, template: str, payload: dict[str, object]) -> str:
+        out = str(template)
+        for key, val in payload.items():
+            out = out.replace(f"{{{key}}}", str(val))
+        return out
+
+    def _dedupe_text_lines(self, text: str, seen: set[str]) -> str:
+        lines = str(text).splitlines()
+        out: list[str] = []
+        blank_pending = False
+        for raw in lines:
+            line = raw.rstrip()
+            key = line.strip()
+            if not key:
+                if out and not blank_pending:
+                    out.append("")
+                    blank_pending = True
+                continue
+            blank_pending = False
+            if key in seen:
+                continue
+            seen.add(key)
+            out.append(line)
+        return "\n".join(out).strip()
+
+    def _clip_text(self, text: str, max_chars: int) -> tuple[str, bool]:
+        src = str(text or "")
+        if len(src) <= max_chars:
+            return src, False
+        clipped = src[: max(0, max_chars - 1)] + "…"
+        return clipped, True
+
+    def _resolve_pattern_soul_path(self, stage: StageSpec) -> str | None:
+        pattern = str(self.spec.meta.pattern or "").strip()
+        if not pattern:
+            return None
+
+        roots = [self._workspace_root]
+        repo_root = Path(__file__).resolve().parents[2]
+        if repo_root not in roots:
+            roots.append(repo_root)
+
+        candidates: list[Path] = []
+        for root in roots:
+            base = root / "systems" / "pattern_souls" / pattern
+            candidates.append(base / f"{stage.kind}.md")
+
+            alias = _PATTERN_STAGE_ALIAS.get(pattern, {}).get(stage.kind)
+            if alias:
+                candidates.append(base / f"{alias}.md")
+
+        for c in candidates:
+            if c.exists() and c.is_file():
+                return str(c.resolve())
+
+        _LOG.debug(
+            "pattern soul not found: pattern=%s stage=%s kind=%s checked=%s",
+            pattern,
+            stage.id,
+            stage.kind,
+            [str(x) for x in candidates],
+        )
+        return None
+
+    def _resolve_soul_path(self, soul_file_path: str) -> str:
+        p = Path(soul_file_path).expanduser()
+        if not p.is_absolute():
+            candidates: list[Path] = []
+            candidates.append((Path(self._spec_dir) / p).resolve())
+            candidates.append((self._workspace_root / p).resolve())
+            candidates.append((Path.cwd() / p).resolve())
+
+            # Inline spec without source_path: try discovering unique match under institutions.
+            if self._spec_path is None:
+                inst_root = self._workspace_root / "systems" / "institutions"
+                if inst_root.exists() and inst_root.is_dir():
+                    hits = []
+                    for d in inst_root.iterdir():
+                        if not d.is_dir():
+                            continue
+                        c = (d / p).resolve()
+                        if c.exists() and c.is_file():
+                            hits.append(c)
+                    if len(hits) == 1:
+                        candidates.insert(0, hits[0])
+
+                    guessed_id = self._guess_institution_id_from_meta()
+                    if guessed_id:
+                        guessed = (inst_root / guessed_id / p).resolve()
+                        candidates.insert(0, guessed)
+
+            seen: set[str] = set()
+            for c in candidates:
+                k = str(c)
+                if k in seen:
+                    continue
+                seen.add(k)
+                if c.exists() and c.is_file():
+                    return str(c)
+            p = candidates[0]
+        else:
+            p = p.resolve()
+        if not p.exists() or not p.is_file():
+            raise RuntimeErrorEngine(f"soul file not found: {p}")
+        return str(p)
+
+    def _guess_institution_id_from_meta(self) -> str:
+        sid = str(self.spec.meta.id or "").strip().lower()
+        for suffix in ("_yaml", "_json", "_cue"):
+            if sid.endswith(suffix):
+                sid = sid[: -len(suffix)]
+                break
+        return sid
+
+    def _read_soul_file(self, resolved_path: str) -> str:
+        p = Path(resolved_path)
+        mtime = p.stat().st_mtime
+        cached = self._soul_cache.get(resolved_path)
+        if cached and cached[0] == mtime:
+            return cached[1]
+        text = p.read_text(encoding="utf-8")
+        self._soul_cache[resolved_path] = (mtime, text)
+        _LOG.info("loaded soul file: %s", resolved_path)
+        return text
+
+    def _evaluate_sop(self, stage: StageSpec, result: AgentResult) -> dict[str, object] | None:
+        if stage.sop is None:
+            return None
+        text = f"{result.raw_output}\n{result.summary}"
+        missing_required: list[str] = []
+        matched_forbidden: list[str] = []
+        for pat in stage.sop.required_patterns:
+            if not re.search(pat, text, flags=re.MULTILINE):
+                missing_required.append(pat)
+        for pat in stage.sop.forbidden_patterns:
+            if re.search(pat, text, flags=re.MULTILINE):
+                matched_forbidden.append(pat)
+        return {
+            "enabled": True,
+            "passed": not missing_required and not matched_forbidden,
+            "required_patterns": stage.sop.required_patterns,
+            "forbidden_patterns": stage.sop.forbidden_patterns,
+            "missing_required": missing_required,
+            "matched_forbidden": matched_forbidden,
+            "on_violation": stage.sop.on_violation,
+        }

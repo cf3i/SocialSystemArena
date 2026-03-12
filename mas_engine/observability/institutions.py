@@ -169,7 +169,11 @@ class InstitutionRegistry:
         if not str(spec_text or "").strip():
             raise ValueError("spec_text is required")
 
-        rel_spec_path = self._normalize_rel_spec_path(spec_path=spec_path, spec_id=sid)
+        rel_spec_path = self._normalize_rel_spec_path(
+            spec_path=spec_path,
+            spec_id=sid,
+            institution_id=iid,
+        )
         abs_spec_path = self._resolve_path(Path(rel_spec_path))
         if not self._is_within(abs_spec_path, self.workspace_root):
             raise ValueError("spec_path must be inside workspace")
@@ -396,10 +400,16 @@ class InstitutionRegistry:
         text = re.sub(r"_+", "_", text).strip("_")
         return text
 
-    def _normalize_rel_spec_path(self, *, spec_path: str | None, spec_id: str) -> str:
+    def _normalize_rel_spec_path(
+        self,
+        *,
+        spec_path: str | None,
+        spec_id: str,
+        institution_id: str,
+    ) -> str:
         path_raw = str(spec_path or "").strip()
         if not path_raw:
-            path_raw = f"systems/{spec_id}.yaml"
+            path_raw = f"systems/institutions/{institution_id}/{spec_id}.yaml"
         path_raw = path_raw.replace("\\", "/")
         p = Path(path_raw)
         if p.is_absolute():

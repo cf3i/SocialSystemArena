@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import tempfile
 import time
 import unittest
@@ -14,12 +15,24 @@ SYSTEMS = ROOT / "systems"
 
 
 class TaskManagerTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self._old_cwd = Path.cwd()
+        os.chdir(ROOT)
+
+    def tearDown(self) -> None:
+        os.chdir(self._old_cwd)
+
     def test_start_run_and_collect_events(self) -> None:
         with tempfile.TemporaryDirectory() as td:
-            manager = TaskRunManager(trace_dir=td)
+            manager = TaskRunManager(
+                trace_dir=td,
+                institutions_path=SYSTEMS / "institutions.yaml",
+            )
             task = manager.start_run(
                 {
-                    "spec": str(SYSTEMS / "egypt_pipeline.json"),
+                    "spec": str(
+                        SYSTEMS / "institutions" / "egypt_pipeline" / "egypt_pipeline.json"
+                    ),
                     "title": "计算",
                     "input": "1*3*5",
                     "adapter": "mock",
@@ -48,7 +61,10 @@ class TaskManagerTests(unittest.TestCase):
 
     def test_start_run_by_institution_id(self) -> None:
         with tempfile.TemporaryDirectory() as td:
-            manager = TaskRunManager(trace_dir=td)
+            manager = TaskRunManager(
+                trace_dir=td,
+                institutions_path=SYSTEMS / "institutions.yaml",
+            )
             task = manager.start_run(
                 {
                     "institution_id": "qinhan_junxian",
@@ -66,11 +82,18 @@ class TaskManagerTests(unittest.TestCase):
             final = manager.get_task(task_id)
             self.assertEqual(final["institution_id"], "qinhan_junxian")
             self.assertEqual(final["status"], "done")
-            self.assertTrue(final["spec_path"].endswith("systems/qinhan_junxian.yaml"))
+            self.assertTrue(
+                final["spec_path"].endswith(
+                    "systems/institutions/qinhan_junxian/qinhan_junxian.yaml"
+                )
+            )
 
     def test_inline_yaml_validate_and_run(self) -> None:
         with tempfile.TemporaryDirectory() as td:
-            manager = TaskRunManager(trace_dir=td)
+            manager = TaskRunManager(
+                trace_dir=td,
+                institutions_path=SYSTEMS / "institutions.yaml",
+            )
             spec = manager.get_spec_text("egypt_yaml")
             spec_text = spec["spec_text"]
 
@@ -100,7 +123,10 @@ class TaskManagerTests(unittest.TestCase):
             self.assertEqual(final["spec_source"], "inline_text")
 
     def test_institutions_registry_api(self) -> None:
-        manager = TaskRunManager(trace_dir="traces")
+        manager = TaskRunManager(
+            trace_dir="traces",
+            institutions_path=SYSTEMS / "institutions.yaml",
+        )
         items = manager.list_institutions()
         ids = {x["institution_id"] for x in items}
         self.assertIn("athens_democracy", ids)
@@ -117,8 +143,18 @@ class TaskManagerTests(unittest.TestCase):
         self.assertIn("topology", spec)
 
     def test_preview_topology(self) -> None:
-        manager = TaskRunManager(trace_dir="traces")
-        topology = manager.preview_topology(str(SYSTEMS / "qinhan_junxian.yaml"))
+        manager = TaskRunManager(
+            trace_dir="traces",
+            institutions_path=SYSTEMS / "institutions.yaml",
+        )
+        topology = manager.preview_topology(
+            str(
+                SYSTEMS
+                / "institutions"
+                / "qinhan_junxian"
+                / "qinhan_junxian.yaml"
+            )
+        )
         self.assertIn("nodes", topology)
         self.assertIn("edges", topology)
         self.assertTrue(topology["entry_stage"])
@@ -139,6 +175,7 @@ stages:
   - id: plan
     kind: planner
     agent: planner
+    prompt_template: legacy prompt
     transitions:
       - decision: next
         to: completed

@@ -19,7 +19,7 @@ stages:
   - id: vizier_planning
     kind: planner
     agent: vizier
-    prompt_template: 你是维齐尔，制定执行计划。任务:{title}
+    soul_file_path: souls/vizier.md
     transitions:
       - decision: next
         to: nomarch_execution
@@ -27,7 +27,7 @@ stages:
   - id: nomarch_execution
     kind: executor
     agent: nomarch
-    prompt_template: 你是地方官执行计划。任务:{title}
+    soul_file_path: souls/nomarch.md
     transitions:
       - decision: next
         to: completed

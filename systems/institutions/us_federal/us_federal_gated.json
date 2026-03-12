@@ -49,6 +49,7 @@
       "id": "agency_execute",
       "kind": "executor",
       "agent": "agency",
+      "prompt_template": "行政机构执行法案并回报，decision=next",
       "transitions": [
         {"decision": "next", "to": "court_audit"}
       ]

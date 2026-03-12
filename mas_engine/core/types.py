@@ -49,15 +49,24 @@ class ClusterMember:
 
 
 @dataclass
+class StageSopSpec:
+    required_patterns: list[str] = field(default_factory=list)
+    forbidden_patterns: list[str] = field(default_factory=list)
+    on_violation: str = "error"  # error | retry | force_decision
+
+
+@dataclass
 class StageSpec:
     id: str
     kind: str
     agent: str | None = None
     description: str = ""
+    soul_file_path: str = ""
     prompt_template: str = ""
     transitions: list[TransitionSpec] = field(default_factory=list)
     consensus: ConsensusConfig | None = None
     cluster_members: list[ClusterMember] = field(default_factory=list)
+    sop: StageSopSpec | None = None
     default_decision: str = "next"
 
 
@@ -102,6 +111,7 @@ class GovernanceSpec:
     stages: list[StageSpec]
     features: list[FeatureSpec] = field(default_factory=list)
     policy: PolicySpec = field(default_factory=PolicySpec)
+    source_path: str = ""
 
 
 @dataclass

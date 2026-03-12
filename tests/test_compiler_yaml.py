@@ -24,6 +24,7 @@ stages:
   - id: a
     kind: planner
     agent: x
+    prompt_template: legacy prompt
     transitions:
       - decision: next
         to: done
@@ -45,4 +46,3 @@ stages:
             path.write_text("- just\n- a\n- list\n", encoding="utf-8")
             with self.assertRaises(SpecError):
                 compile_spec(path)
-

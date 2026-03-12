@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import logging
 import sys
 import uuid
 from pathlib import Path
@@ -20,6 +21,12 @@ from .storage.jsonl import JsonlStore
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="MAS governance engine")
+    parser.add_argument(
+        "--log-level",
+        default="INFO",
+        choices=["DEBUG", "INFO", "WARNING", "ERROR"],
+        help="logging level",
+    )
     sub = parser.add_subparsers(dest="cmd", required=True)
 
     p_compile = sub.add_parser("compile", help="compile CUE/JSON spec into normalized JSON IR")
@@ -94,6 +101,10 @@ def main() -> None:
     )
 
     args = parser.parse_args()
+    logging.basicConfig(
+        level=getattr(logging, str(args.log_level).upper(), logging.INFO),
+        format="%(asctime)s [%(name)s] %(levelname)s %(message)s",
+    )
 
     try:
         if args.cmd == "compile":

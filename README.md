@@ -21,7 +21,8 @@ This repository now contains a **new implementation** (independent from `sample/
 - `mas_engine/dashboard_server.py`: API/SSE server
 - `mas_engine/cli.py`: CLI entry
 - `dsl/`: CUE schema
-- `systems/`: institution specs (JSON/CUE/YAML)
+- `systems/pattern_souls/`: reusable pattern-level SOUL files
+- `systems/institutions/<institution_id>/`: institution specs + institution souls
 - `systems/institutions.yaml`: institution -> spec mapping registry
 - `tests/`: unit tests
 - `third_party/pc-agent-loop`: git submodule backend runtime used by `PcAgentLoopAdapter`
@@ -53,20 +54,20 @@ python -m mas_engine.cli init-spec \
 ### 1) Validate spec
 
 ```bash
-python -m mas_engine.cli validate --spec systems/tang_sanshengliubu.json
+python -m mas_engine.cli validate --spec systems/institutions/tang_sanshengliubu/tang_sanshengliubu.json
 ```
 
 YAML works the same way:
 
 ```bash
-python -m mas_engine.cli validate --spec systems/egypt_pipeline.yaml
+python -m mas_engine.cli validate --spec systems/institutions/egypt_pipeline/egypt_pipeline.yaml
 ```
 
 ### 2) Compile spec to IR
 
 ```bash
 python -m mas_engine.cli compile \
-  --spec systems/tang_sanshengliubu.json \
+  --spec systems/institutions/tang_sanshengliubu/tang_sanshengliubu.json \
   --out build/tang.ir.json
 ```
 
@@ -74,7 +75,7 @@ python -m mas_engine.cli compile \
 
 ```bash
 python -m mas_engine.cli run \
-  --spec systems/tang_sanshengliubu.json \
+  --spec systems/institutions/tang_sanshengliubu/tang_sanshengliubu.json \
   --title "测试任务" \
   --input "请完成一个复杂任务" \
   --adapter mock \
@@ -85,7 +86,7 @@ python -m mas_engine.cli run \
 
 ```bash
 python -m mas_engine.cli run \
-  --spec systems/tang_sanshengliubu.json \
+  --spec systems/institutions/tang_sanshengliubu/tang_sanshengliubu.json \
   --title "真实任务" \
   --input "请执行..." \
   --adapter pc-agent-loop \
@@ -107,7 +108,7 @@ Trace (`--trace-out`) now writes two record types:
 
 ```bash
 python -m mas_engine.cli run \
-  --spec systems/tang_sanshengliubu.json \
+  --spec systems/institutions/tang_sanshengliubu/tang_sanshengliubu.json \
   --title "真实任务" \
   --input "请执行..." \
   --adapter openclaw \
@@ -145,6 +146,14 @@ Dashboard capabilities:
 - Filter/search events and traces in real time
 - Show per-agent trace rows (`sequential_id`, `agent_id`, `decision`, `summary`)
 
+Prompt composition (runtime):
+- `stage.description` (node objective)
+- `systems/pattern_souls/<pattern>/<stage.kind>.md` (pattern-level node rules, optional)
+- `stage.soul_file_path` (institution node soul)
+- precedence: `Stage Objective > Institution SOP > Pattern Rules`
+- rendered with fixed labeled sections (`[Stage Objective] / [Pattern Rules] / [Institution SOP]`)
+- runtime applies line dedup + length clipping to reduce repeated/overlong prompts
+
 Core API endpoints:
 - `POST /api/runs`
 - `GET /api/tasks`
@@ -160,13 +169,12 @@ Core API endpoints:
 
 ## Built-in sample specs
 
-- `systems/egypt_pipeline.json`
-- `systems/qinhan_junxian.json`
-- `systems/tang_sanshengliubu.json`
-- `systems/us_federal_gated.json`
-- `systems/edo_cluster.json`
-- `systems/athens_consensus.json`
-- `systems/egypt_pipeline.yaml` (YAML example)
+- `systems/institutions/egypt_pipeline/egypt_pipeline.json`
+- `systems/institutions/qinhan_junxian/qinhan_junxian.json`
+- `systems/institutions/tang_sanshengliubu/tang_sanshengliubu.json`
+- `systems/institutions/us_federal/us_federal_gated.json`
+- `systems/institutions/athens_democracy/athens_consensus.json`
+- `systems/institutions/egypt_pipeline/egypt_pipeline.yaml` (YAML example)
 
 ## Run tests
 

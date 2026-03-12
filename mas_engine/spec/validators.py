@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from collections import Counter
 
 from ..core.errors import SpecError
@@ -21,12 +22,26 @@ def validate_spec(spec: GovernanceSpec) -> None:
         raise SpecError(f"entry_stage not found: {spec.entry_stage}")
 
     stage_map = {s.id: s for s in spec.stages}
+    runtime_ids = [a.runtime_id for a in spec.agents.values()]
+    runtime_dup = [k for k, v in Counter(runtime_ids).items() if v > 1]
+    if runtime_dup:
+        raise SpecError(
+            "Duplicate runtime_id across agents is not allowed for identity isolation: "
+            + ", ".join(sorted(runtime_dup))
+        )
+
     for s in spec.stages:
         if s.kind not in STAGE_KIND_VALUES:
             raise SpecError(f"Invalid stage kind '{s.kind}' in stage '{s.id}'")
 
         if s.kind != "terminal" and not s.transitions:
             raise SpecError(f"Stage '{s.id}' must declare transitions")
+
+        if s.kind != "terminal" and not s.soul_file_path and not s.prompt_template:
+            raise SpecError(
+                f"Stage '{s.id}' must set soul_file_path "
+                "or prompt_template (legacy fallback)"
+            )
 
         if s.agent is not None and s.agent not in spec.agents:
             raise SpecError(f"Stage '{s.id}' references unknown agent '{s.agent}'")
@@ -36,6 +51,17 @@ def validate_spec(spec: GovernanceSpec) -> None:
                 raise SpecError(
                     f"Stage '{s.id}' transition points to unknown stage '{t.to}'"
                 )
+
+        if s.sop:
+            if s.sop.on_violation not in {"error", "retry", "force_decision"}:
+                raise SpecError(
+                    f"Stage '{s.id}' sop.on_violation must be one of "
+                    "error|retry|force_decision"
+                )
+            for pat in s.sop.required_patterns:
+                _validate_regex(stage_id=s.id, pattern=pat, field="required_patterns")
+            for pat in s.sop.forbidden_patterns:
+                _validate_regex(stage_id=s.id, pattern=pat, field="forbidden_patterns")
 
         if s.kind == "consensus":
             if not s.consensus:
@@ -93,3 +119,12 @@ def _validate_pattern_constraints(spec: GovernanceSpec) -> None:
     if pattern == "consensus":
         if "consensus" not in kinds:
             raise SpecError("consensus pattern requires a consensus stage")
+
+
+def _validate_regex(stage_id: str, pattern: str, field: str) -> None:
+    try:
+        re.compile(pattern)
+    except re.error as exc:
+        raise SpecError(
+            f"Stage '{stage_id}' sop.{field} has invalid regex '{pattern}': {exc}"
+        ) from exc
