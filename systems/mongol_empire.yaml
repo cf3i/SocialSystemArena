@@ -1,0 +1,117 @@
+meta:
+  id: mongol_empire_yaml
+  name: 蒙古帝国札撒与汗国制（YAML）
+  version: "0.1.0"
+  pattern: pipeline
+  description: Pipeline with recursive executor decomposition (万->千->百->十).
+
+entry_stage: khagan_order
+
+agents:
+  khagan:
+    runtime_id: khagan
+    role: initiator
+  imperial_secretariat:
+    runtime_id: imperial_secretariat
+    role: planner
+  tumen_commander:
+    runtime_id: tumen_commander
+    role: executor
+  mingghan_commander:
+    runtime_id: mingghan_commander
+    role: executor
+  jaghun_commander:
+    runtime_id: jaghun_commander
+    role: executor
+  arban_commander:
+    runtime_id: arban_commander
+    role: executor
+
+stages:
+  - id: khagan_order
+    kind: initiator
+    agent: khagan
+    prompt_template: >
+      你是大汗，下达征调令。任务: {title}
+    transitions:
+      - decision: next
+        to: imperial_plan
+      - decision: default
+        to: imperial_plan
+
+  - id: imperial_plan
+    kind: planner
+    agent: imperial_secretariat
+    prompt_template: >
+      你是中枢书记官，制定万户级分配计划并下发。
+    transitions:
+      - decision: next
+        to: tumen_level_execute
+      - decision: default
+        to: tumen_level_execute
+
+  - id: tumen_level_execute
+    kind: executor
+    agent: tumen_commander
+    prompt_template: >
+      你是万户长，分解任务到千户级并反馈。
+    transitions:
+      - decision: next
+        to: mingghan_level_execute
+      - decision: default
+        to: mingghan_level_execute
+
+  - id: mingghan_level_execute
+    kind: executor
+    agent: mingghan_commander
+    prompt_template: >
+      你是千户长，分解任务到百户级并反馈。
+    transitions:
+      - decision: next
+        to: jaghun_level_execute
+      - decision: default
+        to: jaghun_level_execute
+
+  - id: jaghun_level_execute
+    kind: executor
+    agent: jaghun_commander
+    prompt_template: >
+      你是百户长，分解任务到十户级并反馈。
+    transitions:
+      - decision: next
+        to: arban_level_execute
+      - decision: default
+        to: arban_level_execute
+
+  - id: arban_level_execute
+    kind: executor
+    agent: arban_commander
+    prompt_template: >
+      你是十户长，执行并汇报完成情况。
+    transitions:
+      - decision: next
+        to: completed
+      - decision: default
+        to: completed
+
+  - id: completed
+    kind: terminal
+
+features:
+  - name: shared_state
+    enabled: true
+    config: {}
+
+  - name: monitor
+    enabled: true
+    config:
+      label: 逐级递归执行监控
+
+policy:
+  require_json_decision: false
+  max_steps: 32
+
+x_report_feature_catalog:
+  - name: recursive_executor
+    mapped_to: stage_sequence.tumen_to_arban
+    runtime_support: modeled_by_multistage_pipeline

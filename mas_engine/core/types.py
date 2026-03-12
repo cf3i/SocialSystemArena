@@ -134,7 +134,12 @@ class TaskState:
     status: str = "running"
     shared_state: dict[str, Any] = field(default_factory=dict)
     history: list[TaskEvent] = field(default_factory=list)
+    agent_sequence: int = 0
 
     def append_event(self, event: TaskEvent) -> None:
         self.history.append(event)
         self.current_stage = event.next_stage or self.current_stage
+
+    def next_agent_sequence(self) -> int:
+        self.agent_sequence += 1
+        return self.agent_sequence

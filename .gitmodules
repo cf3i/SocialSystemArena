@@ -1,0 +1,7 @@
+[submodule "sample/edict"]
+	path = sample/edict
+	url = https://github.com/cft0808/edict.git
+
+[submodule "third_party/pc-agent-loop"]
+	path = third_party/pc-agent-loop
+	url = https://github.com/lsdefine/pc-agent-loop.git

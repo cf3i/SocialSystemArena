@@ -1,0 +1,317 @@
+# Comprehensive YAML example based on MAS_架构模式报告
+# Goal:
+# - Keep one executable spec in current engine
+# - Cover as many Pattern+Feature semantics as possible in one topology
+# - Use built-in features that runtime supports today
+
+meta:
+  id: yaml_example_comprehensive
+  name: 综合制度示例（Pattern+Feature）
+  version: "0.1.0"
+  pattern: gated_pipeline
+  description: >
+    Composite governance topology in YAML. Main pattern is Gated Pipeline,
+    with embedded Consensus stage, Autonomous Cluster execution, Auditor,
+    Emergency branch, and Symbolic Trigger.
+
+entry_stage: delegated_intake
+
+agents:
+  delegated_user:
+    runtime_id: delegated_user
+    role: initiator
+    instructions: 代表用户做任务分流，只做入口判断
+    timeout_sec: 120
+    retries: 1
+
+  chief_planner:
+    runtime_id: chief_planner
+    role: planner
+    instructions: 负责形成可执行政策草案
+    timeout_sec: 180
+    retries: 1
+
+  senate_gate:
+    runtime_id: senate_gate
+    role: gate
+    instructions: 可审批、打回、否决
+    timeout_sec: 180
+    retries: 1
+
+  citizen_a:
+    runtime_id: citizen_a
+    role: voter
+  citizen_b:
+    runtime_id: citizen_b
+    role: voter
+  citizen_c:
+    runtime_id: citizen_c
+    role: voter
+  citizen_d:
+    runtime_id: citizen_d
+    role: voter
+
+  federation_orchestrator:
+    runtime_id: federation_orchestrator
+    role: orchestrator
+
+  finance_unit:
+    runtime_id: finance_unit
+    role: executor
+  justice_unit:
+    runtime_id: justice_unit
+    role: executor
+  infra_unit:
+    runtime_id: infra_unit
+    role: executor
+  liaison_unit:
+    runtime_id: liaison_unit
+    role: executor
+
+  emergency_gate:
+    runtime_id: emergency_gate
+    role: gate
+  emergency_exec:
+    runtime_id: emergency_exec
+    role: executor
+
+  supreme_court:
+    runtime_id: supreme_court
+    role: auditor
+
+  symbolic_crown:
+    runtime_id: symbolic_crown
+    role: gate
+    instructions: 象征性触发节点，只发放合法性 token
+
+stages:
+  - id: delegated_intake
+    kind: initiator
+    agent: delegated_user
+    prompt_template: >
+      你是委托入口节点（Delegated User）。
+      判断输入是否属于正式治理任务。标题: {title} 输入: {input_text}
+      返回 decision=work_order 或 smalltalk。
+    transitions:
+      - decision: smalltalk
+        to: completed
+      - decision: work_order
+        to: planner_draft
+      - decision: default
+        to: planner_draft
+
+  - id: planner_draft
+    kind: planner
+    agent: chief_planner
+    prompt_template: >
+      你是总规划节点。产出政策草案并提交门控审批。
+      必须返回 submit 或 revise。
+      历史: {history}
+    transitions:
+      - decision: submit
+        to: senate_gate_review
+      - decision: revise
+        to: planner_draft
+      - decision: default
+        to: senate_gate_review
+
+  - id: senate_gate_review
+    kind: gate
+    agent: senate_gate
+    prompt_template: >
+      你是 Gate 节点（参考三省六部/联邦门控）。
+      对草案执行 approve/reject/revise。
+      - approve: 进入公民共识投票
+      - revise: 打回 planner
+      - reject: 直接终止
+    transitions:
+      - decision: approve
+        to: citizens_consensus_vote
+      - decision: revise
+        to: planner_draft
+      - decision: reject
+        to: completed
+      - decision: default
+        to: planner_draft
+
+  - id: citizens_consensus_vote
+    kind: consensus
+    prompt_template: >
+      你是共识层（Consensus Gate 语义）。
+      仅输出 yes/no，系统会聚合为 approve/reject。
+      历史: {history}
+    consensus:
+      voters: [citizen_a, citizen_b, citizen_c, citizen_d]
+      algorithm: weighted
+      threshold: 0.6
+      tie_breaker: reject
+      weights:
+        citizen_a: 1.0
+        citizen_b: 1.0
+        citizen_c: 1.0
+        citizen_d: 1.2
+    transitions:
+      - decision: approve
+        to: federation_orchestrate
+      - decision: reject
+        to: planner_draft
+      - decision: default
+        to: planner_draft
+
+  - id: federation_orchestrate
+    kind: orchestrator
+    agent: federation_orchestrator
+    prompt_template: >
+      你是自治集群的编排节点，负责分解任务并下发给多个自治执行单元。
+      返回 decision=dispatch。
+    transitions:
+      - decision: dispatch
+        to: autonomous_cluster_exec
+      - decision: default
+        to: autonomous_cluster_exec
+
+  - id: autonomous_cluster_exec
+    kind: cluster
+    prompt_template: >
+      你是自治子系统执行层。
+      各成员根据 role 执行子任务并返回 success/failed。
+    cluster_members:
+      - agent: finance_unit
+        role: finance
+        required: true
+      - agent: justice_unit
+        role: legal
+        required: true
+      - agent: infra_unit
+        role: infrastructure
+        required: true
+      - agent: liaison_unit
+        role: liaison
+        required: false
+    transitions:
+      - decision: success
+        to: judicial_audit
+      - decision: failure
+        to: emergency_gate_router
+      - decision: default
+        to: judicial_audit
+
+  - id: emergency_gate_router
+    kind: gate
+    agent: emergency_gate
+    prompt_template: >
+      你是应急门控节点。
+      若风险可控返回 recover（回到 planner 重整）；
+      若需应急执行返回 emergency。
+    transitions:
+      - decision: recover
+        to: planner_draft
+      - decision: emergency
+        to: emergency_execute
+      - decision: default
+        to: emergency_execute
+
+  - id: emergency_execute
+    kind: executor
+    agent: emergency_exec
+    prompt_template: >
+      你是应急执行节点。完成止损后返回 stabilized 或 failed。
+    transitions:
+      - decision: stabilized
+        to: judicial_audit
+      - decision: failed
+        to: completed
+      - decision: default
+        to: judicial_audit
+
+  - id: judicial_audit
+    kind: auditor
+    agent: supreme_court
+    prompt_template: >
+      你是后置审计节点（Auditor）。
+      approve=合规通过；invalidate=判定无效并回退重整。
+    transitions:
+      - decision: approve
+        to: symbolic_trigger
+      - decision: invalidate
+        to: planner_draft
+      - decision: default
+        to: symbolic_trigger
+
+  - id: symbolic_trigger
+    kind: gate
+    agent: symbolic_crown
+    prompt_template: >
+      你是象征性触发节点（Symbolic Trigger）。
+      不做实质审查，只签发 token。返回 token_ok。
+    transitions:
+      - decision: token_ok
+        to: completed
+      - decision: default
+        to: completed
+
+  - id: completed
+    kind: terminal
+
+features:
+  # 旁路监控（报告 Feature: Monitor）
+  - name: monitor
+    enabled: true
+    config:
+      label: 旁路监控
+
+  # 共享状态（报告 Feature: Shared State）
+  - name: shared_state
+    enabled: true
+    config: {}
+
+  # 硬护栏（报告 Feature: System Protocol）
+  - name: system_protocol
+    enabled: true
+    config:
+      banned_terms: ["rm -rf", "DROP TABLE", "越权执行"]
+      violation_decision: policy_violation
+
+  # 应急模式切换（报告 Feature: Emergency Handler）
+  - name: emergency_handler
+    enabled: true
+    config:
+      failure_decisions: ["error", "failed", "failure", "reject", "policy_violation"]
+      threshold: 2
+      emergency_decision: emergency
+
+  # 人类确认（报告 Feature: Human-in-the-loop Confirmation）
+  - name: human_confirmation
+    enabled: true
+    config:
+      stages: [judicial_audit]
+      reject_decision: reject
+
+policy:
+  banned_terms: ["rm -rf", "DROP TABLE", "越权执行"]
+  require_json_decision: false
+  max_steps: 64
+
+# Extra catalog for report traceability (not interpreted by runtime).
+x_report_feature_catalog:
+  - name: delegated_user
+    mapped_to: stage.delegated_intake
+    runtime_support: modeled_by_topology
+  - name: planner_internal_consensus
+    mapped_to: stage.citizens_consensus_vote
+    runtime_support: explicit_consensus_stage
+  - name: recursive_executor
+    mapped_to: cluster_members + role-level decomposition
+    runtime_support: modeled_by_prompt
+  - name: randomized_planner
+    mapped_to: planner selection strategy
+    runtime_support: external_or_adapter_level
+  - name: symbolic_trigger
+    mapped_to: stage.symbolic_trigger
+    runtime_support: modeled_by_topology
+  - name: node_lifecycle_control
+    mapped_to: agent roster governance
+    runtime_support: out_of_band
+  - name: consensus_gate
+    mapped_to: gate + consensus composition
+    runtime_support: explicit_consensus_stage

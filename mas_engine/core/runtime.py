@@ -57,10 +57,11 @@ class GovernanceRuntime:
             ctx: dict[str, object] = {
                 "step": idx,
                 "human_confirm_callback": self.human_confirm_callback,
+                "agent_traces": [],
             }
             self._features.before_stage(task, stage, ctx)
 
-            result = self._execute_stage(task, stage)
+            result = self._execute_stage(task, stage, ctx)
             result = self._features.after_stage(task, stage, result, ctx)
 
             decision = str(ctx.get("force_decision", result.decision or stage.default_decision))
@@ -84,6 +85,14 @@ class GovernanceRuntime:
                     "monitor": ctx.get("monitor", []),
                 },
             )
+            if self.store:
+                self.store.append_agent_traces(
+                    task=task,
+                    stage_index=idx,
+                    stage_id=stage.id,
+                    stage_kind=stage.kind,
+                    traces=list(ctx.get("agent_traces", [])),
+                )
             task.append_event(event)
             if self.store:
                 self.store.append_event(task, event)
@@ -96,14 +105,24 @@ class GovernanceRuntime:
 
         return task
 
-    def _execute_stage(self, task: TaskState, stage: StageSpec) -> AgentResult:
+    def _execute_stage(
+        self,
+        task: TaskState,
+        stage: StageSpec,
+        ctx: dict[str, object],
+    ) -> AgentResult:
         if stage.kind == "consensus":
-            return self._run_consensus_stage(task, stage)
+            return self._run_consensus_stage(task, stage, ctx)
         if stage.kind == "cluster":
-            return self._run_cluster_stage(task, stage)
-        return self._run_single_agent_stage(task, stage)
+            return self._run_cluster_stage(task, stage, ctx)
+        return self._run_single_agent_stage(task, stage, ctx)
 
-    def _run_single_agent_stage(self, task: TaskState, stage: StageSpec) -> AgentResult:
+    def _run_single_agent_stage(
+        self,
+        task: TaskState,
+        stage: StageSpec,
+        ctx: dict[str, object],
+    ) -> AgentResult:
         if not stage.agent:
             return AgentResult(
                 decision=stage.default_decision,
@@ -112,6 +131,7 @@ class GovernanceRuntime:
 
         agent = self.spec.agents[stage.agent]
         prompt = self._build_prompt(task, stage)
+        seq = task.next_agent_sequence()
         try:
             result = self.adapter.dispatch(
                 runtime_id=agent.runtime_id,
@@ -120,7 +140,23 @@ class GovernanceRuntime:
                 retries=agent.retries,
             )
         except AdapterError as exc:
-            return AgentResult(decision="error", summary=str(exc), raw_output=str(exc))
+            result = AgentResult(decision="error", summary=str(exc), raw_output=str(exc))
+            self._append_agent_trace(
+                ctx=ctx,
+                sequential_id=seq,
+                agent_id=stage.agent,
+                runtime_id=agent.runtime_id,
+                result=result,
+            )
+            return result
+
+        self._append_agent_trace(
+            ctx=ctx,
+            sequential_id=seq,
+            agent_id=stage.agent,
+            runtime_id=agent.runtime_id,
+            result=result,
+        )
 
         if self.spec.policy.require_json_decision and not result.decision:
             return AgentResult(
@@ -133,15 +169,21 @@ class GovernanceRuntime:
 
         return result
 
-    def _run_consensus_stage(self, task: TaskState, stage: StageSpec) -> AgentResult:
+    def _run_consensus_stage(
+        self,
+        task: TaskState,
+        stage: StageSpec,
+        ctx: dict[str, object],
+    ) -> AgentResult:
         assert stage.consensus is not None
         prompt = self._build_prompt(task, stage)
 
         ballots: dict[str, AgentResult] = {}
         with ThreadPoolExecutor(max_workers=len(stage.consensus.voters) or 1) as ex:
-            futures = {}
+            futures: dict[object, tuple[str, int, str]] = {}
             for voter in stage.consensus.voters:
                 agent = self.spec.agents[voter]
+                seq = task.next_agent_sequence()
                 msg = (
                     f"{prompt}\n\n"
                     "Return JSON only: "
@@ -154,18 +196,26 @@ class GovernanceRuntime:
                     agent.timeout_sec,
                     agent.retries,
                 )
-                futures[fut] = voter
+                futures[fut] = (voter, seq, agent.runtime_id)
 
             for fut in as_completed(futures):
-                voter = futures[fut]
+                voter, seq, runtime_id = futures[fut]
                 try:
-                    ballots[voter] = fut.result()
+                    result = fut.result()
                 except Exception as exc:  # adapter error path
-                    ballots[voter] = AgentResult(
+                    result = AgentResult(
                         decision="error",
                         summary=f"voter {voter} failed: {exc}",
                         raw_output=str(exc),
                     )
+                ballots[voter] = result
+                self._append_agent_trace(
+                    ctx=ctx,
+                    sequential_id=seq,
+                    agent_id=voter,
+                    runtime_id=runtime_id,
+                    result=result,
+                )
 
         decision = self._aggregate_consensus(stage, ballots)
         summary = (
@@ -212,14 +262,20 @@ class GovernanceRuntime:
         ratio = len(positives) / len(cfg.voters)
         return "approve" if ratio >= cfg.threshold else cfg.tie_breaker
 
-    def _run_cluster_stage(self, task: TaskState, stage: StageSpec) -> AgentResult:
+    def _run_cluster_stage(
+        self,
+        task: TaskState,
+        stage: StageSpec,
+        ctx: dict[str, object],
+    ) -> AgentResult:
         prompt = self._build_prompt(task, stage)
 
         outputs: dict[str, AgentResult] = {}
         with ThreadPoolExecutor(max_workers=len(stage.cluster_members) or 1) as ex:
-            futures = {}
+            futures: dict[object, tuple[object, int, str]] = {}
             for member in stage.cluster_members:
                 agent = self.spec.agents[member.agent]
+                seq = task.next_agent_sequence()
                 member_prompt = (
                     f"{prompt}\n\n"
                     f"Cluster role: {member.role}. "
@@ -233,18 +289,26 @@ class GovernanceRuntime:
                     agent.timeout_sec,
                     agent.retries,
                 )
-                futures[fut] = member
+                futures[fut] = (member, seq, agent.runtime_id)
 
             for fut in as_completed(futures):
-                member = futures[fut]
+                member, seq, runtime_id = futures[fut]
                 try:
-                    outputs[member.agent] = fut.result()
+                    result = fut.result()
                 except Exception as exc:
-                    outputs[member.agent] = AgentResult(
+                    result = AgentResult(
                         decision="failed",
                         summary=f"member {member.agent} failed: {exc}",
                         raw_output=str(exc),
                     )
+                outputs[member.agent] = result
+                self._append_agent_trace(
+                    ctx=ctx,
+                    sequential_id=seq,
+                    agent_id=member.agent,
+                    runtime_id=runtime_id,
+                    result=result,
+                )
 
         required_failures = []
         for member in stage.cluster_members:
@@ -270,6 +334,30 @@ class GovernanceRuntime:
             meta={"cluster": {k: v.summary for k, v in outputs.items()}},
         )
 
+    def _append_agent_trace(
+        self,
+        ctx: dict[str, object],
+        sequential_id: int,
+        agent_id: str,
+        runtime_id: str,
+        result: AgentResult,
+    ) -> None:
+        traces = ctx.get("agent_traces")
+        if not isinstance(traces, list):
+            return
+        traces.append(
+            {
+                "sequential_id": sequential_id,
+                "agent_id": agent_id,
+                "runtime_id": runtime_id,
+                "decision": result.decision,
+                "summary": result.summary,
+                "raw_tail": result.raw_output[-500:],
+                "updates": result.updates,
+                "meta": result.meta,
+            }
+        )
+
     def _resolve_next_stage(self, stage: StageSpec, decision: str) -> str | None:
         for t in stage.transitions:
             if t.decision == decision:
@@ -285,6 +373,12 @@ class GovernanceRuntime:
         return None
 
     def _build_prompt(self, task: TaskState, stage: StageSpec) -> str:
+        transition_view = [{"decision": t.decision, "to": t.to} for t in stage.transitions]
+        allowed_decisions = [t.decision for t in stage.transitions if t.decision != "default"]
+        if not allowed_decisions and stage.default_decision:
+            allowed_decisions = [stage.default_decision]
+        allowed_decisions = list(dict.fromkeys(allowed_decisions))
+
         history_tail = [
             {
                 "stage": e.stage_id,
@@ -302,7 +396,17 @@ class GovernanceRuntime:
             "shared_state": json.dumps(task.shared_state, ensure_ascii=False),
             "history": json.dumps(history_tail, ensure_ascii=False),
             "last_summary": task.history[-1].summary if task.history else "",
+            "transitions": json.dumps(transition_view, ensure_ascii=False),
+            "allowed_decisions": json.dumps(allowed_decisions, ensure_ascii=False),
         }
+        contract = (
+            "\n\nTopology context:\n"
+            f"- stage: {stage.id} ({stage.kind})\n"
+            f"- transitions: {payload['transitions']}\n"
+            f"- allowed_decisions: {payload['allowed_decisions']}\n"
+            "Return JSON only with this schema: "
+            '{"decision":"...","summary":"...","updates":{}}'
+        )
 
         if stage.prompt_template:
             try:
@@ -311,7 +415,7 @@ class GovernanceRuntime:
                 raise RuntimeErrorEngine(
                     f"Stage '{stage.id}' prompt template missing key: {exc}"
                 )
-            return text
+            return text + contract
 
         return (
             "You are a stage worker in a governance engine. "
@@ -320,7 +424,8 @@ class GovernanceRuntime:
             f"Title={task.title}\n"
             f"Input={task.input_text}\n"
             f"SharedState={payload['shared_state']}\n"
-            f"History={payload['history']}\n\n"
-            "Return JSON only with this schema: "
-            '{"decision":"...","summary":"...","updates":{}}'
+            f"History={payload['history']}\n"
+            f"Transitions={payload['transitions']}\n"
+            f"AllowedDecisions={payload['allowed_decisions']}"
+            + contract
         )

@@ -1,0 +1,104 @@
+meta:
+  id: soviet_party_state_yaml
+  name: 苏联党国体制（YAML）
+  version: "0.1.0"
+  pattern: pipeline
+  description: Party-center planning pipeline with internal politburo consensus semantics.
+
+entry_stage: politburo_planner
+
+agents:
+  politburo:
+    runtime_id: politburo
+    role: planner
+    instructions: 政治局内部协商后对外输出单一决策
+  sovmin:
+    runtime_id: sovmin
+    role: executor
+  gosplan:
+    runtime_id: gosplan
+    role: executor
+  republic_exec:
+    runtime_id: republic_exec
+    role: executor
+  supreme_soviet:
+    runtime_id: supreme_soviet
+    role: executor
+
+stages:
+  - id: politburo_planner
+    kind: planner
+    agent: politburo
+    prompt_template: >
+      你代表政治局形成政策方向并下发执行。返回 next。
+    transitions:
+      - decision: next
+        to: sovmin_deploy
+      - decision: default
+        to: sovmin_deploy
+
+  - id: sovmin_deploy
+    kind: executor
+    agent: sovmin
+    prompt_template: >
+      部长会议将政策转为部门执行指令。
+    transitions:
+      - decision: next
+        to: gosplan_allocate
+      - decision: default
+        to: gosplan_allocate
+
+  - id: gosplan_allocate
+    kind: executor
+    agent: gosplan
+    prompt_template: >
+      国家计委分配指标与资源。
+    transitions:
+      - decision: next
+        to: republic_execute
+      - decision: default
+        to: republic_execute
+
+  - id: republic_execute
+    kind: executor
+    agent: republic_exec
+    prompt_template: >
+      各加盟共和国与地方层执行并反馈。
+    transitions:
+      - decision: next
+        to: formal_ratify
+      - decision: default
+        to: formal_ratify
+
+  - id: formal_ratify
+    kind: executor
+    agent: supreme_soviet
+    prompt_template: >
+      最高苏维埃进行形式化追认。
+    transitions:
+      - decision: next
+        to: completed
+      - decision: default
+        to: completed
+
+  - id: completed
+    kind: terminal
+
+features:
+  - name: shared_state
+    enabled: true
+    config: {}
+
+  - name: monitor
+    enabled: true
+    config:
+      label: 党国执行链路监控
+
+policy:
+  require_json_decision: false
+  max_steps: 24
+
+x_report_feature_catalog:
+  - name: planner_internal_consensus
+    mapped_to: stage.politburo_planner
+    runtime_support: modeled_by_prompt

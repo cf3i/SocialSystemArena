@@ -1,0 +1,126 @@
+meta:
+  id: tang_sanshengliubu_yaml
+  name: 唐代三省六部（YAML）
+  version: "0.1.0"
+  pattern: gated_pipeline
+  description: Single-gate review (Menxia) with multi-ministry execution.
+
+entry_stage: zhongshu_plan
+
+agents:
+  zhongshu:
+    runtime_id: zhongshu
+    role: planner
+  menxia:
+    runtime_id: menxia
+    role: gate
+  shangshu:
+    runtime_id: shangshu
+    role: orchestrator
+  hubu:
+    runtime_id: hubu
+    role: executor
+  libu:
+    runtime_id: libu
+    role: executor
+  bingbu:
+    runtime_id: bingbu
+    role: executor
+  xingbu:
+    runtime_id: xingbu
+    role: executor
+  gongbu:
+    runtime_id: gongbu
+    role: executor
+  libu_hr:
+    runtime_id: libu_hr
+    role: executor
+
+stages:
+  - id: zhongshu_plan
+    kind: planner
+    agent: zhongshu
+    prompt_template: >
+      你是中书省，形成诏令草案并提交门下省审议。返回 submit。
+    transitions:
+      - decision: submit
+        to: menxia_gate
+      - decision: default
+        to: menxia_gate
+
+  - id: menxia_gate
+    kind: gate
+    agent: menxia
+    prompt_template: >
+      你是门下省，拥有封驳权。approve=通过，reject=打回中书。
+    transitions:
+      - decision: approve
+        to: shangshu_dispatch
+      - decision: reject
+        to: zhongshu_plan
+      - decision: default
+        to: zhongshu_plan
+
+  - id: shangshu_dispatch
+    kind: orchestrator
+    agent: shangshu
+    prompt_template: >
+      你是尚书省，分派六部执行，返回 dispatch。
+    transitions:
+      - decision: dispatch
+        to: liubu_exec
+      - decision: default
+        to: liubu_exec
+
+  - id: liubu_exec
+    kind: cluster
+    prompt_template: >
+      六部按职责执行，返回 success 或 failed。
+    cluster_members:
+      - agent: hubu
+        role: finance
+        required: true
+      - agent: libu
+        role: ritual_docs
+        required: true
+      - agent: bingbu
+        role: military_affairs
+        required: true
+      - agent: xingbu
+        role: legal_compliance
+        required: true
+      - agent: gongbu
+        role: engineering
+        required: true
+      - agent: libu_hr
+        role: personnel
+        required: false
+    transitions:
+      - decision: success
+        to: completed
+      - decision: failure
+        to: shangshu_dispatch
+      - decision: default
+        to: completed
+
+  - id: completed
+    kind: terminal
+
+features:
+  - name: monitor
+    enabled: true
+    config:
+      label: 三省流程监控
+
+  - name: shared_state
+    enabled: true
+    config: {}
+
+policy:
+  require_json_decision: false
+  max_steps: 40
+
+x_report_feature_catalog:
+  - name: gate_reject_loop
+    mapped_to: stage.menxia_gate
+    runtime_support: modeled_by_topology

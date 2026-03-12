@@ -104,9 +104,29 @@ def _load_raw(src: Path) -> dict[str, Any]:
     suffix = src.suffix.lower()
     if suffix == ".json":
         return json.loads(src.read_text())
+    if suffix in {".yaml", ".yml"}:
+        return _load_yaml(src)
     if suffix == ".cue":
         return _load_cue(src)
-    raise SpecError(f"Unsupported spec format: {src.suffix}. Use .cue or .json")
+    raise SpecError(f"Unsupported spec format: {src.suffix}. Use .cue/.json/.yaml")
+
+
+def _load_yaml(src: Path) -> dict[str, Any]:
+    try:
+        import yaml
+    except ImportError as exc:
+        raise SpecError(
+            "YAML spec requires PyYAML. Install with `pip install pyyaml`."
+        ) from exc
+
+    try:
+        raw = yaml.safe_load(src.read_text(encoding="utf-8"))
+    except Exception as exc:
+        raise SpecError(f"YAML parse failed: {exc}") from exc
+
+    if not isinstance(raw, dict):
+        raise SpecError("YAML root must be an object")
+    return raw
 
 
 def _load_cue(src: Path) -> dict[str, Any]:

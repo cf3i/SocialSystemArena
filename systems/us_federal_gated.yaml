@@ -1,0 +1,113 @@
+meta:
+  id: us_federal_gated_yaml
+  name: 美国联邦总统制（YAML）
+  version: "0.1.0"
+  pattern: gated_pipeline
+  description: Multi-gate pipeline with committee, congress, president and court auditor.
+
+entry_stage: committee_modify
+
+agents:
+  committee:
+    runtime_id: committee
+    role: gate
+  congress:
+    runtime_id: congress
+    role: gate
+  president:
+    runtime_id: president
+    role: gate
+  agency:
+    runtime_id: agency
+    role: executor
+  supreme_court:
+    runtime_id: supreme_court
+    role: auditor
+
+stages:
+  - id: committee_modify
+    kind: gate
+    agent: committee
+    prompt_template: >
+      委员会审议并可修改，返回 approve/reject。
+    transitions:
+      - decision: approve
+        to: congress_vote
+      - decision: reject
+        to: completed
+      - decision: default
+        to: completed
+
+  - id: congress_vote
+    kind: gate
+    agent: congress
+    prompt_template: >
+      参众两院投票，返回 approve/reject。
+    transitions:
+      - decision: approve
+        to: president_veto
+      - decision: reject
+        to: completed
+      - decision: default
+        to: completed
+
+  - id: president_veto
+    kind: gate
+    agent: president
+    prompt_template: >
+      总统签署或否决，返回 approve/veto。
+    transitions:
+      - decision: approve
+        to: agency_execute
+      - decision: veto
+        to: completed
+      - decision: default
+        to: completed
+
+  - id: agency_execute
+    kind: executor
+    agent: agency
+    prompt_template: >
+      行政机构执行法案并回报。
+    transitions:
+      - decision: next
+        to: court_audit
+      - decision: default
+        to: court_audit
+
+  - id: court_audit
+    kind: auditor
+    agent: supreme_court
+    prompt_template: >
+      最高法院审计，approve=合宪，invalidate=违宪。
+    transitions:
+      - decision: approve
+        to: completed
+      - decision: invalidate
+        to: completed
+      - decision: default
+        to: completed
+
+  - id: completed
+    kind: terminal
+
+features:
+  - name: monitor
+    enabled: true
+    config: {}
+
+  - name: shared_state
+    enabled: true
+    config: {}
+
+policy:
+  require_json_decision: false
+  max_steps: 24
+
+x_report_feature_catalog:
+  - name: multigate_pipeline
+    mapped_to: stage.committee_modify->congress_vote->president_veto
+    runtime_support: modeled_by_topology
+  - name: auditor_invalidate
+    mapped_to: stage.court_audit
+    runtime_support: modeled_by_topology

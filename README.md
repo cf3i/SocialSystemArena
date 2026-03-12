@@ -6,8 +6,8 @@ This repository now contains a **new implementation** (independent from `sample/
 
 - Pattern runtime: `pipeline`, `gated_pipeline`, `autonomous_cluster`, `consensus`
 - Feature plugins: `monitor`, `shared_state`, `system_protocol`, `emergency_handler`, `human_confirmation`
-- Spec compiler: `CUE/JSON -> normalized JSON IR`
-- Adapter layer: `OpenClawAdapter` and `MockAdapter`
+- Spec compiler: `CUE/JSON/YAML -> normalized JSON IR`
+- Adapter layer: `PcAgentLoopAdapter`, `OpenClawAdapter`, `MockAdapter`
 
 ## Structure
 
@@ -17,16 +17,23 @@ This repository now contains a **new implementation** (independent from `sample/
 - `mas_engine/adapters/`: runtime adapter implementations
 - `mas_engine/cli.py`: CLI entry
 - `dsl/`: CUE schema
-- `systems/`: institution specs (JSON/CUE)
+- `systems/`: institution specs (JSON/CUE/YAML)
 - `tests/`: unit tests
-- `sample/`: legacy reference code (not used by new engine)
+- `third_party/pc-agent-loop`: git submodule backend runtime used by `PcAgentLoopAdapter`
 
-## Why CUE + JSON
+## Why CUE + JSON/YAML
 
 - Author specs in CUE for stronger constraints and composition
 - Compile to JSON IR for stable runtime execution and auditing
+- YAML is supported for easier manual editing
 
 ## Quickstart
+
+Initialize third-party submodules first:
+
+```bash
+git submodule update --init --recursive
+```
 
 ### 0) Generate a starter template
 
@@ -42,6 +49,12 @@ python -m mas_engine.cli init-spec \
 
 ```bash
 python -m mas_engine.cli validate --spec systems/tang_sanshengliubu.json
+```
+
+YAML works the same way:
+
+```bash
+python -m mas_engine.cli validate --spec systems/egypt_pipeline.yaml
 ```
 
 ### 2) Compile spec to IR
@@ -63,7 +76,29 @@ python -m mas_engine.cli run \
   --trace-out traces/tang.jsonl
 ```
 
-### 4) Run with OpenClaw adapter
+### 4) Run with pc-agent-loop adapter
+
+```bash
+python -m mas_engine.cli run \
+  --spec systems/tang_sanshengliubu.json \
+  --title "真实任务" \
+  --input "请执行..." \
+  --adapter pc-agent-loop \
+  --pc-agent-root third_party/pc-agent-loop \
+  --pc-mykey third_party/pc-agent-loop/mykey.py \
+  --trace-out traces/live.jsonl
+```
+
+Optional pc-agent-loop flags:
+- `--pc-shared-instance`: one backend instance shared across all runtime_ids
+- `--pc-llm-no N`: choose LLM backend index from `mykey` list
+- `--pc-mykey`: explicit `mykey.py` / `mykey.json` path
+
+Trace (`--trace-out`) now writes two record types:
+- `stage_event`: stage-level transition record
+- `agent_trace`: one row per agent dispatch, with `sequential_id`
+
+### 5) Run with OpenClaw adapter
 
 ```bash
 python -m mas_engine.cli run \
@@ -89,6 +124,7 @@ python -m mas_engine.cli run \
 - `systems/us_federal_gated.json`
 - `systems/edo_cluster.json`
 - `systems/athens_consensus.json`
+- `systems/egypt_pipeline.yaml` (YAML example)
 
 ## Run tests
 
@@ -99,7 +135,7 @@ python -m unittest discover -s tests -p 'test_*.py'
 ## Notes
 
 - CUE export requires `cue` CLI when loading `.cue` files
-- JSON specs work without CUE installed
+- JSON/YAML specs work without CUE installed
 
 ## Documentation
 

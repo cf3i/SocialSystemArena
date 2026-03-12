@@ -10,10 +10,10 @@
 
 - 用 `Pattern` 描述消息流拓扑（主流程结构）
 - 用 `Feature` 描述可叠加机制（监控、护栏、应急、人类确认等）
-- 用统一规范文件（JSON/CUE）描述“制度”
+- 用统一规范文件（JSON/CUE/YAML）描述“制度”
 - 用统一运行时执行不同制度，不为每个制度重写代码
 
-当前实现完全独立于 `sample/`，属于你自己的新框架。
+运行时核心独立于 `sample/`，并可通过 `PcAgentLoopAdapter` 对接 `third_party/pc-agent-loop` 作为执行后端。
 
 ---
 
@@ -24,17 +24,19 @@
 - `mas_engine/spec/`：规范层（`templates/compiler/validators`）
 - `mas_engine/core/`：运行时核心（`types/errors/features/runtime`）
 - `mas_engine/storage/`：持久化层（`jsonl` trace 存储）
-- `mas_engine/adapters/`：Agent 执行适配层（`MockAdapter`、`OpenClawAdapter`）
+- `mas_engine/adapters/`：Agent 执行适配层（`MockAdapter`、`PcAgentLoopAdapter`、`OpenClawAdapter`）
 - `mas_engine/cli.py`：命令行入口（`init-spec / validate / compile / run`）
 
 运行数据流：
 
-1. 读取制度规范（`*.json` 或 `*.cue`）
+1. 读取制度规范（`*.json` / `*.yaml` / `*.cue`）
 2. 编译 + 语义校验
 3. 进入 runtime 主循环（`entry_stage`）
 4. 每步执行：`before_stage` -> `adapter.dispatch` -> `after_stage`
 5. 基于 `decision` 查找 transition，推进到下一 stage
 6. 记录事件（内存 + 可选 JSONL trace）
+   - `agent_trace`：每次 agent dispatch 一条，包含 `sequential_id`
+   - `stage_event`：每个 stage 聚合结果一条
 7. 到达 `terminal` 后完成
 
 ---
@@ -85,7 +87,7 @@
 
 ---
 
-## 4. 规范格式（JSON/CUE）
+## 4. 规范格式（JSON/CUE/YAML）
 
 制度文件核心字段：
 
@@ -100,7 +102,7 @@
 
 常用字段：
 
-- `runtime_id`：适配器层实际调用 id（OpenClaw agent id）
+- `runtime_id`：适配器层实际调用 id（后端 agent 实例标识）
 - `role`：语义角色（文档化）
 - `timeout_sec`：超时秒数
 - `retries`：重试次数
@@ -212,6 +214,22 @@ openclaw agent --agent <runtime_id> -m "<message>" --timeout <sec>
 - 从 stdout/stderr 中提取最后一个包含 `decision` 的 JSON 对象
 - 若无结构化 JSON，回退为 `decision=next` + 最后一行摘要
 
+### 6.3 PcAgentLoopAdapter
+
+通过 `third_party/pc-agent-loop` 的 `GeneraticAgent` 执行：
+
+- `runtime_id` 默认映射到独立实例（可选共享实例）
+- 调用 `put_task(...)` 投递任务，轮询 `display_queue` 等待 `done`
+- 支持超时中断（调用 `abort()`）
+- 输出解析策略：优先提取最后一个 `decision` JSON，失败回退为 `next`
+
+常用参数：
+
+- `agent_root`：`pc-agent-loop` 根目录
+- `mykey_path`：显式指定 `mykey.py` / `mykey.json`
+- `llm_no`：选择后端模型索引
+- `shared_instance`：是否所有角色复用同一实例
+
 ---
 
 ## 7. CLI 使用
@@ -251,7 +269,26 @@ python -m mas_engine.cli run \
   --trace-out traces/my_system.jsonl
 ```
 
-### 7.5 运行（OpenClaw）
+### 7.5 运行（pc-agent-loop）
+
+```bash
+python -m mas_engine.cli run \
+  --spec systems/my_system.json \
+  --title "真实任务" \
+  --input "请执行..." \
+  --adapter pc-agent-loop \
+  --pc-agent-root third_party/pc-agent-loop \
+  --pc-mykey third_party/pc-agent-loop/mykey.py \
+  --trace-out traces/live.jsonl
+```
+
+可选参数：
+
+- `--pc-shared-instance`：所有 runtime_id 共享一个后端实例
+- `--pc-llm-no`：指定 `mykey` 多后端中的索引
+- `--pc-mykey`：显式指定 `mykey.py` / `mykey.json`
+
+### 7.6 运行（OpenClaw）
 
 ```bash
 python -m mas_engine.cli run \
@@ -277,6 +314,7 @@ python -m mas_engine.cli run \
 - `us_federal_gated.json`
 - `edo_cluster.json`
 - `athens_consensus.json`
+- `egypt_pipeline.yaml`（YAML 版本示例）
 
 说明：
 
@@ -296,7 +334,7 @@ python -m mas_engine.cli run \
 5. 生成初稿（`init-spec`）并修改为正式 spec
 6. 先 `validate` 再 `run --adapter mock`
 7. 为该制度新增一条测试（至少覆盖成功路径）
-8. 最后再做 OpenClaw 联调
+8. 最后做 pc-agent-loop 或 OpenClaw 联调（按部署选型）
 
 ---
 
@@ -309,6 +347,7 @@ python -m mas_engine.cli run \
 - Consensus 拒绝路径
 - Pipeline 非法 gate 约束
 - OpenClaw 输出解析与 `--deliver` 兼容回退
+- pc-agent-loop 适配器的 JSON 解析与超时中断
 - 模板生成可编译性
 - CUE 编译路径稳定性
 - 新制度（秦汉）运行与 monitor 元数据
@@ -334,26 +373,26 @@ python -m unittest discover -s tests -p 'test_*.py'
 - `recursive_executor` 一等语义（当前可通过多 stage 近似）
 - Planner 内部共识强/弱约束的显式建模
 - Symbolic trigger / 节点生命周期控制等高级 Feature
-- YAML 前端输入（当前推荐 JSON/CUE）
+- 更简化的“业务短格式 YAML”（当前支持的是等价结构 YAML）
 
 推荐后续优先级：
 
 1. 扩展 DSL 语义（尤其递归执行与内部共识）
 2. 将报告中的高代表制度继续结构化落地
-3. 增加 OpenClaw 端到端集成测试
+3. 增加 pc-agent-loop / OpenClaw 端到端集成测试
 
 ---
 
 ## 12. 常见问题（FAQ）
 
-### Q1：为什么优先 JSON/CUE，而不是 YAML？
+### Q1：为什么优先 JSON/CUE，同时支持 YAML？
 
-因为当前运行时吃 JSON，CUE 可提供更强约束并可导出 JSON。  
-如果后续需要 YAML，可加一层 `YAML -> JSON IR` 前端，不影响 runtime。
+JSON 结构最直接、歧义最少；CUE 约束能力更强。  
+YAML 现在也已支持，适合手写配置；运行时会统一编译为同一套 IR。
 
 ### Q2：`cue` 不可用怎么办？
 
-可以直接使用 JSON 规范；`.cue` 仅在作者侧建模时使用。  
+可以直接使用 JSON 或 YAML 规范；`.cue` 仅在作者侧建模时使用。  
 安装后可直接 `validate/compile` CUE 文件。
 
 ### Q3：如何保证制度改动不破坏运行？

@@ -1,0 +1,111 @@
+meta:
+  id: athens_democracy_yaml
+  name: 雅典直接民主制（YAML）
+  version: "0.1.0"
+  pattern: consensus
+  description: Planner proposes, citizens vote by consensus, executor acts, court audits.
+
+entry_stage: boule_planner
+
+agents:
+  boule:
+    runtime_id: boule
+    role: planner
+    instructions: 议题准备节点，负责生成提案
+  citizen_a:
+    runtime_id: citizen_a
+    role: voter
+  citizen_b:
+    runtime_id: citizen_b
+    role: voter
+  citizen_c:
+    runtime_id: citizen_c
+    role: voter
+  citizen_d:
+    runtime_id: citizen_d
+    role: voter
+  strategos:
+    runtime_id: strategos
+    role: executor
+  heliaia:
+    runtime_id: heliaia
+    role: auditor
+
+stages:
+  - id: boule_planner
+    kind: planner
+    agent: boule
+    prompt_template: >
+      你是五百人议事会，起草政策提案。任务: {title} 输入: {input_text}
+      返回 decision=next。
+    transitions:
+      - decision: next
+        to: ekklesia_vote
+      - decision: default
+        to: ekklesia_vote
+
+  - id: ekklesia_vote
+    kind: consensus
+    prompt_template: >
+      你是公民大会投票层。每位投票者只返回 yes 或 no。
+    consensus:
+      voters: [citizen_a, citizen_b, citizen_c, citizen_d]
+      algorithm: majority
+      threshold: 0.5
+      tie_breaker: reject
+    transitions:
+      - decision: approve
+        to: strategos_execute
+      - decision: reject
+        to: completed
+      - decision: default
+        to: completed
+
+  - id: strategos_execute
+    kind: executor
+    agent: strategos
+    prompt_template: >
+      你是将军执行层，对通过的提案进行执行，返回 next。
+    transitions:
+      - decision: next
+        to: heliaia_audit
+      - decision: default
+        to: heliaia_audit
+
+  - id: heliaia_audit
+    kind: auditor
+    agent: heliaia
+    prompt_template: >
+      你是陪审法庭，审查执行合法性。approve=通过，invalidate=判定无效。
+    transitions:
+      - decision: approve
+        to: completed
+      - decision: invalidate
+        to: completed
+      - decision: default
+        to: completed
+
+  - id: completed
+    kind: terminal
+
+features:
+  - name: monitor
+    enabled: true
+    config:
+      label: 公民监督旁路
+
+  - name: shared_state
+    enabled: true
+    config: {}
+
+policy:
+  require_json_decision: false
+  max_steps: 24
+
+x_report_feature_catalog:
+  - name: randomized_planner
+    mapped_to: stage.boule_planner
+    runtime_support: external_or_adapter_level
+  - name: auditor
+    mapped_to: stage.heliaia_audit
+    runtime_support: modeled_by_topology
