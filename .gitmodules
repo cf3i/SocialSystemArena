@@ -5,3 +5,6 @@
 [submodule "third_party/pc-agent-loop"]
 	path = third_party/pc-agent-loop
 	url = https://github.com/lsdefine/pc-agent-loop.git
+[submodule "third_party/pinchbench-skill"]
+	path = third_party/pinchbench-skill
+	url = https://github.com/pinchbench/skill.git

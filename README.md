@@ -26,6 +26,7 @@ This repository now contains a **new implementation** (independent from `sample/
 - `systems/institutions.yaml`: institution -> spec mapping registry
 - `tests/`: unit tests
 - `third_party/pc-agent-loop`: git submodule backend runtime used by `PcAgentLoopAdapter`
+- `third_party/pinchbench-skill`: PinchBench task/asset submodule for benchmark runs
 
 ## Why CUE + JSON/YAML
 
@@ -166,6 +167,46 @@ Core API endpoints:
 - `GET /api/specs/{spec_id}`
 - `POST /api/specs/validate`
 - `POST /api/specs/to-yaml`
+
+### 7) Run PinchBench with MAS runtime
+
+PinchBench tasks can be executed through this engine with either `openclaw` or `pc-agent-loop` adapter.
+
+OpenClaw backend example:
+
+```bash
+python -m mas_engine.cli bench-pinch \
+  --adapter openclaw \
+  --model openrouter/openai/gpt-4o \
+  --suite automated-only \
+  --runs 1 \
+  --spec systems/institutions/egypt_pipeline \
+  --out-dir traces/benchmarks/pinchbench
+```
+
+pc-agent-loop backend example:
+
+```bash
+python -m mas_engine.cli bench-pinch \
+  --adapter pc-agent-loop \
+  --model minimax/MiniMax-M2.5 \
+  --pc-agent-root third_party/pc-agent-loop \
+  --pc-mykey third_party/pc-agent-loop/mykey.py \
+  --pc-llm-no 0 \
+  --suite automated-only \
+  --runs 1 \
+  --spec systems/institutions/egypt_pipeline \
+  --out-dir traces/benchmarks/pinchbench
+```
+
+Notes:
+- `--pinch-root` defaults to `third_party/pinchbench-skill`.
+- `--spec` is optional. You can pass a spec file or an institution directory.
+- `bench-pinch` defaults `--openclaw-deliver-mode` to `never` (benchmark runs are local workspace tasks).
+- `--adapter` defaults to `openclaw`; use `pc-agent-loop` to run via `third_party/pc-agent-loop`.
+- `--suite` supports `all`, `automated-only`, or comma-separated task ids.
+- `llm_judge/hybrid` tasks use judge model from `--judge-model` (or fall back to `--model`).
+- Outputs are saved under `--out-dir/<UTC timestamp>/results/{summary.json,details.jsonl}`.
 
 ## Built-in sample specs
 

@@ -10,6 +10,7 @@ import uuid
 from pathlib import Path
 
 from .adapters import MockAdapter, OpenClawAdapter, PcAgentLoopAdapter
+from .benchmark import PinchBenchRunConfig, run_pinchbench
 from .core.errors import SpecError
 from .core.runtime import GovernanceRuntime
 from .dashboard_server import serve_dashboard
@@ -100,6 +101,112 @@ def main() -> None:
         help="institution registry file",
     )
 
+    p_bench_pinch = sub.add_parser(
+        "bench-pinch",
+        help="run PinchBench tasks via MAS runtime",
+    )
+    p_bench_pinch.add_argument(
+        "--pinch-root",
+        default="third_party/pinchbench-skill",
+        help=(
+            "path to PinchBench skill repo root (contains tasks/ and assets/). "
+            "Default: third_party/pinchbench-skill"
+        ),
+    )
+    p_bench_pinch.add_argument(
+        "--model",
+        required=True,
+        help="worker model id label (OpenClaw model id or pc-agent-loop backend label)",
+    )
+    p_bench_pinch.add_argument(
+        "--adapter",
+        choices=["openclaw", "pc-agent-loop"],
+        default="openclaw",
+        help="runtime adapter backend for benchmark execution",
+    )
+    p_bench_pinch.add_argument(
+        "--spec",
+        default="",
+        help=(
+            "optional governance spec file or directory for runtime execution "
+            "(e.g. systems/institutions/egypt_pipeline)"
+        ),
+    )
+    p_bench_pinch.add_argument(
+        "--suite",
+        default="all",
+        help='task selection: "all", "automated-only", or comma-separated task IDs',
+    )
+    p_bench_pinch.add_argument(
+        "--runs",
+        type=int,
+        default=1,
+        help="number of runs per task",
+    )
+    p_bench_pinch.add_argument(
+        "--out-dir",
+        default="traces/benchmarks/pinchbench",
+        help="output directory for benchmark artifacts",
+    )
+    p_bench_pinch.add_argument(
+        "--judge-model",
+        default="",
+        help="judge model id for llm_judge/hybrid tasks (default: same as --model)",
+    )
+    p_bench_pinch.add_argument(
+        "--judge-timeout",
+        type=int,
+        default=180,
+        help="judge timeout in seconds",
+    )
+    p_bench_pinch.add_argument(
+        "--no-judge",
+        action="store_true",
+        help="skip llm judge for llm_judge/hybrid tasks",
+    )
+    p_bench_pinch.add_argument(
+        "--keep-agents",
+        action="store_true",
+        help="do not delete temporary OpenClaw agents after run",
+    )
+    p_bench_pinch.add_argument(
+        "--openclaw-bin",
+        default="openclaw",
+        help="OpenClaw executable path",
+    )
+    p_bench_pinch.add_argument(
+        "--openclaw-deliver-mode",
+        choices=["auto", "always", "never"],
+        default="never",
+        help="whether to append --deliver when invoking OpenClaw",
+    )
+    p_bench_pinch.add_argument(
+        "--openclaw-project-dir",
+        default="",
+        help="working directory for OpenClaw CLI execution",
+    )
+    p_bench_pinch.add_argument(
+        "--pc-agent-root",
+        default="third_party/pc-agent-loop",
+        help="path to pc-agent-loop root directory",
+    )
+    p_bench_pinch.add_argument(
+        "--pc-mykey",
+        default="",
+        help="optional path to mykey.py/mykey.json for pc-agent-loop",
+    )
+    p_bench_pinch.add_argument(
+        "--pc-llm-no",
+        type=int,
+        default=-1,
+        help="select backend index in pc-agent-loop (default: keep runtime default)",
+    )
+    p_bench_pinch.add_argument(
+        "--pc-shared-instance",
+        action="store_true",
+        help="share one pc-agent-loop agent instance for all runtime_ids",
+    )
+
     args = parser.parse_args()
     logging.basicConfig(
         level=getattr(logging, str(args.log_level).upper(), logging.INFO),
@@ -117,6 +224,8 @@ def main() -> None:
             return _cmd_run(args)
         if args.cmd == "serve":
             return _cmd_serve(args)
+        if args.cmd == "bench-pinch":
+            return _cmd_bench_pinch(args)
     except SpecError as exc:
         print(f"[spec-error] {exc}", file=sys.stderr)
         raise SystemExit(2)
@@ -221,6 +330,31 @@ def _cmd_serve(args: argparse.Namespace) -> None:
         institutions_path=args.institutions,
     )
     serve_dashboard(manager=manager, host=args.host, port=args.port)
+
+
+def _cmd_bench_pinch(args: argparse.Namespace) -> None:
+    config = PinchBenchRunConfig(
+        pinch_root=Path(args.pinch_root),
+        model=str(args.model).strip(),
+        suite=str(args.suite).strip() or "all",
+        runs=max(1, int(args.runs)),
+        output_dir=Path(args.out_dir),
+        adapter=str(args.adapter).strip() or "openclaw",
+        openclaw_bin=str(args.openclaw_bin).strip() or "openclaw",
+        openclaw_deliver_mode=str(args.openclaw_deliver_mode).strip() or "auto",
+        openclaw_project_dir=(str(args.openclaw_project_dir).strip() or None),
+        pc_agent_root=str(args.pc_agent_root).strip() or "third_party/pc-agent-loop",
+        pc_mykey=(str(args.pc_mykey).strip() or None),
+        pc_llm_no=(args.pc_llm_no if int(args.pc_llm_no) >= 0 else None),
+        pc_shared_instance=bool(args.pc_shared_instance),
+        judge_model=(str(args.judge_model).strip() or None),
+        judge_timeout_sec=max(30, int(args.judge_timeout)),
+        no_judge=bool(args.no_judge),
+        keep_agents=bool(args.keep_agents),
+        benchmark_spec_path=(Path(args.spec).expanduser() if str(args.spec).strip() else None),
+    )
+    out = run_pinchbench(config)
+    print(json.dumps(out, ensure_ascii=False, indent=2))
 
 
 def _interactive_confirm(**kwargs) -> bool:
