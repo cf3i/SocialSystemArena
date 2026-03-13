@@ -197,16 +197,20 @@ class GovernanceRuntime:
 
         agent = self.spec.agents[stage.agent]
         prompt, prompt_meta = self._build_prompt(task, stage)
+        prompt_with_profile = self._append_agent_profile(
+            prompt=prompt,
+            agent_id=stage.agent,
+        )
         sop_retry_enabled = bool(stage.sop and stage.sop.on_violation == "retry")
         max_attempts = 2 if sop_retry_enabled else 1
         result: AgentResult | None = None
 
         for attempt in range(1, max_attempts + 1):
             seq = task.next_agent_sequence()
-            message = prompt
+            message = prompt_with_profile
             if attempt > 1:
                 message = (
-                    f"{prompt}\n\n"
+                    f"{prompt_with_profile}\n\n"
                     "[SYSTEM] Previous output violated SOP rules. "
                     "You must strictly follow SOP and return valid JSON."
                 )
@@ -323,8 +327,12 @@ class GovernanceRuntime:
             for voter in stage.consensus.voters:
                 agent = self.spec.agents[voter]
                 seq = task.next_agent_sequence()
+                prompt_with_profile = self._append_agent_profile(
+                    prompt=prompt,
+                    agent_id=voter,
+                )
                 msg = (
-                    f"{prompt}\n\n"
+                    f"{prompt_with_profile}\n\n"
                     "Return JSON only: "
                     '{"decision":"yes|no","summary":"...","updates":{}}'
                 )
@@ -432,8 +440,12 @@ class GovernanceRuntime:
             for member in stage.cluster_members:
                 agent = self.spec.agents[member.agent]
                 seq = task.next_agent_sequence()
+                prompt_with_profile = self._append_agent_profile(
+                    prompt=prompt,
+                    agent_id=member.agent,
+                )
                 member_prompt = (
-                    f"{prompt}\n\n"
+                    f"{prompt_with_profile}\n\n"
                     f"Cluster role: {member.role}. "
                     "Return JSON only: "
                     '{"decision":"success|failed","summary":"...","updates":{}}'
@@ -667,6 +679,25 @@ class GovernanceRuntime:
         prompt_meta["prompt_sections"] = section_names
         prompt_meta["prompt_truncated_sections"] = truncated_sections
         return body + contract, prompt_meta
+
+    def _append_agent_profile(self, prompt: str, agent_id: str) -> str:
+        agent = self.spec.agents.get(agent_id)
+        if agent is None:
+            return prompt
+
+        profile_lines: list[str] = []
+        role = str(agent.role or "").strip()
+        instructions = str(agent.instructions or "").strip()
+        if role:
+            profile_lines.append(f"- role: {role}")
+        if instructions:
+            profile_lines.append(f"- instructions: {instructions}")
+
+        if not profile_lines:
+            return prompt
+
+        profile = "[Agent Profile]\n" + "\n".join(profile_lines)
+        return f"{prompt}\n\n{profile}"
 
     def _render_with_payload(self, template: str, payload: dict[str, object]) -> str:
         out = str(template)

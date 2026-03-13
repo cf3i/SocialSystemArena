@@ -2,59 +2,152 @@
   "meta": {
     "id": "athens_consensus",
     "name": "雅典直接民主制",
-    "version": "0.1.0",
+    "version": "0.3.0",
     "pattern": "consensus",
-    "description": "Planner proposes, consensus layer votes, executor runs"
+    "description": "Boulē proposes, sampled citizens vote by majority, strategos executes, Dikasteria audits only when disputed"
   },
   "entry_stage": "boule_planner",
   "agents": {
-    "boule": {"runtime_id": "boule", "role": "planner"},
-    "citizen_a": {"runtime_id": "citizen_a", "role": "voter"},
-    "citizen_b": {"runtime_id": "citizen_b", "role": "voter"},
-    "citizen_c": {"runtime_id": "citizen_c", "role": "voter"},
-    "strategos": {"runtime_id": "strategos", "role": "executor"}
+    "boule_planner_1": {
+      "runtime_id": "boule_planner_1",
+      "role": "planner",
+      "instructions": "你负责议程设置与提案整形，确保提案可被公民大会直接投票。"
+    },
+    "citizen_01": {"runtime_id": "citizen_01", "role": "voter", "instructions": "海贸扩展派公民：若提案能提升海上通道与贸易收益则倾向 yes；收益不明且风险高则倾向 no。"},
+    "citizen_02": {"runtime_id": "citizen_02", "role": "voter", "instructions": "财政审慎派公民：优先控制财政负担与长期成本；预算不清或成本过高时倾向 no。"},
+    "citizen_03": {"runtime_id": "citizen_03", "role": "voter", "instructions": "农政稳健派公民：优先保障农业生产与民生稳定；对扰动民生较大的提案倾向 no。"},
+    "citizen_04": {"runtime_id": "citizen_04", "role": "voter", "instructions": "程序法治派公民：重点审查程序合法性与授权边界；程序不清或越权迹象时倾向 no。"},
+    "citizen_05": {"runtime_id": "citizen_05", "role": "voter", "instructions": "安全现实派公民：重视外部威胁与防务可行性；能显著提升安全时倾向 yes。"},
+    "citizen_06": {"runtime_id": "citizen_06", "role": "voter", "instructions": "公民自由派公民：关注权力扩张与公民负担；若限制公民权利或代价过高则倾向 no。"},
+    "citizen_07": {"runtime_id": "citizen_07", "role": "voter", "instructions": "海贸扩展派公民：若提案能提升海上通道与贸易收益则倾向 yes；收益不明且风险高则倾向 no。"},
+    "citizen_08": {"runtime_id": "citizen_08", "role": "voter", "instructions": "财政审慎派公民：优先控制财政负担与长期成本；预算不清或成本过高时倾向 no。"},
+    "citizen_09": {"runtime_id": "citizen_09", "role": "voter", "instructions": "农政稳健派公民：优先保障农业生产与民生稳定；对扰动民生较大的提案倾向 no。"},
+    "citizen_10": {"runtime_id": "citizen_10", "role": "voter", "instructions": "程序法治派公民：重点审查程序合法性与授权边界；程序不清或越权迹象时倾向 no。"},
+    "citizen_11": {"runtime_id": "citizen_11", "role": "voter", "instructions": "安全现实派公民：重视外部威胁与防务可行性；能显著提升安全时倾向 yes。"},
+    "citizen_12": {"runtime_id": "citizen_12", "role": "voter", "instructions": "公民自由派公民：关注权力扩张与公民负担；若限制公民权利或代价过高则倾向 no。"},
+    "citizen_13": {"runtime_id": "citizen_13", "role": "voter", "instructions": "海贸扩展派公民：若提案能提升海上通道与贸易收益则倾向 yes；收益不明且风险高则倾向 no。"},
+    "citizen_14": {"runtime_id": "citizen_14", "role": "voter", "instructions": "财政审慎派公民：优先控制财政负担与长期成本；预算不清或成本过高时倾向 no。"},
+    "citizen_15": {"runtime_id": "citizen_15", "role": "voter", "instructions": "农政稳健派公民：优先保障农业生产与民生稳定；对扰动民生较大的提案倾向 no。"},
+    "citizen_16": {"runtime_id": "citizen_16", "role": "voter", "instructions": "程序法治派公民：重点审查程序合法性与授权边界；程序不清或越权迹象时倾向 no。"},
+    "citizen_17": {"runtime_id": "citizen_17", "role": "voter", "instructions": "安全现实派公民：重视外部威胁与防务可行性；能显著提升安全时倾向 yes。"},
+    "citizen_18": {"runtime_id": "citizen_18", "role": "voter", "instructions": "公民自由派公民：关注权力扩张与公民负担；若限制公民权利或代价过高则倾向 no。"},
+    "citizen_19": {"runtime_id": "citizen_19", "role": "voter", "instructions": "海贸扩展派公民：若提案能提升海上通道与贸易收益则倾向 yes；收益不明且风险高则倾向 no。"},
+    "citizen_20": {"runtime_id": "citizen_20", "role": "voter", "instructions": "财政审慎派公民：优先控制财政负担与长期成本；预算不清或成本过高时倾向 no。"},
+    "citizen_21": {"runtime_id": "citizen_21", "role": "voter", "instructions": "农政稳健派公民：优先保障农业生产与民生稳定；对扰动民生较大的提案倾向 no。"},
+    "citizen_22": {"runtime_id": "citizen_22", "role": "voter", "instructions": "程序法治派公民：重点审查程序合法性与授权边界；程序不清或越权迹象时倾向 no。"},
+    "citizen_23": {"runtime_id": "citizen_23", "role": "voter", "instructions": "安全现实派公民：重视外部威胁与防务可行性；能显著提升安全时倾向 yes。"},
+    "citizen_24": {"runtime_id": "citizen_24", "role": "voter", "instructions": "公民自由派公民：关注权力扩张与公民负担；若限制公民权利或代价过高则倾向 no。"},
+    "citizen_25": {"runtime_id": "citizen_25", "role": "voter", "instructions": "海贸扩展派公民：若提案能提升海上通道与贸易收益则倾向 yes；收益不明且风险高则倾向 no。"},
+    "citizen_26": {"runtime_id": "citizen_26", "role": "voter", "instructions": "财政审慎派公民：优先控制财政负担与长期成本；预算不清或成本过高时倾向 no。"},
+    "citizen_27": {"runtime_id": "citizen_27", "role": "voter", "instructions": "农政稳健派公民：优先保障农业生产与民生稳定；对扰动民生较大的提案倾向 no。"},
+    "citizen_28": {"runtime_id": "citizen_28", "role": "voter", "instructions": "程序法治派公民：重点审查程序合法性与授权边界；程序不清或越权迹象时倾向 no。"},
+    "citizen_29": {"runtime_id": "citizen_29", "role": "voter", "instructions": "安全现实派公民：重视外部威胁与防务可行性；能显著提升安全时倾向 yes。"},
+    "citizen_30": {"runtime_id": "citizen_30", "role": "voter", "instructions": "公民自由派公民：关注权力扩张与公民负担；若限制公民权利或代价过高则倾向 no。"},
+    "citizen_31": {"runtime_id": "citizen_31", "role": "voter", "instructions": "海贸扩展派公民：若提案能提升海上通道与贸易收益则倾向 yes；收益不明且风险高则倾向 no。"},
+    "strategos_1": {
+      "runtime_id": "strategos_1",
+      "role": "executor",
+      "instructions": "严格按公民大会通过的提案执行，不得擅自扩权；出现重大程序或合法性争议时返回 dispute。"
+    },
+    "dikasteria_1": {
+      "runtime_id": "dikasteria_1",
+      "role": "auditor",
+      "instructions": "对争议执行进行追溯审查，证据不足以推翻则 approve，严重违规则 invalidate。"
+    }
   },
   "stages": [
     {
       "id": "boule_planner",
       "kind": "planner",
-      "agent": "boule",
-      "prompt_template": "你是议事会，生成提案。任务:{title}",
+      "agent": "boule_planner_1",
+      "soul_file_path": "souls/boule_planner.md",
+      "prompt_template": "你是五百人议事会（抽样等价建模），形成可投票提案。任务:{title}",
       "transitions": [
-        {"decision": "next", "to": "ekklesia_vote"}
+        {"decision": "next", "to": "ekklesia_vote"},
+        {"decision": "default", "to": "ekklesia_vote"}
       ]
     },
     {
       "id": "ekklesia_vote",
       "kind": "consensus",
-      "prompt_template": "你是公民代表，请投票同意(yes)或反对(no)。任务:{title}",
+      "soul_file_path": "souls/ekklesia_vote.md",
+      "prompt_template": "你是公民大会投票层，请仅投 yes 或 no。任务:{title}",
       "consensus": {
-        "voters": ["citizen_a", "citizen_b", "citizen_c"],
+        "voters": [
+          "citizen_01",
+          "citizen_02",
+          "citizen_03",
+          "citizen_04",
+          "citizen_05",
+          "citizen_06",
+          "citizen_07",
+          "citizen_08",
+          "citizen_09",
+          "citizen_10",
+          "citizen_11",
+          "citizen_12",
+          "citizen_13",
+          "citizen_14",
+          "citizen_15",
+          "citizen_16",
+          "citizen_17",
+          "citizen_18",
+          "citizen_19",
+          "citizen_20",
+          "citizen_21",
+          "citizen_22",
+          "citizen_23",
+          "citizen_24",
+          "citizen_25",
+          "citizen_26",
+          "citizen_27",
+          "citizen_28",
+          "citizen_29",
+          "citizen_30",
+          "citizen_31"
+        ],
         "algorithm": "majority",
         "threshold": 0.5,
         "tie_breaker": "reject"
       },
       "transitions": [
         {"decision": "approve", "to": "strategos_execute"},
-        {"decision": "reject", "to": "completed"}
+        {"decision": "reject", "to": "completed"},
+        {"decision": "default", "to": "completed"}
       ]
     },
     {
       "id": "strategos_execute",
       "kind": "executor",
-      "agent": "strategos",
-      "prompt_template": "你是将军，执行已通过提案。",
+      "agent": "strategos_1",
+      "soul_file_path": "souls/strategos_execute.md",
+      "prompt_template": "你是将军执行层。若有重大争议返回 dispute，否则返回 next。",
       "transitions": [
-        {"decision": "next", "to": "completed"}
+        {"decision": "next", "to": "completed"},
+        {"decision": "dispute", "to": "dikasteria_audit"},
+        {"decision": "default", "to": "completed"}
+      ]
+    },
+    {
+      "id": "dikasteria_audit",
+      "kind": "auditor",
+      "agent": "dikasteria_1",
+      "soul_file_path": "souls/dikasteria_audit.md",
+      "prompt_template": "你是陪审法庭，审查争议执行。approve=通过，invalidate=判定无效。",
+      "transitions": [
+        {"decision": "approve", "to": "completed"},
+        {"decision": "invalidate", "to": "completed"},
+        {"decision": "default", "to": "completed"}
       ]
     },
     {"id": "completed", "kind": "terminal"}
   ],
   "features": [
-    {"name": "monitor", "enabled": true, "config": {}}
+    {"name": "monitor", "enabled": true, "config": {"label": "公民监督旁路"}},
+    {"name": "shared_state", "enabled": true, "config": {}}
   ],
   "policy": {
     "require_json_decision": false,
-    "max_steps": 16
+    "max_steps": 24
   }
 }

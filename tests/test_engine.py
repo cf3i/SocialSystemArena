@@ -3,13 +3,14 @@ from __future__ import annotations
 import json
 import os
 import tempfile
+import threading
 import unittest
 from pathlib import Path
 
 from mas_engine.adapters.mock import MockAdapter
 from mas_engine.core.errors import SpecError
 from mas_engine.core.runtime import GovernanceRuntime
-from mas_engine.core.types import TaskState
+from mas_engine.core.types import AgentResult, TaskState
 from mas_engine.spec.compiler import compile_spec
 from mas_engine.storage.jsonl import JsonlStore
 
@@ -72,13 +73,15 @@ class EngineTests(unittest.TestCase):
         spec = compile_spec(
             INSTITUTION_SPECS / "athens_democracy" / "athens_consensus.json"
         )
+        vote_stage = next(s for s in spec.stages if s.id == "ekklesia_vote")
+        voters = list(vote_stage.consensus.voters if vote_stage.consensus else [])
+        self.assertGreaterEqual(len(voters), 3)
+        yes_voter = voters[0]
+        no_voters = voters[1:]
+        scripted = {"boule_planner_1": ["next"], yes_voter: ["yes"]}
+        scripted.update({v: ["no"] for v in no_voters})
         adapter = MockAdapter(
-            scripted_decisions={
-                "boule": ["next"],
-                "citizen_a": ["yes"],
-                "citizen_b": ["no"],
-                "citizen_c": ["no"],
-            }
+            scripted_decisions=scripted
         )
         rt = GovernanceRuntime(spec=spec, adapter=adapter)
         state = rt.run(
@@ -159,6 +162,107 @@ class EngineTests(unittest.TestCase):
         self.assertIn("transitions", prompt)
         self.assertIn("allowed_decisions", prompt)
 
+    def test_single_stage_includes_agent_profile(self) -> None:
+        class CaptureAdapter:
+            def __init__(self) -> None:
+                self.messages: dict[str, list[str]] = {}
+                self._lock = threading.Lock()
+
+            def dispatch(
+                self,
+                runtime_id: str,
+                message: str,
+                timeout_sec: int = 300,
+                retries: int = 1,
+            ) -> AgentResult:
+                del timeout_sec, retries
+                with self._lock:
+                    self.messages.setdefault(runtime_id, []).append(message)
+                return AgentResult(decision="next", summary=f"capture:{runtime_id}")
+
+        spec_obj = {
+            "meta": {
+                "id": "profile_demo",
+                "name": "profile demo",
+                "version": "0.1.0",
+                "pattern": "pipeline",
+            },
+            "entry_stage": "plan",
+            "agents": {
+                "planner": {
+                    "runtime_id": "planner",
+                    "role": "planner",
+                    "instructions": "PROFILE_MARKER_SINGLE_STAGE",
+                }
+            },
+            "stages": [
+                {
+                    "id": "plan",
+                    "kind": "planner",
+                    "agent": "planner",
+                    "prompt_template": "你是规划节点。任务:{title}",
+                    "transitions": [{"decision": "next", "to": "done"}],
+                },
+                {"id": "done", "kind": "terminal"},
+            ],
+        }
+        with tempfile.TemporaryDirectory() as td:
+            path = Path(td) / "profile_demo.json"
+            path.write_text(json.dumps(spec_obj), encoding="utf-8")
+            spec = compile_spec(path)
+
+        adapter = CaptureAdapter()
+        rt = GovernanceRuntime(spec=spec, adapter=adapter)
+        state = rt.run(
+            task_id="P-001",
+            title="profile test",
+            input_text="profile",
+            max_steps=8,
+        )
+        self.assertEqual(state.status, "done")
+        msg = adapter.messages.get("planner", [""])[0]
+        self.assertIn("[Agent Profile]", msg)
+        self.assertIn("PROFILE_MARKER_SINGLE_STAGE", msg)
+
+    def test_consensus_voters_receive_their_own_profile(self) -> None:
+        class CaptureAdapter:
+            def __init__(self) -> None:
+                self.messages: dict[str, list[str]] = {}
+                self._lock = threading.Lock()
+
+            def dispatch(
+                self,
+                runtime_id: str,
+                message: str,
+                timeout_sec: int = 300,
+                retries: int = 1,
+            ) -> AgentResult:
+                del timeout_sec, retries
+                with self._lock:
+                    self.messages.setdefault(runtime_id, []).append(message)
+
+                decision = "yes" if runtime_id.startswith("citizen_") else "next"
+                return AgentResult(decision=decision, summary=f"capture:{runtime_id}")
+
+        spec = compile_spec(
+            INSTITUTION_SPECS / "athens_democracy" / "athens_consensus.json"
+        )
+        adapter = CaptureAdapter()
+        rt = GovernanceRuntime(spec=spec, adapter=adapter)
+        state = rt.run(
+            task_id="C-PROFILE-001",
+            title="投票画像测试",
+            input_text="是否通过提案",
+            max_steps=10,
+        )
+        self.assertEqual(state.status, "done")
+        for voter in ["citizen_01", "citizen_02", "citizen_03"]:
+            runtime_id = spec.agents[voter].runtime_id
+            instruction = spec.agents[voter].instructions
+            msg = adapter.messages.get(runtime_id, [""])[0]
+            self.assertIn("[Agent Profile]", msg)
+            self.assertIn(instruction, msg)
+
     def test_trace_has_agent_rows_with_sequential_id(self) -> None:
         spec = compile_spec(
             INSTITUTION_SPECS / "egypt_pipeline" / "egypt_pipeline.json"
@@ -198,13 +302,15 @@ class EngineTests(unittest.TestCase):
         spec = compile_spec(
             INSTITUTION_SPECS / "athens_democracy" / "athens_consensus.json"
         )
+        vote_stage = next(s for s in spec.stages if s.id == "ekklesia_vote")
+        voters = list(vote_stage.consensus.voters if vote_stage.consensus else [])
+        self.assertGreaterEqual(len(voters), 3)
+        yes_voter = voters[0]
+        no_voters = voters[1:]
+        scripted = {"boule_planner_1": ["next"], yes_voter: ["yes"]}
+        scripted.update({v: ["no"] for v in no_voters})
         adapter = MockAdapter(
-            scripted_decisions={
-                "boule": ["next"],
-                "citizen_a": ["yes"],
-                "citizen_b": ["no"],
-                "citizen_c": ["no"],
-            }
+            scripted_decisions=scripted
         )
         with tempfile.TemporaryDirectory() as td:
             trace_path = Path(td) / "trace.jsonl"
@@ -227,10 +333,10 @@ class EngineTests(unittest.TestCase):
             ]
 
         agent_rows = [r for r in rows if r.get("record_type") == "agent_trace"]
-        self.assertEqual(len(agent_rows), 4)  # 1 proposer + 3 voters
+        self.assertEqual(len(agent_rows), 1 + len(voters))  # proposer + all voters
         self.assertEqual(
             [r["agent_trace"]["sequential_id"] for r in agent_rows],
-            [1, 2, 3, 4],
+            list(range(1, len(agent_rows) + 1)),
         )
 
     def test_soul_file_path_loaded_and_traced(self) -> None:
