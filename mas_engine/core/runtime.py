@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import logging
 import re
+import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from pathlib import Path
@@ -21,6 +22,7 @@ _POSITIVE_DECISIONS = {"approve", "approved", "yes", "pass", "accepted", "succes
 _FAILURE_DECISIONS = {"error", "failed", "reject", "rejected", "veto", "cancel", "cancelled"}
 _SECTION_MAX_CHARS = 3200
 _PROMPT_BODY_MAX_CHARS = 10000
+_DISPATCH_GUARD_SLACK_SEC = 1
 _PATTERN_STAGE_ALIAS: dict[str, dict[str, str]] = {
     "pipeline": {
         "planner": "plan",
@@ -115,6 +117,10 @@ class GovernanceRuntime:
                 "step": idx,
                 "human_confirm_callback": self.human_confirm_callback,
                 "agent_traces": [],
+                "adapter_dispatch": self._dispatch_with_guard,
+                "agents": self.spec.agents,
+                "next_agent_sequence": task.next_agent_sequence,
+                "append_agent_trace": self._append_agent_trace,
             }
             self._features.before_stage(task, stage, ctx)
 
@@ -122,10 +128,14 @@ class GovernanceRuntime:
             result = self._features.after_stage(task, stage, result, ctx)
 
             decision = str(ctx.get("force_decision", result.decision or stage.default_decision))
-            next_stage = self._resolve_next_stage(stage, decision)
-            if next_stage is None:
+            if decision.lower() == "error":
                 task.status = "error"
                 next_stage = task.current_stage
+            else:
+                next_stage = self._resolve_next_stage(stage, decision)
+                if next_stage is None:
+                    task.status = "error"
+                    next_stage = task.current_stage
 
             event = TaskEvent(
                 index=idx,
@@ -215,7 +225,7 @@ class GovernanceRuntime:
                     "You must strictly follow SOP and return valid JSON."
                 )
             try:
-                dispatch_result = self.adapter.dispatch(
+                dispatch_result = self._dispatch_with_guard(
                     runtime_id=agent.runtime_id,
                     message=message,
                     timeout_sec=agent.timeout_sec,
@@ -312,6 +322,59 @@ class GovernanceRuntime:
 
         return result
 
+    def _dispatch_with_guard(
+        self,
+        runtime_id: str,
+        message: str,
+        timeout_sec: int,
+        retries: int,
+    ) -> AgentResult:
+        timeout = max(1, int(timeout_sec or 0))
+        retry_count = max(1, int(retries or 1))
+        holder: dict[str, object] = {}
+        done = threading.Event()
+
+        def _target() -> None:
+            try:
+                holder["result"] = self.adapter.dispatch(
+                    runtime_id=runtime_id,
+                    message=message,
+                    timeout_sec=timeout,
+                    retries=retry_count,
+                )
+            except Exception as exc:  # adapter boundary
+                holder["error"] = exc
+            finally:
+                done.set()
+
+        th = threading.Thread(
+            target=_target,
+            daemon=True,
+            name=f"dispatch-{runtime_id}",
+        )
+        th.start()
+
+        wait_sec = timeout + _DISPATCH_GUARD_SLACK_SEC
+        if not done.wait(wait_sec):
+            raise AdapterError(
+                f"dispatch timeout: runtime_id={runtime_id} "
+                f"timeout_sec={timeout} waited={wait_sec}"
+            )
+
+        err = holder.get("error")
+        if err is not None:
+            if isinstance(err, AdapterError):
+                raise err
+            raise AdapterError(str(err))
+
+        out = holder.get("result")
+        if isinstance(out, AgentResult):
+            return out
+        raise AdapterError(
+            f"dispatch returned invalid result type for agent '{runtime_id}': "
+            f"{type(out).__name__}"
+        )
+
     def _run_consensus_stage(
         self,
         task: TaskState,
@@ -337,11 +400,11 @@ class GovernanceRuntime:
                     '{"decision":"yes|no","summary":"...","updates":{}}'
                 )
                 fut = ex.submit(
-                    self.adapter.dispatch,
-                    agent.runtime_id,
-                    msg,
-                    agent.timeout_sec,
-                    agent.retries,
+                    self._dispatch_with_guard,
+                    runtime_id=agent.runtime_id,
+                    message=msg,
+                    timeout_sec=agent.timeout_sec,
+                    retries=agent.retries,
                 )
                 futures[fut] = (voter, seq, agent.runtime_id)
 
@@ -451,11 +514,11 @@ class GovernanceRuntime:
                     '{"decision":"success|failed","summary":"...","updates":{}}'
                 )
                 fut = ex.submit(
-                    self.adapter.dispatch,
-                    agent.runtime_id,
-                    member_prompt,
-                    agent.timeout_sec,
-                    agent.retries,
+                    self._dispatch_with_guard,
+                    runtime_id=agent.runtime_id,
+                    message=member_prompt,
+                    timeout_sec=agent.timeout_sec,
+                    retries=agent.retries,
                 )
                 futures[fut] = (member, seq, agent.runtime_id)
 

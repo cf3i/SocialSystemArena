@@ -1,9 +1,9 @@
 meta:
   id: soviet_party_state_yaml
   name: 苏联党国体制（YAML）
-  version: "0.1.0"
+  version: "0.2.0"
   pattern: pipeline
-  description: Party-center planning pipeline with internal politburo consensus semantics.
+  description: Politburo internal-consensus planning pipeline with party-state execution and formal ratification.
 
 entry_stage: politburo_planner
 
@@ -11,26 +11,30 @@ agents:
   politburo:
     runtime_id: politburo
     role: planner
-    instructions: 政治局内部协商后对外输出单一决策
+    instructions: 作为政治局以集体协商形成单一政策输出；对外仅发布统一决策口径。
   sovmin:
     runtime_id: sovmin
     role: executor
+    instructions: 作为部长会议把政治局方向转译为部委可执行政务指令。
   gosplan:
     runtime_id: gosplan
     role: executor
+    instructions: 作为国家计委进行指标、产能与资源配额分配。
   republic_exec:
     runtime_id: republic_exec
     role: executor
+    instructions: 作为加盟共和国与地方执行体系落实计划并回传实施结果。
   supreme_soviet:
     runtime_id: supreme_soviet
     role: executor
+    instructions: 作为最高苏维埃进行形式性追认与法定发布。
 
 stages:
   - id: politburo_planner
     kind: planner
     agent: politburo
-    prompt_template: >
-      你代表政治局形成政策方向并下发执行。返回 next。
+    soul_file_path: souls/politburo_planner.md
+    description: 政治局内部协商后输出统一政策决策。
     transitions:
       - decision: next
         to: sovmin_deploy
@@ -40,8 +44,8 @@ stages:
   - id: sovmin_deploy
     kind: executor
     agent: sovmin
-    prompt_template: >
-      部长会议将政策转为部门执行指令。
+    soul_file_path: souls/sovmin_deploy.md
+    description: 部长会议将政策转为部委执行部署。
     transitions:
       - decision: next
         to: gosplan_allocate
@@ -51,8 +55,8 @@ stages:
   - id: gosplan_allocate
     kind: executor
     agent: gosplan
-    prompt_template: >
-      国家计委分配指标与资源。
+    soul_file_path: souls/gosplan_allocate.md
+    description: 国家计委下达资源与指标配额。
     transitions:
       - decision: next
         to: republic_execute
@@ -62,8 +66,8 @@ stages:
   - id: republic_execute
     kind: executor
     agent: republic_exec
-    prompt_template: >
-      各加盟共和国与地方层执行并反馈。
+    soul_file_path: souls/republic_execute.md
+    description: 加盟共和国与地方层按指标执行并反馈。
     transitions:
       - decision: next
         to: formal_ratify
@@ -73,8 +77,8 @@ stages:
   - id: formal_ratify
     kind: executor
     agent: supreme_soviet
-    prompt_template: >
-      最高苏维埃进行形式化追认。
+    soul_file_path: souls/formal_ratify.md
+    description: 最高苏维埃进行形式化追认与发布。
     transitions:
       - decision: next
         to: completed
@@ -84,16 +88,6 @@ stages:
   - id: completed
     kind: terminal
 
-features:
-  - name: shared_state
-    enabled: true
-    config: {}
-
-  - name: monitor
-    enabled: true
-    config:
-      label: 党国执行链路监控
-
 policy:
   require_json_decision: false
   max_steps: 24
@@ -101,4 +95,4 @@ policy:
 x_report_feature_catalog:
   - name: planner_internal_consensus
     mapped_to: stage.politburo_planner
-    runtime_support: modeled_by_prompt
+    runtime_support: modeled_by_soul_and_agent_instructions

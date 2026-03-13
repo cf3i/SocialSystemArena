@@ -1,0 +1,126 @@
+meta:
+  id: edo_bakuhan_yaml
+  name: 日本江户幕藩体制（YAML）
+  version: "0.1.0"
+  pattern: autonomous_cluster
+  description: Bakufu orchestrates domain-level autonomous execution with Sankin-kotai heartbeat control and Metsuke side-channel monitoring.
+
+entry_stage: shogun_orchestrate
+
+agents:
+  shogun:
+    runtime_id: shogun
+    role: orchestrator
+    instructions: 作为将军通过老中发布全国政策并定义不可逾越边界，不直接介入藩内细则。
+  satsuma_daimyo:
+    runtime_id: satsuma_daimyo
+    role: subsystem
+    instructions: 作为萨摩藩大名在藩内自治制定并执行措施，按参觐交代节奏回报幕府。
+  choshu_daimyo:
+    runtime_id: choshu_daimyo
+    role: subsystem
+    instructions: 作为长州藩大名在藩内自治制定并执行措施，按参觐交代节奏回报幕府。
+  kaga_daimyo:
+    runtime_id: kaga_daimyo
+    role: subsystem
+    instructions: 作为加贺藩大名在藩内自治制定并执行措施，按参觐交代节奏回报幕府。
+  tosa_daimyo:
+    runtime_id: tosa_daimyo
+    role: subsystem
+    instructions: 作为土佐藩大名在藩内自治制定并执行措施，按参觐交代节奏回报幕府。
+  bakufu_roju:
+    runtime_id: bakufu_roju
+    role: executor
+    instructions: 作为幕府老中汇总参觐交代回报，做心跳核验并上报合规态势。
+  bakufu_discipline:
+    runtime_id: bakufu_discipline
+    role: executor
+    instructions: 作为幕府处置节点，对严重违规藩执行改易或减封建议与流程。
+  metsuke:
+    runtime_id: metsuke
+    role: monitor
+    instructions: 作为目付进行旁路监察，只上报合规风险，不直接阻断主链路。
+
+stages:
+  - id: shogun_orchestrate
+    kind: orchestrator
+    agent: shogun
+    soul_file_path: souls/shogun_orchestrate.md
+    description: 将军通过老中发布全国性政策目标与边界。
+    transitions:
+      - decision: next
+        to: han_cluster_execute
+      - decision: default
+        to: han_cluster_execute
+
+  - id: han_cluster_execute
+    kind: cluster
+    soul_file_path: souls/han_cluster_execute.md
+    description: 各藩在自治权限内自行制定和执行地方细则。
+    cluster_members:
+      - agent: satsuma_daimyo
+        role: domain_subsystem
+        required: true
+      - agent: choshu_daimyo
+        role: domain_subsystem
+        required: true
+      - agent: kaga_daimyo
+        role: domain_subsystem
+        required: true
+      - agent: tosa_daimyo
+        role: domain_subsystem
+        required: true
+    transitions:
+      - decision: success
+        to: sankin_kotai_check
+      - decision: failure
+        to: sanction_enforce
+      - decision: default
+        to: sankin_kotai_check
+
+  - id: sankin_kotai_check
+    kind: executor
+    agent: bakufu_roju
+    soul_file_path: souls/sankin_kotai_check.md
+    description: 参觐交代周期内核验各藩心跳回报与合规状态。
+    transitions:
+      - decision: compliant
+        to: completed
+      - decision: non_compliant
+        to: sanction_enforce
+      - decision: default
+        to: completed
+
+  - id: sanction_enforce
+    kind: executor
+    agent: bakufu_discipline
+    soul_file_path: souls/sanction_enforce.md
+    description: 对严重违规藩执行改易/减封等惩罚流程。
+    transitions:
+      - decision: next
+        to: completed
+      - decision: default
+        to: completed
+
+  - id: completed
+    kind: terminal
+
+features:
+  - name: monitor
+    enabled: true
+    config:
+      label: 目付旁路监察
+      observer_agent: metsuke
+      note: 仅旁路监控与弹劾报告，不阻断主链路
+
+policy:
+  require_json_decision: false
+  max_steps: 20
+
+x_report_feature_catalog:
+  - name: monitor
+    mapped_to: feature.monitor
+    runtime_support: built_in
+  - name: orchestrator_heartbeat_control
+    mapped_to: stage.sankin_kotai_check
+    runtime_support: modeled_by_topology

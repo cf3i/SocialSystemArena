@@ -1,9 +1,9 @@
 meta:
   id: mongol_empire_yaml
   name: 蒙古帝国札撒与汗国制（YAML）
-  version: "0.1.0"
+  version: "0.2.0"
   pattern: pipeline
-  description: Pipeline with recursive executor decomposition (万->千->百->十).
+  description: Great Khan decree pipeline with recursive executor decomposition (10x per level).
 
 entry_stage: khagan_order
 
@@ -11,28 +11,46 @@ agents:
   khagan:
     runtime_id: khagan
     role: initiator
+    timeout_sec: 45
+    retries: 1
+    instructions: 作为大汗定义征调目标、时间要求与札撒红线，不直接下钻到户级细节。
   imperial_secretariat:
     runtime_id: imperial_secretariat
     role: planner
+    timeout_sec: 45
+    retries: 1
+    instructions: 作为中枢书记官将大汗命令转化为万户级可执行配额方案。
   tumen_commander:
     runtime_id: tumen_commander
     role: executor
+    timeout_sec: 45
+    retries: 1
+    instructions: 作为万户长把任务按 1:10 分解给千户长，并汇总辖下进度。
   mingghan_commander:
     runtime_id: mingghan_commander
     role: executor
+    timeout_sec: 45
+    retries: 1
+    instructions: 作为千户长把任务按 1:10 分解给百户长，并回传征调状态。
   jaghun_commander:
     runtime_id: jaghun_commander
     role: executor
+    timeout_sec: 45
+    retries: 1
+    instructions: 作为百户长把任务按 1:10 分解给十户长，并监控末端落实。
   arban_commander:
     runtime_id: arban_commander
     role: executor
+    timeout_sec: 45
+    retries: 1
+    instructions: 作为十户长执行户级动员与集结，形成末端完成回报。
 
 stages:
   - id: khagan_order
     kind: initiator
     agent: khagan
-    prompt_template: >
-      你是大汗，下达征调令。任务: {title}
+    soul_file_path: souls/khagan_order.md
+    description: 大汗发布征调令并定义边界。
     transitions:
       - decision: next
         to: imperial_plan
@@ -42,8 +60,8 @@ stages:
   - id: imperial_plan
     kind: planner
     agent: imperial_secretariat
-    prompt_template: >
-      你是中枢书记官，制定万户级分配计划并下发。
+    soul_file_path: souls/imperial_plan.md
+    description: 中枢将征调令转成万户级配额与节奏计划。
     transitions:
       - decision: next
         to: tumen_level_execute
@@ -53,8 +71,8 @@ stages:
   - id: tumen_level_execute
     kind: executor
     agent: tumen_commander
-    prompt_template: >
-      你是万户长，分解任务到千户级并反馈。
+    soul_file_path: souls/tumen_level_execute.md
+    description: 万户级执行并向下分解到千户级。
     transitions:
       - decision: next
         to: mingghan_level_execute
@@ -64,8 +82,8 @@ stages:
   - id: mingghan_level_execute
     kind: executor
     agent: mingghan_commander
-    prompt_template: >
-      你是千户长，分解任务到百户级并反馈。
+    soul_file_path: souls/mingghan_level_execute.md
+    description: 千户级执行并向下分解到百户级。
     transitions:
       - decision: next
         to: jaghun_level_execute
@@ -75,8 +93,8 @@ stages:
   - id: jaghun_level_execute
     kind: executor
     agent: jaghun_commander
-    prompt_template: >
-      你是百户长，分解任务到十户级并反馈。
+    soul_file_path: souls/jaghun_level_execute.md
+    description: 百户级执行并向下分解到十户级。
     transitions:
       - decision: next
         to: arban_level_execute
@@ -86,8 +104,8 @@ stages:
   - id: arban_level_execute
     kind: executor
     agent: arban_commander
-    prompt_template: >
-      你是十户长，执行并汇报完成情况。
+    soul_file_path: souls/arban_level_execute.md
+    description: 十户级落实动员并回报完成情况。
     transitions:
       - decision: next
         to: completed
@@ -96,16 +114,6 @@ stages:
 
   - id: completed
     kind: terminal
-
-features:
-  - name: shared_state
-    enabled: true
-    config: {}
-
-  - name: monitor
-    enabled: true
-    config:
-      label: 逐级递归执行监控
 
 policy:
   require_json_decision: false

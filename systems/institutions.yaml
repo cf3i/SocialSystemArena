@@ -10,6 +10,10 @@ institutions:
         name: 雅典民主（YAML）
         name_en: Athens Democracy (YAML)
         path: systems/institutions/athens_democracy/athens_democracy.yaml
+      - id: athens_open_challenge_yaml
+        name: 雅典民主（开放提案+中段司法挑战，YAML）
+        name_en: Athens Democracy (Open Proposal + Mid-Judicial Challenge, YAML)
+        path: systems/institutions/athens_democracy/athens_open_challenge.yaml
       - id: athens_json
         name: 雅典民主（JSON）
         name_en: Athens Democracy (JSON)
@@ -75,6 +79,18 @@ institutions:
         name_en: United States Federal System (JSON)
         path: systems/institutions/us_federal/us_federal_gated.json
 
+  - id: edo_bakuhan
+    name: 日本江户幕藩体制
+    name_en: Edo Bakuhan System
+    description: 幕府编排下各藩自治执行，并以参觐交代形成心跳控制
+    description_en: Bakufu-orchestrated domain autonomy with Sankin-kotai heartbeat control
+    default_spec_id: edo_yaml
+    specs:
+      - id: edo_yaml
+        name: 日本江户幕藩体制（YAML）
+        name_en: Edo Bakuhan System (YAML)
+        path: systems/institutions/edo_bakuhan/edo_bakuhan.yaml
+
   - id: soviet_party_state
     name: 苏联党国体制
     name_en: Soviet Party-State System
@@ -86,6 +102,10 @@ institutions:
         name: 苏联党国体制（YAML）
         name_en: Soviet Party-State System (YAML)
         path: systems/institutions/soviet_party_state/soviet_party_state.yaml
+      - id: soviet_consensus_loop_yaml
+        name: 苏联党国体制（政治局共识+偏差回环，YAML）
+        name_en: Soviet Party-State System (Politburo Consensus + Deviation Loop, YAML)
+        path: systems/institutions/soviet_party_state/soviet_consensus_loop.yaml
 
   - id: egypt_pipeline
     name: 古埃及法老制

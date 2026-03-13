@@ -2,63 +2,142 @@
   "meta": {
     "id": "us_federal_gated",
     "name": "美国联邦总统制",
-    "version": "0.1.0",
+    "version": "0.2.0",
     "pattern": "gated_pipeline",
-    "description": "Multi-gate pipeline with committee, congress, president and auditor"
+    "description": "Legislator initiation with committee, bicameral congress, presidential veto, override path, and court audit"
   },
-  "entry_stage": "committee_modify",
+  "entry_stage": "legislator_initiative",
   "agents": {
-    "committee": {"runtime_id": "committee", "role": "gate"},
-    "congress": {"runtime_id": "congress", "role": "gate"},
-    "president": {"runtime_id": "president", "role": "gate"},
-    "agency": {"runtime_id": "agency", "role": "executor"},
-    "supreme_court": {"runtime_id": "supreme_court", "role": "auditor"}
+    "legislator": {
+      "runtime_id": "legislator",
+      "role": "initiator",
+      "instructions": "作为议员提出法案目标与立法范围，不直接代替后续审议机关作出通过决定。"
+    },
+    "committee": {
+      "runtime_id": "committee",
+      "role": "gate",
+      "instructions": "作为委员会完成听证与条文修改审查，输出是否送交全院表决。"
+    },
+    "house": {
+      "runtime_id": "house",
+      "role": "gate",
+      "instructions": "作为众议院进行全院表决，聚焦民意授权与预算可行性。"
+    },
+    "senate": {
+      "runtime_id": "senate",
+      "role": "gate",
+      "instructions": "作为参议院进行全院表决，聚焦联邦层面稳定性与长期约束。"
+    },
+    "president": {
+      "runtime_id": "president",
+      "role": "gate",
+      "instructions": "作为总统决定签署或否决法案；否决后交由国会考虑覆决。"
+    },
+    "congress_override_panel": {
+      "runtime_id": "congress_override_panel",
+      "role": "gate",
+      "instructions": "作为国会覆决环节评估是否达到推翻否决的门槛并作出结论。"
+    },
+    "agency": {
+      "runtime_id": "agency",
+      "role": "executor",
+      "instructions": "作为行政机构执行已生效法案并反馈实施状态。"
+    },
+    "supreme_court": {
+      "runtime_id": "supreme_court",
+      "role": "auditor",
+      "instructions": "作为最高法院进行违宪审查，可维持或判定无效。"
+    }
   },
   "stages": [
+    {
+      "id": "legislator_initiative",
+      "kind": "initiator",
+      "agent": "legislator",
+      "description": "议员提出法案草案并定义目标。",
+      "soul_file_path": "souls/legislator_initiative.md",
+      "transitions": [
+        {"decision": "next", "to": "committee_modify"},
+        {"decision": "default", "to": "committee_modify"}
+      ]
+    },
     {
       "id": "committee_modify",
       "kind": "gate",
       "agent": "committee",
-      "prompt_template": "委员会审议并可修改，decision=approve或reject",
+      "description": "委员会听证、修改并决定是否出委员会。",
+      "soul_file_path": "souls/committee_modify.md",
       "transitions": [
-        {"decision": "approve", "to": "congress_vote"},
-        {"decision": "reject", "to": "completed"}
+        {"decision": "approve", "to": "house_vote"},
+        {"decision": "reject", "to": "completed"},
+        {"decision": "default", "to": "completed"}
       ]
     },
     {
-      "id": "congress_vote",
+      "id": "house_vote",
       "kind": "gate",
-      "agent": "congress",
-      "prompt_template": "国会投票，decision=approve或reject",
+      "agent": "house",
+      "description": "众议院全院表决。",
+      "soul_file_path": "souls/house_vote.md",
+      "transitions": [
+        {"decision": "approve", "to": "senate_vote"},
+        {"decision": "reject", "to": "completed"},
+        {"decision": "default", "to": "completed"}
+      ]
+    },
+    {
+      "id": "senate_vote",
+      "kind": "gate",
+      "agent": "senate",
+      "description": "参议院全院表决。",
+      "soul_file_path": "souls/senate_vote.md",
       "transitions": [
         {"decision": "approve", "to": "president_veto"},
-        {"decision": "reject", "to": "completed"}
+        {"decision": "reject", "to": "completed"},
+        {"decision": "default", "to": "completed"}
       ]
     },
     {
       "id": "president_veto",
       "kind": "gate",
       "agent": "president",
-      "prompt_template": "总统签署或否决，decision=approve或veto",
+      "description": "总统签署或否决。",
+      "soul_file_path": "souls/president_veto.md",
       "transitions": [
         {"decision": "approve", "to": "agency_execute"},
-        {"decision": "veto", "to": "completed"}
+        {"decision": "veto", "to": "congress_override"},
+        {"decision": "default", "to": "completed"}
+      ]
+    },
+    {
+      "id": "congress_override",
+      "kind": "gate",
+      "agent": "congress_override_panel",
+      "description": "国会是否推翻总统否决。",
+      "soul_file_path": "souls/congress_override.md",
+      "transitions": [
+        {"decision": "approve", "to": "agency_execute"},
+        {"decision": "reject", "to": "completed"},
+        {"decision": "default", "to": "completed"}
       ]
     },
     {
       "id": "agency_execute",
       "kind": "executor",
       "agent": "agency",
-      "prompt_template": "行政机构执行法案并回报，decision=next",
+      "description": "行政机构执行生效法案并回报。",
+      "soul_file_path": "souls/agency_execute.md",
       "transitions": [
-        {"decision": "next", "to": "court_audit"}
+        {"decision": "next", "to": "court_audit"},
+        {"decision": "default", "to": "court_audit"}
       ]
     },
     {
       "id": "court_audit",
       "kind": "auditor",
       "agent": "supreme_court",
-      "prompt_template": "最高法院审计，decision=approve或invalidate",
+      "description": "最高法院进行合宪性审查。",
+      "soul_file_path": "souls/court_audit.md",
       "transitions": [
         {"decision": "approve", "to": "completed"},
         {"decision": "invalidate", "to": "completed"},
@@ -67,12 +146,25 @@
     },
     {"id": "completed", "kind": "terminal"}
   ],
-  "features": [
-    {"name": "monitor", "enabled": true, "config": {}},
-    {"name": "shared_state", "enabled": true, "config": {}}
-  ],
   "policy": {
     "require_json_decision": false,
-    "max_steps": 20
-  }
+    "max_steps": 28
+  },
+  "x_report_feature_catalog": [
+    {
+      "name": "multigate_pipeline",
+      "mapped_to": "stage.committee_modify->house_vote->senate_vote->president_veto",
+      "runtime_support": "modeled_by_topology"
+    },
+    {
+      "name": "veto_override_path",
+      "mapped_to": "stage.president_veto->congress_override",
+      "runtime_support": "modeled_by_topology"
+    },
+    {
+      "name": "auditor_invalidate",
+      "mapped_to": "stage.court_audit",
+      "runtime_support": "modeled_by_topology"
+    }
+  ]
 }

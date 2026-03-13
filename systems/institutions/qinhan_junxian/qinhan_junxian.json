@@ -2,23 +2,44 @@
   "meta": {
     "id": "qinhan_junxian",
     "name": "秦汉郡县制",
-    "version": "0.1.0",
+    "version": "0.2.0",
     "pattern": "pipeline",
-    "description": "Imperial decree pipeline with side-channel censor monitoring"
+    "description": "Imperial decree pipeline (Emperor -> Chancellor -> Commandery -> County) with side-channel censor monitoring"
   },
   "entry_stage": "huangdi_decree",
   "agents": {
-    "huangdi": {"runtime_id": "huangdi", "role": "initiator"},
-    "chengxiang": {"runtime_id": "chengxiang", "role": "planner"},
-    "junshou": {"runtime_id": "junshou", "role": "executor"},
-    "xianling": {"runtime_id": "xianling", "role": "executor"},
-    "yushi": {"runtime_id": "yushi", "role": "monitor"}
+    "huangdi": {
+      "runtime_id": "huangdi",
+      "role": "initiator",
+      "instructions": "作为皇帝发布政令目标与边界，不直接进入地方执行细节。"
+    },
+    "chengxiang": {
+      "runtime_id": "chengxiang",
+      "role": "planner",
+      "instructions": "作为丞相制定郡县实施细则；若涉及军事协调，可在方案中标注与太尉协同要点。"
+    },
+    "junshou": {
+      "runtime_id": "junshou",
+      "role": "executor",
+      "instructions": "作为郡守负责郡级分解、调度与督导，并向上反馈执行态势。"
+    },
+    "xianling": {
+      "runtime_id": "xianling",
+      "role": "executor",
+      "instructions": "作为县令在辖区落地执行政令，输出执行结果与问题清单。"
+    },
+    "yushi": {
+      "runtime_id": "yushi",
+      "role": "monitor",
+      "instructions": "作为御史系统旁路监察角色，仅做观察和上报，不直接阻断主链路。"
+    }
   },
   "stages": [
     {
       "id": "huangdi_decree",
       "kind": "initiator",
       "agent": "huangdi",
+      "soul_file_path": "souls/huangdi_decree.md",
       "prompt_template": "你是皇帝，下达新政令。任务:{title}",
       "transitions": [
         {"decision": "next", "to": "chengxiang_plan"},
@@ -29,6 +50,7 @@
       "id": "chengxiang_plan",
       "kind": "planner",
       "agent": "chengxiang",
+      "soul_file_path": "souls/chengxiang_plan.md",
       "prompt_template": "你是丞相，制定郡县执行细则。任务:{title}",
       "transitions": [
         {"decision": "next", "to": "jun_dispatch"},
@@ -39,6 +61,7 @@
       "id": "jun_dispatch",
       "kind": "executor",
       "agent": "junshou",
+      "soul_file_path": "souls/jun_dispatch.md",
       "prompt_template": "你是郡守，向各县分解并派发执行任务。任务:{title}",
       "transitions": [
         {"decision": "next", "to": "xian_execute"},
@@ -49,6 +72,7 @@
       "id": "xian_execute",
       "kind": "executor",
       "agent": "xianling",
+      "soul_file_path": "souls/xian_execute.md",
       "prompt_template": "你是县令，在辖区内落地执行政令。任务:{title}",
       "transitions": [
         {"decision": "next", "to": "completed"},
@@ -63,12 +87,13 @@
       "enabled": true,
       "config": {
         "label": "御史大夫旁路监察",
-        "observer_agent": "yushi"
+        "observer_agent": "yushi",
+        "note": "旁路只读监察与弹劾上报，不直接阻断主链路"
       }
     }
   ],
   "policy": {
     "require_json_decision": false,
-    "max_steps": 16
+    "max_steps": 20
   }
 }

@@ -1,63 +1,84 @@
 meta: {
   id:          "tang_sanshengliubu"
   name:        "唐代三省六部"
-  version:     "0.1.0"
+  version:     "0.2.0"
   pattern:     "gated_pipeline"
-  description: "Single-gate institutional review with multi-ministry execution"
+  description: "Emperor intent -> Zhongshu draft -> Menxia gate reject loop -> Shangshu dispatch -> Six ministries execution"
 }
 
-entry_stage: "taizi_triage"
+entry_stage: "huangdi_intent"
 
 agents: {
-  taizi: {
-    runtime_id: "taizi"
+  huangdi: {
+    runtime_id: "huangdi"
     role:       "initiator"
-    timeout_sec: 180
-    retries:    1
+    instructions: "作为皇帝给出法令目标与红线，通常不直接参与细部执行。"
   }
   zhongshu: {
     runtime_id: "zhongshu"
     role:       "planner"
-    timeout_sec: 300
-    retries:    1
+    instructions: "作为中书省起草诏令文本与实施框架，接收封驳后按意见修订。"
   }
   menxia: {
     runtime_id: "menxia"
     role:       "gate"
-    timeout_sec: 240
-    retries:    1
+    instructions: "作为门下省进行封驳审查；不通过则退回中书重拟。"
   }
   shangshu: {
     runtime_id: "shangshu"
-    role:       "dispatcher"
-    timeout_sec: 300
-    retries:    1
+    role:       "executor"
+    instructions: "作为尚书省将通过诏令拆解为六部可执行工单与协同顺序。"
   }
-  hubu: { runtime_id: "hubu", role: "executor" }
-  libu: { runtime_id: "libu", role: "executor" }
-  bingbu: { runtime_id: "bingbu", role: "executor" }
-  xingbu: { runtime_id: "xingbu", role: "executor" }
-  gongbu: { runtime_id: "gongbu", role: "executor" }
-  libu_hr: { runtime_id: "libu_hr", role: "executor" }
+  hubu: {
+    runtime_id: "hubu"
+    role:       "executor"
+    instructions: "户部负责财政税赋、仓储与预算平衡执行。"
+  }
+  libu: {
+    runtime_id: "libu"
+    role:       "executor"
+    instructions: "礼部负责礼制文告、典章流程与对外文书协同。"
+  }
+  libu_hr: {
+    runtime_id: "libu_hr"
+    role:       "executor"
+    instructions: "吏部负责人事任免、官员考课与编制配置。"
+  }
+  bingbu: {
+    runtime_id: "bingbu"
+    role:       "executor"
+    instructions: "兵部负责军事相关调度、兵员与防务配套。"
+  }
+  xingbu: {
+    runtime_id: "xingbu"
+    role:       "executor"
+    instructions: "刑部负责法令合规、刑名审查与执法边界。"
+  }
+  gongbu: {
+    runtime_id: "gongbu"
+    role:       "executor"
+    instructions: "工部负责工程营造、器用与基础设施落地。"
+  }
 }
 
 stages: [
   {
-    id:    "taizi_triage"
+    id:    "huangdi_intent"
     kind:  "initiator"
-    agent: "taizi"
-    prompt_template: "你是太子，请分拣此输入是否为正式旨意。\\n任务: {title}\\n输入: {input_text}\\n返回JSON decision=work_order或smalltalk"
+    agent: "huangdi"
+    description: "皇帝授意并明确政策目标与边界。"
+    soul_file_path: "souls/huangdi_intent.md"
     transitions: [
-      { decision: "smalltalk", to: "completed" },
-      { decision: "work_order", to: "zhongshu_plan" },
-      { decision: "default", to: "zhongshu_plan" },
+      { decision: "next", to: "zhongshu_draft" },
+      { decision: "default", to: "zhongshu_draft" },
     ]
   },
   {
-    id:    "zhongshu_plan"
+    id:    "zhongshu_draft"
     kind:  "planner"
     agent: "zhongshu"
-    prompt_template: "你是中书省，输出执行方案并提交门下省。\\n任务: {title}\\n输入: {input_text}\\n返回JSON decision=submit"
+    description: "中书省起草可审议诏令，提交门下省审核。"
+    soul_file_path: "souls/zhongshu_draft.md"
     transitions: [
       { decision: "submit", to: "menxia_gate" },
       { decision: "default", to: "menxia_gate" },
@@ -67,49 +88,42 @@ stages: [
     id:    "menxia_gate"
     kind:  "gate"
     agent: "menxia"
-    prompt_template: "你是门下省，审议中书方案，decision=approve或reject。\\n历史: {history}"
+    description: "门下省封驳审查；reject 触发回路，imperial_override 为非常规覆盖。"
+    soul_file_path: "souls/menxia_gate.md"
     transitions: [
       { decision: "approve", to: "shangshu_dispatch" },
-      { decision: "reject", to: "zhongshu_plan" },
-      { decision: "default", to: "zhongshu_plan" },
+      { decision: "reject", to: "zhongshu_draft" },
+      { decision: "imperial_override", to: "shangshu_dispatch" },
+      { decision: "default", to: "zhongshu_draft" },
     ]
   },
   {
     id:    "shangshu_dispatch"
     kind:  "executor"
     agent: "shangshu"
-    prompt_template: "你是尚书省，负责分派六部执行。返回 decision=dispatched"
+    description: "尚书省统筹六部任务拆分与依赖顺序。"
+    soul_file_path: "souls/shangshu_dispatch.md"
     transitions: [
-      { decision: "dispatched", to: "liubu_cluster" },
-      { decision: "default", to: "liubu_cluster" },
+      { decision: "dispatch", to: "liubu_execution" },
+      { decision: "default", to: "liubu_execution" },
     ]
   },
   {
-    id:   "liubu_cluster"
+    id:   "liubu_execution"
     kind: "cluster"
-    prompt_template: "你是六部成员，请执行分配子任务并返回JSON decision=success|failed"
+    description: "六部并行执行职责内任务并回报。"
+    soul_file_path: "souls/liubu_execution.md"
     cluster_members: [
-      { agent: "hubu", role: "finance", required: true },
-      { agent: "libu", role: "documentation", required: true },
-      { agent: "bingbu", role: "engineering", required: true },
-      { agent: "xingbu", role: "compliance", required: true },
-      { agent: "gongbu", role: "infrastructure", required: true },
-      { agent: "libu_hr", role: "staffing", required: false },
+      { agent: "hubu", role: "finance_tax", required: true },
+      { agent: "libu", role: "ritual_docs", required: true },
+      { agent: "libu_hr", role: "personnel_admin", required: true },
+      { agent: "bingbu", role: "military_affairs", required: true },
+      { agent: "xingbu", role: "legal_compliance", required: true },
+      { agent: "gongbu", role: "engineering_works", required: true },
     ]
     transitions: [
-      { decision: "success", to: "review_report" },
+      { decision: "success", to: "completed" },
       { decision: "failure", to: "shangshu_dispatch" },
-      { decision: "default", to: "review_report" },
-    ]
-  },
-  {
-    id:    "review_report"
-    kind:  "auditor"
-    agent: "zhongshu"
-    prompt_template: "你是中书省，总结六部结果并回奏。decision=approve或rework"
-    transitions: [
-      { decision: "approve", to: "completed" },
-      { decision: "rework", to: "zhongshu_plan" },
       { decision: "default", to: "completed" },
     ]
   },
@@ -119,14 +133,7 @@ stages: [
   },
 ]
 
-features: [
-  { name: "monitor", enabled: true, config: {} },
-  { name: "shared_state", enabled: true, config: {} },
-  { name: "system_protocol", enabled: true, config: { banned_terms: ["rm -rf", "DROP TABLE"] } },
-]
-
 policy: {
-  banned_terms: ["rm -rf", "DROP TABLE"]
   require_json_decision: false
-  max_steps: 40
+  max_steps: 32
 }

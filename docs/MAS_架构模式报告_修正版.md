@@ -2,7 +2,7 @@
 
 - 不同治理制度可以统一抽象为：`Pattern（消息流拓扑） + Feature（可叠加特性）`。
 - 4 类核心 Pattern：`Pipeline`、`Gated Pipeline`、`Autonomous Cluster`、`Consensus`。
-- 实验阶段优先选各 Pattern 的 Representative 制度：雅典民主,秦汉郡县,唐朝三省六部,蒙古帝国,美国联邦,苏联
+- 实验阶段优先选各 Pattern 的 Representative 制度：雅典民主,秦汉郡县,唐朝三省六部,蒙古帝国,美国联邦,苏联, 日本江户幕藩体制
 
 # MAS 架构模式报告
 

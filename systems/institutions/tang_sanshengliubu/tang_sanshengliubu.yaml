@@ -1,47 +1,71 @@
 meta:
   id: tang_sanshengliubu_yaml
   name: 唐代三省六部（YAML）
-  version: "0.1.0"
+  version: "0.2.0"
   pattern: gated_pipeline
-  description: Single-gate review (Menxia) with multi-ministry execution.
+  description: Emperor intent -> Zhongshu draft -> Menxia gate reject loop -> Shangshu dispatch -> Six ministries execution.
 
-entry_stage: zhongshu_plan
+entry_stage: huangdi_intent
 
 agents:
+  huangdi:
+    runtime_id: huangdi
+    role: initiator
+    instructions: 作为皇帝给出法令目标与红线，通常不直接参与细部执行。
   zhongshu:
     runtime_id: zhongshu
     role: planner
+    instructions: 作为中书省起草诏令文本与实施框架，接收封驳后按意见修订。
   menxia:
     runtime_id: menxia
     role: gate
+    instructions: 作为门下省进行封驳审查；不通过则退回中书重拟。
   shangshu:
     runtime_id: shangshu
-    role: orchestrator
+    role: executor
+    instructions: 作为尚书省将通过诏令拆解为六部可执行工单与协同顺序。
   hubu:
     runtime_id: hubu
     role: executor
+    instructions: 户部负责财政税赋、仓储与预算平衡执行。
   libu:
     runtime_id: libu
     role: executor
-  bingbu:
-    runtime_id: bingbu
-    role: executor
-  xingbu:
-    runtime_id: xingbu
-    role: executor
-  gongbu:
-    runtime_id: gongbu
-    role: executor
+    instructions: 礼部负责礼制文告、典章流程与对外文书协同。
   libu_hr:
     runtime_id: libu_hr
     role: executor
+    instructions: 吏部负责人事任免、官员考课与编制配置。
+  bingbu:
+    runtime_id: bingbu
+    role: executor
+    instructions: 兵部负责军事相关调度、兵员与防务配套。
+  xingbu:
+    runtime_id: xingbu
+    role: executor
+    instructions: 刑部负责法令合规、刑名审查与执法边界。
+  gongbu:
+    runtime_id: gongbu
+    role: executor
+    instructions: 工部负责工程营造、器用与基础设施落地。
 
 stages:
-  - id: zhongshu_plan
+  - id: huangdi_intent
+    kind: initiator
+    agent: huangdi
+    soul_file_path: souls/huangdi_intent.md
+    description: 皇帝授意并明确政策目标与边界。
+    transitions:
+      - decision: next
+        to: zhongshu_draft
+      - decision: default
+        to: zhongshu_draft
+
+  - id: zhongshu_draft
     kind: planner
     agent: zhongshu
-    prompt_template: >
-      你是中书省，形成诏令草案并提交门下省审议。返回 submit。
+    soul_file_path: souls/zhongshu_draft.md
+    description: 中书省起草可审议诏令，提交门下省审核。
     transitions:
       - decision: submit
         to: menxia_gate
@@ -51,37 +75,42 @@ stages:
   - id: menxia_gate
     kind: gate
     agent: menxia
-    prompt_template: >
-      你是门下省，拥有封驳权。approve=通过，reject=打回中书。
+    soul_file_path: souls/menxia_gate.md
+    description: 门下省封驳审查；reject 触发回路，imperial_override 为非常规覆盖。
     transitions:
       - decision: approve
         to: shangshu_dispatch
       - decision: reject
-        to: zhongshu_plan
+        to: zhongshu_draft
+      - decision: imperial_override
+        to: shangshu_dispatch
       - decision: default
-        to: zhongshu_plan
+        to: zhongshu_draft
 
   - id: shangshu_dispatch
-    kind: orchestrator
+    kind: executor
     agent: shangshu
-    prompt_template: >
-      你是尚书省，分派六部执行，返回 dispatch。
+    soul_file_path: souls/shangshu_dispatch.md
+    description: 尚书省统筹六部任务拆分与依赖顺序。
     transitions:
       - decision: dispatch
-        to: liubu_exec
+        to: liubu_execution
       - decision: default
-        to: liubu_exec
+        to: liubu_execution
 
-  - id: liubu_exec
+  - id: liubu_execution
     kind: cluster
-    prompt_template: >
-      六部按职责执行，返回 success 或 failed。
+    soul_file_path: souls/liubu_execution.md
+    description: 六部并行执行职责内任务并回报。
     cluster_members:
       - agent: hubu
-        role: finance
+        role: finance_tax
         required: true
       - agent: libu
         role: ritual_docs
+        required: true
+      - agent: libu_hr
+        role: personnel_admin
         required: true
       - agent: bingbu
         role: military_affairs
@@ -90,11 +119,8 @@ stages:
         role: legal_compliance
         required: true
       - agent: gongbu
-        role: engineering
+        role: engineering_works
         required: true
-      - agent: libu_hr
-        role: personnel
-        required: false
     transitions:
       - decision: success
         to: completed
@@ -106,21 +132,14 @@ stages:
   - id: completed
     kind: terminal
 
-features:
-  - name: monitor
-    enabled: true
-    config:
-      label: 三省流程监控
-
-  - name: shared_state
-    enabled: true
-    config: {}
-
 policy:
   require_json_decision: false
-  max_steps: 40
+  max_steps: 32
 
 x_report_feature_catalog:
   - name: gate_reject_loop
     mapped_to: stage.menxia_gate
+    runtime_support: modeled_by_topology
+  - name: exceptional_override
+    mapped_to: stage.menxia_gate.decision.imperial_override
     runtime_support: modeled_by_topology

@@ -1,0 +1,143 @@
+meta:
+  id: soviet_consensus_loop_yaml
+  name: 苏联党国体制（政治局共识+偏差回环，YAML）
+  version: "0.1.0"
+  pattern: consensus
+  description: Politburo explicit consensus entry with republic deviation-report feedback loop.
+
+entry_stage: politburo_consensus
+
+agents:
+  politburo_member_1:
+    runtime_id: politburo_member_1
+    role: voter
+    instructions: 你是政治局成员，优先维护总体战略一致性与国家能力边界，投票仅返回 yes/no。
+  politburo_member_2:
+    runtime_id: politburo_member_2
+    role: voter
+    instructions: 你是政治局成员，优先考量工业与资源可达性，投票仅返回 yes/no。
+  politburo_member_3:
+    runtime_id: politburo_member_3
+    role: voter
+    instructions: 你是政治局成员，优先考量政治稳定与执行纪律，投票仅返回 yes/no。
+  politburo_member_4:
+    runtime_id: politburo_member_4
+    role: voter
+    instructions: 你是政治局成员，优先考量地方执行能力与成本，投票仅返回 yes/no。
+  politburo_member_5:
+    runtime_id: politburo_member_5
+    role: voter
+    instructions: 你是政治局成员，优先考量国际压力与安全风险，投票仅返回 yes/no。
+  sovmin:
+    runtime_id: sovmin
+    role: executor
+    instructions: 作为部长会议把政治局共识转译为部委可执行政务指令。
+  gosplan:
+    runtime_id: gosplan
+    role: executor
+    instructions: 作为国家计委进行指标、产能与资源配额分配。
+  republic_exec:
+    runtime_id: republic_exec
+    role: executor
+    instructions: 作为加盟共和国与地方执行体系落实计划并回传实施结果；重大偏差时上报复议。
+  supreme_soviet:
+    runtime_id: supreme_soviet
+    role: executor
+    instructions: 作为最高苏维埃进行形式性追认与法定发布。
+
+stages:
+  - id: politburo_consensus
+    kind: consensus
+    soul_file_path: souls/politburo_consensus.md
+    description: 政治局成员集体投票形成统一政策口径。
+    consensus:
+      voters:
+        - politburo_member_1
+        - politburo_member_2
+        - politburo_member_3
+        - politburo_member_4
+        - politburo_member_5
+      algorithm: majority
+      threshold: 0.6
+      tie_breaker: reject
+    transitions:
+      - decision: approve
+        to: sovmin_deploy
+      - decision: reject
+        to: completed
+      - decision: default
+        to: completed
+
+  - id: sovmin_deploy
+    kind: executor
+    agent: sovmin
+    soul_file_path: souls/sovmin_deploy.md
+    description: 部长会议将政治局共识转为部委执行部署。
+    transitions:
+      - decision: next
+        to: gosplan_allocate
+      - decision: default
+        to: gosplan_allocate
+
+  - id: gosplan_allocate
+    kind: executor
+    agent: gosplan
+    soul_file_path: souls/gosplan_allocate.md
+    description: 国家计委下达资源与指标配额。
+    transitions:
+      - decision: next
+        to: republic_execute
+      - decision: default
+        to: republic_execute
+
+  - id: republic_execute
+    kind: executor
+    agent: republic_exec
+    soul_file_path: souls/republic_execute_feedback.md
+    description: 地方层按指标执行；若出现重大偏差则回报政治局复议。
+    transitions:
+      - decision: next
+        to: formal_ratify
+      - decision: report_deviation
+        to: politburo_consensus
+      - decision: default
+        to: formal_ratify
+
+  - id: formal_ratify
+    kind: executor
+    agent: supreme_soviet
+    soul_file_path: souls/formal_ratify.md
+    description: 最高苏维埃进行形式化追认与发布。
+    transitions:
+      - decision: next
+        to: completed
+      - decision: default
+        to: completed
+
+  - id: completed
+    kind: terminal
+
+features:
+  - name: loop_guard
+    enabled: true
+    config:
+      rules:
+        - stage: republic_execute
+          decision: report_deviation
+          max_count: 3
+          force_decision: next
+
+policy:
+  require_json_decision: false
+  max_steps: 30
+
+x_report_feature_catalog:
+  - name: explicit_politburo_consensus
+    mapped_to: stage.politburo_consensus
+    runtime_support: modeled_by_topology
+  - name: republic_deviation_feedback_loop
+    mapped_to: stage.republic_execute->politburo_consensus
+    runtime_support: modeled_by_topology
+  - name: loop_guard
+    mapped_to: feature.loop_guard(republic_execute.report_deviation<=3)
+    runtime_support: built_in
