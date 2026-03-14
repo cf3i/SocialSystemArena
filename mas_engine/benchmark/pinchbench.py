@@ -99,6 +99,7 @@ class PinchBenchRunConfig:
     pc_mykey: str | None = None
     pc_llm_no: int | None = None
     pc_shared_instance: bool = False
+    worker_timeout_sec: int = 0
     judge_model: str | None = None
     judge_timeout_sec: int = 180
     no_judge: bool = False
@@ -298,6 +299,7 @@ def _run_single_task(
     workspace = run_dir / "workspaces" / task.task_id / f"run_{run_idx:02d}"
     _prepare_workspace(task=task, workspace=workspace, assets_dir=assets_dir)
 
+    worker_timeout_floor = max(0, int(config.worker_timeout_sec or 0))
     task_input = task.prompt
     max_steps = 4
     worker_agent_ids: list[str] = []
@@ -305,7 +307,12 @@ def _run_single_task(
         worker_agent_ids.append(
             _build_agent_id("mas-pinch-worker", config.model, f"{task.task_id}-{run_idx}")
         )
-        spec = _build_task_spec(task=task, runtime_id=worker_agent_ids[0], workspace=workspace)
+        spec = _build_task_spec(
+            task=task,
+            runtime_id=worker_agent_ids[0],
+            workspace=workspace,
+            worker_timeout_sec=worker_timeout_floor,
+        )
     else:
         spec = copy.deepcopy(base_spec)
         _apply_benchmark_stage_objectives(spec=spec, task=task, workspace=workspace)
@@ -317,7 +324,11 @@ def _run_single_task(
                 f"{task.task_id}-{run_idx}-{agent_key}",
             )
             agent.runtime_id = runtime_id
-            agent.timeout_sec = max(int(getattr(agent, "timeout_sec", 300)), int(task.timeout_seconds))
+            agent.timeout_sec = max(
+                int(getattr(agent, "timeout_sec", 300)),
+                int(task.timeout_seconds),
+                worker_timeout_floor,
+            )
             worker_agent_ids.append(runtime_id)
         max_steps = max(4, int(getattr(spec.policy, "max_steps", 0) or 0))
 
@@ -641,7 +652,13 @@ def _prepare_workspace(task: PinchTask, workspace: Path, assets_dir: Path) -> No
         dest.write_bytes(src.read_bytes())
 
 
-def _build_task_spec(task: PinchTask, runtime_id: str, workspace: Path):
+def _build_task_spec(
+    task: PinchTask,
+    runtime_id: str,
+    workspace: Path,
+    worker_timeout_sec: int = 0,
+):
+    timeout_sec = max(30, int(task.timeout_seconds), max(0, int(worker_timeout_sec)))
     prompt = _build_worker_prompt(task, workspace)
     raw = {
         "meta": {
@@ -656,7 +673,7 @@ def _build_task_spec(task: PinchTask, runtime_id: str, workspace: Path):
             "worker": {
                 "runtime_id": runtime_id,
                 "role": "executor",
-                "timeout_sec": max(30, int(task.timeout_seconds)),
+                "timeout_sec": timeout_sec,
             }
         },
         "stages": [

@@ -144,6 +144,15 @@ def main() -> None:
         help="number of runs per task",
     )
     p_bench_pinch.add_argument(
+        "--worker-timeout",
+        type=int,
+        default=0,
+        help=(
+            "minimum worker timeout seconds for each stage dispatch. "
+            "0 keeps spec/task defaults."
+        ),
+    )
+    p_bench_pinch.add_argument(
         "--out-dir",
         default="traces/benchmarks/pinchbench",
         help="output directory for benchmark artifacts",
@@ -347,6 +356,7 @@ def _cmd_bench_pinch(args: argparse.Namespace) -> None:
         pc_mykey=(str(args.pc_mykey).strip() or None),
         pc_llm_no=(args.pc_llm_no if int(args.pc_llm_no) >= 0 else None),
         pc_shared_instance=bool(args.pc_shared_instance),
+        worker_timeout_sec=max(0, int(args.worker_timeout)),
         judge_model=(str(args.judge_model).strip() or None),
         judge_timeout_sec=max(30, int(args.judge_timeout)),
         no_judge=bool(args.no_judge),
