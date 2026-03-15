@@ -8,3 +8,6 @@
 [submodule "third_party/pinchbench-skill"]
 	path = third_party/pinchbench-skill
 	url = https://github.com/pinchbench/skill.git
+[submodule "third_party/multiagentbench"]
+	path = third_party/multiagentbench
+	url = https://github.com/ulab-uiuc/MARBLE.git
