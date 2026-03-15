@@ -42,8 +42,14 @@
       "soul_file_path": "souls/huangdi_decree.md",
       "prompt_template": "你是皇帝，下达新政令。任务:{title}",
       "transitions": [
-        {"decision": "next", "to": "chengxiang_plan"},
-        {"decision": "default", "to": "chengxiang_plan"}
+        {
+          "decision": "next",
+          "to": "chengxiang_plan"
+        },
+        {
+          "decision": "default",
+          "to": "chengxiang_plan"
+        }
       ]
     },
     {
@@ -53,8 +59,14 @@
       "soul_file_path": "souls/chengxiang_plan.md",
       "prompt_template": "你是丞相，制定郡县执行细则。任务:{title}",
       "transitions": [
-        {"decision": "next", "to": "jun_dispatch"},
-        {"decision": "default", "to": "jun_dispatch"}
+        {
+          "decision": "next",
+          "to": "jun_dispatch"
+        },
+        {
+          "decision": "default",
+          "to": "jun_dispatch"
+        }
       ]
     },
     {
@@ -64,8 +76,14 @@
       "soul_file_path": "souls/jun_dispatch.md",
       "prompt_template": "你是郡守，向各县分解并派发执行任务。任务:{title}",
       "transitions": [
-        {"decision": "next", "to": "xian_execute"},
-        {"decision": "default", "to": "xian_execute"}
+        {
+          "decision": "next",
+          "to": "xian_execute"
+        },
+        {
+          "decision": "default",
+          "to": "xian_execute"
+        }
       ]
     },
     {
@@ -75,11 +93,24 @@
       "soul_file_path": "souls/xian_execute.md",
       "prompt_template": "你是县令，在辖区内落地执行政令。任务:{title}",
       "transitions": [
-        {"decision": "next", "to": "completed"},
-        {"decision": "default", "to": "completed"}
+        {
+          "decision": "next",
+          "to": "completed"
+        },
+        {
+          "decision": "error",
+          "to": "jun_dispatch"
+        },
+        {
+          "decision": "default",
+          "to": "completed"
+        }
       ]
     },
-    {"id": "completed", "kind": "terminal"}
+    {
+      "id": "completed",
+      "kind": "terminal"
+    }
   ],
   "features": [
     {

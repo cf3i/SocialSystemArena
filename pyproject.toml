@@ -11,6 +11,9 @@ requires-python = ">=3.10"
 authors = [{ name = "SocialSystemArena" }]
 dependencies = ["pyyaml>=6.0"]
 
+[project.optional-dependencies]
+visualize = ["Pillow>=10"]
+
 [project.scripts]
 mas-engine = "mas_engine.cli:main"
 

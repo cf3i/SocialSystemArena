@@ -25,3 +25,7 @@ scripts/
 
 *.err
 *.out
+
+temp/
+
+.claude/

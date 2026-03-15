@@ -1,0 +1,50 @@
+{
+  "meta": {
+    "id": "bare_pipeline",
+    "name": "Bare Pipeline",
+    "version": "0.1.0",
+    "pattern": "pipeline",
+    "description": "Starter template for pipeline"
+  },
+  "features": [
+    {
+      "name": "monitor",
+      "enabled": true,
+      "config": {}
+    },
+    {
+      "name": "shared_state",
+      "enabled": true,
+      "config": {}
+    }
+  ],
+  "policy": {
+    "require_json_decision": false,
+    "max_steps": 16
+  },
+  "entry_stage": "execute",
+  "agents": {
+    "agent": {
+      "runtime_id": "agent",
+      "role": "executor"
+    }
+  },
+  "stages": [
+    {
+      "id": "execute",
+      "kind": "executor",
+      "agent": "agent",
+      "prompt_template": "完成用户给定的任务，必须产出实际结果（文件、代码、数据等），不能只描述意图。",
+      "transitions": [
+        {
+          "decision": "next",
+          "to": "completed"
+        }
+      ]
+    },
+    {
+      "id": "completed",
+      "kind": "terminal"
+    }
+  ]
+}
