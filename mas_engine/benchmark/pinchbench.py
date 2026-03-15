@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import copy
-import hashlib
 import json
 import logging
 import re
@@ -22,10 +21,12 @@ except ImportError as exc:  # pragma: no cover - guarded in runtime usage
         "PinchBench integration requires PyYAML. Install with `pip install pyyaml`."
     ) from exc
 
-from ..adapters import AgentAdapter, OpenClawAdapter, PcAgentLoopAdapter
+from ..adapters import AgentAdapter
 from ..core.runtime import GovernanceRuntime
 from ..spec.compiler import compile_spec, compile_spec_obj
 from ..storage.jsonl import JsonlStore
+from .common import build_runtime_adapter as _build_runtime_adapter_common
+from .common import make_agent_id as _make_agent_id_common
 
 _LOG = logging.getLogger("mas_engine.benchmark.pinchbench")
 
@@ -186,29 +187,22 @@ def run_pinchbench(config: PinchBenchRunConfig) -> dict[str, Any]:
 
 
 def _build_runtime_adapter(config: PinchBenchRunConfig) -> tuple[AgentAdapter, bool]:
-    mode = str(config.adapter or "openclaw").strip().lower()
-    if mode == "openclaw":
-        return (
-            OpenClawAdapter(
-                executable=config.openclaw_bin,
-                deliver_mode=config.openclaw_deliver_mode,
-                project_dir=config.openclaw_project_dir,
-            ),
-            True,
+    try:
+        return _build_runtime_adapter_common(
+            adapter=config.adapter,
+            openclaw_bin=config.openclaw_bin,
+            openclaw_deliver_mode=config.openclaw_deliver_mode,
+            openclaw_project_dir=config.openclaw_project_dir,
+            pc_agent_root=config.pc_agent_root,
+            pc_mykey=config.pc_mykey,
+            pc_llm_no=config.pc_llm_no,
+            pc_shared_instance=config.pc_shared_instance,
+            source="mas_engine",
         )
-    if mode == "pc-agent-loop":
-        return (
-            PcAgentLoopAdapter(
-                agent_root=config.pc_agent_root,
-                shared_instance=bool(config.pc_shared_instance),
-                llm_no=config.pc_llm_no,
-                mykey_path=config.pc_mykey,
-            ),
-            False,
-        )
-    raise ValueError(
-        f"unsupported pinchbench adapter '{config.adapter}', expected openclaw or pc-agent-loop"
-    )
+    except ValueError as exc:
+        raise ValueError(
+            f"unsupported pinchbench adapter '{config.adapter}', expected openclaw or pc-agent-loop"
+        ) from exc
 
 
 def load_pinch_tasks(tasks_dir: str | Path) -> list[PinchTask]:
@@ -456,6 +450,7 @@ def _grade_task(
             config=config,
             run_dir=run_dir,
             judge_agent_id=judge_agent_id,
+            workspace=workspace,
         )
 
     if grading_type == "hybrid":
@@ -470,6 +465,7 @@ def _grade_task(
             config=config,
             run_dir=run_dir,
             judge_agent_id=judge_agent_id,
+            workspace=workspace,
         )
         return _combine_hybrid_scores(task=task, automated=auto, llm=llm)
 
@@ -490,9 +486,10 @@ def _grade_llm_judge(
     config: PinchBenchRunConfig,
     run_dir: Path,
     judge_agent_id: str,
+    workspace: Path | None = None,
 ) -> PinchGradeResult:
     rubric = task.llm_judge_rubric.strip() or _format_criteria(task.grading_criteria)
-    prompt = _build_judge_prompt(task=task, transcript=transcript, rubric=rubric)
+    prompt = _build_judge_prompt(task=task, transcript=transcript, rubric=rubric, workspace=workspace)
     try:
         result = adapter.dispatch(
             runtime_id=judge_agent_id,
@@ -745,7 +742,29 @@ def _build_task_input(task: PinchTask, workspace: Path) -> str:
     )
 
 
-def _build_judge_prompt(task: PinchTask, transcript: list[dict[str, Any]], rubric: str) -> str:
+def _build_judge_prompt(
+    task: PinchTask,
+    transcript: list[dict[str, Any]],
+    rubric: str,
+    workspace: "Path | None" = None,
+) -> str:
+    workspace_section = ""
+    if workspace is not None:
+        try:
+            files = sorted(workspace.iterdir()) if workspace.is_dir() else []
+        except Exception:
+            files = []
+        parts: list[str] = []
+        for f in files:
+            if f.is_file() and f.stat().st_size < 32768:
+                try:
+                    content = f.read_text(encoding="utf-8", errors="replace")
+                    parts.append(f"--- {f.name} ---\n{content.strip()}")
+                except Exception:
+                    pass
+        if parts:
+            workspace_section = "\n[Workspace Files]\n" + "\n\n".join(parts) + "\n"
+
     return (
         "You are a strict benchmark grader.\n"
         "Return a single JSON object only, no markdown.\n\n"
@@ -754,7 +773,8 @@ def _build_judge_prompt(task: PinchTask, transcript: list[dict[str, Any]], rubri
         "[Expected Behavior]\n"
         f"{task.expected_behavior.strip()}\n\n"
         "[Transcript Summary]\n"
-        f"{_summarize_transcript(transcript)}\n\n"
+        f"{_summarize_transcript(transcript)}\n"
+        f"{workspace_section}\n"
         "[Rubric]\n"
         f"{rubric.strip()}\n\n"
         "Output schema:\n"
@@ -780,6 +800,10 @@ def _summarize_transcript(transcript: list[dict[str, Any]]) -> str:
                     if not isinstance(args, dict):
                         args = item.get("params", {})
                     rows.append(f"tool_call:{name} args={json.dumps(args, ensure_ascii=False)}")
+                elif isinstance(item, dict) and item.get("type") == "text":
+                    text = str(item.get("text", "")).strip()
+                    if text:
+                        rows.append(f"assistant:{text[:400]}")
         elif role == "toolResult":
             rows.append(f"tool_result:{str(content)[:240]}")
         elif role == "user":
@@ -1091,11 +1115,7 @@ def _format_criteria(criteria: list[str]) -> str:
 
 
 def _build_agent_id(prefix: str, model: str, suffix: str) -> str:
-    mslug = _slugify(model, max_len=24)
-    digest = hashlib.sha1(f"{model}|{suffix}".encode("utf-8")).hexdigest()[:6]
-    ssrc = f"{digest}-{suffix}"
-    sslug = _slugify(ssrc, max_len=18)
-    return f"{prefix}-{mslug}-{sslug}".strip("-")
+    return _make_agent_id_common(prefix, model, suffix)
 
 
 def _slugify(src: str, max_len: int = 32) -> str:
@@ -1208,10 +1228,28 @@ def _apply_benchmark_stage_objectives(spec: Any, task: PinchTask, workspace: Pat
                 "PinchBench task, referencing exact filenames and tools. Do not claim completion."
             )
             continue
+        if kind == "consensus":
+            stage.description = (
+                "You are a voter in a consensus stage. Your ONLY task is to evaluate the proposal "
+                "and output yes or no. Do NOT use any tools or execute code. "
+                'Return JSON: {"decision":"yes","summary":"brief reason"}'
+            )
+            continue
+        if kind in {"gate", "auditor"}:
+            continue
+        if kind not in {"executor", "cluster"}:
+            continue
         stage.description = (
             "You are in execution stage. Execute the task end-to-end using tools and filesystem actions "
             f"in workspace `{workspace}`. Ensure deliverables required by task `{task.task_id}` are "
-            "actually created with correct names and content before responding."
+            "actually created with correct names and content before responding.\n\n"
+            "Tool call format (pc-agent-loop rules):\n"
+            "- PREFERRED: use code_run with Python to create files. Write the Python code in a "
+            "```python block in your reply body BEFORE the tool call JSON. "
+            "Example: ```python\\nimport pathlib\\npathlib.Path('/path/to/file').write_text('content')\\n```\n"
+            "- file_write (fallback): put file content in a <file_content>...</file_content> tag "
+            "in your reply body BEFORE the tool call JSON. Do NOT put content in JSON parameters.\n"
+            "- After writing, verify the file exists with file_read before claiming completion."
         )
 
 

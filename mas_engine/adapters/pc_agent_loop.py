@@ -249,6 +249,12 @@ class PcAgentLoopAdapter:
         )
 
 
+_JUNK_LINE_RE = re.compile(
+    r'^(?:`{3,}|~{3,}|</[\w:.-]+>|<[\w:.-]+/>|<[\w:.-]+>[^<]{0,120}</[\w:.-]+>)\s*$',
+    re.IGNORECASE,
+)
+
+
 def _extract_json_objects(output: str) -> list[dict[str, Any]]:
     decoder = json.JSONDecoder()
     objects: list[dict[str, Any]] = []
@@ -277,7 +283,11 @@ def _fallback_summary(output: str) -> str:
         if text:
             return text[:200]
 
-    lines = [line.strip() for line in output.splitlines() if line.strip()]
+    lines = [
+        line.strip()
+        for line in output.splitlines()
+        if line.strip() and not _JUNK_LINE_RE.match(line.strip())
+    ]
     if not lines:
         return ""
     return lines[-1][:200]

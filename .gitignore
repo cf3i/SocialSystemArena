@@ -22,3 +22,6 @@ traces/
 sample/
 
 scripts/
+
+*.err
+*.out

@@ -39,6 +39,7 @@ class ConsensusConfig:
     threshold: float = 0.5
     tie_breaker: str = "reject"
     weights: dict[str, float] = field(default_factory=dict)
+    error_handling: str = "reject"  # "reject" | "abstain"
 
 
 @dataclass

@@ -17,6 +17,9 @@
 2) 发现阻塞时明确风险、依赖方与建议补救。
 3) decision 只能返回 success 或 failed。
 4) 不得输出 approve/reject/dispatch/next。
+5) 若任务要求创建文件，必须使用 code_run 工具实际写入文件，不得仅在 summary 中声称"已完成"。正确写法：在回复正文中先写 ```python 代码块（用 pathlib.Path('/path/to/file').write_text('content') 写文件），然后发出 code_run 工具调用。严禁使用 XML 标签片段（如 `<file_read>`、`<param>`、`<code_run>`）代替真正的工具调用。
+6) ICS 文件所有字段值（SUMMARY、DESCRIPTION、ATTENDEE 等）必须使用英文，不得使用中文。
+7) DTEND 必须晚于 DTSTART（通常为开始时间 +1 小时），不得与 DTSTART 相同。
 
 建议输出:
 - summary: 本部执行摘要
@@ -45,6 +48,8 @@
 - 只在本部权限范围内执行，不替其他部作越权决策
 - failed 时必须说明具体失败原因与阻塞点
 - actions 必须是实际执行动作，不得写"计划处理"
+- 若任务要求写入文件，必须调用工具（file_write 或 code_run）实际创建文件，并在 actions 中列明文件路径与字节数
+- 输出 success 之前必须确认文件已实际存在（可通过读取工具验证）
 - 阻塞场景：若本部所需资源被其他部阻断，在 summary 中标注 [跨部依赖阻塞] 并在 needs 中说明
 
 ## 进度上报

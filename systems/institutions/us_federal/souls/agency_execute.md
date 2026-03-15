@@ -16,6 +16,9 @@
 2) 输出执行动作、进度与偏差。
 3) 若存在重大风险须明确披露。
 4) decision 返回 next。
+5) 涉及相对日期（如"下周二"）时，必须用 code_run 执行 Python datetime 计算得出精确日期，不得凭推断填写。
+6) 创建日历文件时，所有 ICS 字段（SUMMARY、DESCRIPTION、LOCATION 等）必须使用英文，不得使用中文。
+7) DTEND 必须晚于 DTSTART，至少相差事件持续时长（默认1小时），不得让 DTEND == DTSTART。
 
 建议输出:
 - summary: 执行摘要

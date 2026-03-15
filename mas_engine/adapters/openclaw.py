@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import subprocess
 from dataclasses import dataclass, field
 
@@ -123,6 +124,23 @@ def _should_fallback_to_next(cmd: list[str], output: str, deliver_mode: str) -> 
     )
 
 
+_JUNK_LINE_RE = re.compile(
+    r'^(?:`{3,}|~{3,}|</[\w:.-]+>|<[\w:.-]+/>|<[\w:.-]+>[^<]{0,120}</[\w:.-]+>)\s*$',
+    re.IGNORECASE,
+)
+
+
+def _fallback_summary(output: str) -> str:
+    lines = [
+        line.strip()
+        for line in output.splitlines()
+        if line.strip() and not _JUNK_LINE_RE.match(line.strip())
+    ]
+    if not lines:
+        return ""
+    return lines[-1][:200]
+
+
 def _extract_json_objects(output: str) -> list[dict]:
     decoder = json.JSONDecoder()
     objects: list[dict] = []
@@ -162,7 +180,7 @@ def _parse_agent_output(output: str) -> AgentResult:
     # Fallback: treat as plain text success.
     return AgentResult(
         decision="next",
-        summary=output.strip().splitlines()[-1][:200] if output.strip() else "",
+        summary=_fallback_summary(output),
         raw_output=output[-2000:],
         updates={},
     )

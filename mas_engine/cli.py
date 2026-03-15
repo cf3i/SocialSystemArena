@@ -10,7 +10,12 @@ import uuid
 from pathlib import Path
 
 from .adapters import MockAdapter, OpenClawAdapter, PcAgentLoopAdapter
-from .benchmark import PinchBenchRunConfig, run_pinchbench
+from .benchmark import (
+    MultiAgentBenchRunConfig,
+    PinchBenchRunConfig,
+    run_multiagentbench,
+    run_pinchbench,
+)
 from .core.errors import SpecError
 from .core.runtime import GovernanceRuntime
 from .dashboard_server import serve_dashboard
@@ -215,6 +220,143 @@ def main() -> None:
         action="store_true",
         help="share one pc-agent-loop agent instance for all runtime_ids",
     )
+    p_bench_mab = sub.add_parser(
+        "bench-mab",
+        help="run MultiAgentBench tasks via MAS runtime or MARBLE native runtime",
+    )
+    p_bench_mab.add_argument(
+        "--mab-root",
+        default="third_party/multiagentbench",
+        help=(
+            "path to MultiAgentBench/MARBLE repo root "
+            "(contains multiagentbench/ and marble/). "
+            "Default: third_party/multiagentbench"
+        ),
+    )
+    p_bench_mab.add_argument(
+        "--execution-mode",
+        choices=["mas-native", "marble-native"],
+        default="mas-native",
+        help=(
+            "execution backend: mas-native runs through GovernanceRuntime; "
+            "marble-native calls MARBLE engine directly"
+        ),
+    )
+    p_bench_mab.add_argument(
+        "--scenario",
+        default="all",
+        help=(
+            "scenario selection: all or comma-separated list of "
+            "research,bargaining,coding,database,minecraft"
+        ),
+    )
+    p_bench_mab.add_argument(
+        "--suite",
+        default="all",
+        help='task selection: "all", comma-separated task IDs, or scenario:id aliases',
+    )
+    p_bench_mab.add_argument(
+        "--model",
+        required=True,
+        help="worker model id label (OpenClaw model id or pc-agent-loop backend label)",
+    )
+    p_bench_mab.add_argument(
+        "--adapter",
+        choices=["openclaw", "pc-agent-loop"],
+        default="openclaw",
+        help="runtime adapter backend for mas-native execution",
+    )
+    p_bench_mab.add_argument(
+        "--spec",
+        default="",
+        help=(
+            "optional governance spec file or directory for mas-native execution "
+            "(e.g. systems/institutions/egypt_pipeline)"
+        ),
+    )
+    p_bench_mab.add_argument(
+        "--runs",
+        type=int,
+        default=1,
+        help="number of runs per task",
+    )
+    p_bench_mab.add_argument(
+        "--worker-timeout",
+        type=int,
+        default=0,
+        help=(
+            "minimum worker timeout seconds for each stage dispatch in mas-native mode. "
+            "0 keeps spec/task defaults."
+        ),
+    )
+    p_bench_mab.add_argument(
+        "--out-dir",
+        default="traces/benchmarks/multiagentbench",
+        help="output directory for benchmark artifacts",
+    )
+    p_bench_mab.add_argument(
+        "--judge-model",
+        default="",
+        help="judge model id (default: same as --model)",
+    )
+    p_bench_mab.add_argument(
+        "--judge-timeout",
+        type=int,
+        default=180,
+        help="judge timeout in seconds",
+    )
+    p_bench_mab.add_argument(
+        "--no-judge",
+        action="store_true",
+        help="skip llm judge for judge-capable scenarios",
+    )
+    p_bench_mab.add_argument(
+        "--keep-agents",
+        action="store_true",
+        help="do not delete temporary OpenClaw agents after mas-native run",
+    )
+    p_bench_mab.add_argument(
+        "--openclaw-bin",
+        default="openclaw",
+        help="OpenClaw executable path",
+    )
+    p_bench_mab.add_argument(
+        "--openclaw-deliver-mode",
+        choices=["auto", "always", "never"],
+        default="never",
+        help="whether to append --deliver when invoking OpenClaw",
+    )
+    p_bench_mab.add_argument(
+        "--openclaw-project-dir",
+        default="",
+        help="working directory for OpenClaw CLI execution",
+    )
+    p_bench_mab.add_argument(
+        "--pc-agent-root",
+        default="third_party/pc-agent-loop",
+        help="path to pc-agent-loop root directory",
+    )
+    p_bench_mab.add_argument(
+        "--pc-mykey",
+        default="",
+        help="optional path to mykey.py/mykey.json for pc-agent-loop",
+    )
+    p_bench_mab.add_argument(
+        "--pc-llm-no",
+        type=int,
+        default=-1,
+        help="select backend index in pc-agent-loop (default: keep runtime default)",
+    )
+    p_bench_mab.add_argument(
+        "--pc-shared-instance",
+        action="store_true",
+        help="share one pc-agent-loop agent instance for all runtime_ids",
+    )
+    p_bench_mab.add_argument(
+        "--marble-python",
+        default="python",
+        help="python executable to run MARBLE engine in marble-native mode",
+    )
 
     args = parser.parse_args()
     logging.basicConfig(
@@ -235,6 +377,8 @@ def main() -> None:
             return _cmd_serve(args)
         if args.cmd == "bench-pinch":
             return _cmd_bench_pinch(args)
+        if args.cmd == "bench-mab":
+            return _cmd_bench_mab(args)
     except SpecError as exc:
         print(f"[spec-error] {exc}", file=sys.stderr)
         raise SystemExit(2)
@@ -364,6 +508,35 @@ def _cmd_bench_pinch(args: argparse.Namespace) -> None:
         benchmark_spec_path=(Path(args.spec).expanduser() if str(args.spec).strip() else None),
     )
     out = run_pinchbench(config)
+    print(json.dumps(out, ensure_ascii=False, indent=2))
+
+
+def _cmd_bench_mab(args: argparse.Namespace) -> None:
+    config = MultiAgentBenchRunConfig(
+        mab_root=Path(args.mab_root),
+        model=str(args.model).strip(),
+        scenario=str(args.scenario).strip() or "all",
+        suite=str(args.suite).strip() or "all",
+        runs=max(1, int(args.runs)),
+        output_dir=Path(args.out_dir),
+        adapter=str(args.adapter).strip() or "openclaw",
+        openclaw_bin=str(args.openclaw_bin).strip() or "openclaw",
+        openclaw_deliver_mode=str(args.openclaw_deliver_mode).strip() or "auto",
+        openclaw_project_dir=(str(args.openclaw_project_dir).strip() or None),
+        pc_agent_root=str(args.pc_agent_root).strip() or "third_party/pc-agent-loop",
+        pc_mykey=(str(args.pc_mykey).strip() or None),
+        pc_llm_no=(args.pc_llm_no if int(args.pc_llm_no) >= 0 else None),
+        pc_shared_instance=bool(args.pc_shared_instance),
+        worker_timeout_sec=max(0, int(args.worker_timeout)),
+        judge_model=(str(args.judge_model).strip() or None),
+        judge_timeout_sec=max(30, int(args.judge_timeout)),
+        no_judge=bool(args.no_judge),
+        keep_agents=bool(args.keep_agents),
+        benchmark_spec_path=(Path(args.spec).expanduser() if str(args.spec).strip() else None),
+        execution_mode=str(args.execution_mode).strip() or "mas-native",
+        marble_python_bin=str(args.marble_python).strip() or "python",
+    )
+    out = run_multiagentbench(config)
     print(json.dumps(out, ensure_ascii=False, indent=2))
 
 

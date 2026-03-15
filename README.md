@@ -27,6 +27,7 @@ This repository now contains a **new implementation** (independent from `sample/
 - `tests/`: unit tests
 - `third_party/pc-agent-loop`: git submodule backend runtime used by `PcAgentLoopAdapter`
 - `third_party/pinchbench-skill`: PinchBench task/asset submodule for benchmark runs
+- `third_party/multiagentbench`: MultiAgentBench (MARBLE) submodule for benchmark runs
 
 ## Why CUE + JSON/YAML
 
@@ -208,6 +209,58 @@ Notes:
 - `llm_judge/hybrid` tasks use judge model from `--judge-model` (or fall back to `--model`).
 - Outputs are saved under `--out-dir/<UTC timestamp>/results/{summary.json,details.jsonl}`.
 
+### 8) Run MultiAgentBench with MAS runtime or MARBLE native runtime
+
+MAS runtime (with governance spec + adapter) example:
+
+```bash
+python -m mas_engine.cli bench-mab \
+  --execution-mode mas-native \
+  --adapter pc-agent-loop \
+  --model minimax/MiniMax-M2.5 \
+  --pc-agent-root third_party/pc-agent-loop \
+  --pc-mykey third_party/pc-agent-loop/mykey.py \
+  --pc-llm-no 0 \
+  --pc-shared-instance \
+  --mab-root third_party/multiagentbench \
+  --scenario research,database \
+  --suite all \
+  --spec systems/institutions/egypt_pipeline \
+  --out-dir traces/benchmarks/multiagentbench
+```
+
+MARBLE native example:
+
+```bash
+python -m mas_engine.cli bench-mab \
+  --execution-mode marble-native \
+  --model minimax/MiniMax-M2.5 \
+  --mab-root third_party/multiagentbench \
+  --scenario all \
+  --suite all \
+  --marble-python python \
+  --out-dir traces/benchmarks/multiagentbench/marble_native
+```
+
+SLURM helper scripts:
+
+```bash
+# full run
+sbatch --export=ALL,REPO_ROOT=/home/feic/pjs/SocialSystemArena scripts/run_mab.sh
+
+# rerun failed tasks from latest run
+sbatch --export=ALL,REPO_ROOT=/home/feic/pjs/SocialSystemArena scripts/rerun_mab_errors.sh
+```
+
+Notes:
+- `--mab-root` defaults to `third_party/multiagentbench`.
+- `--scenario` supports `all` or comma-separated: `research,bargaining,coding,database,minecraft`.
+- `--suite` supports `all`, comma-separated task ids, `scenario:id`, or full task uid (for rerun).
+- `bench-mab` supports two execution modes:
+  - `mas-native`: through GovernanceRuntime + adapter + optional governance spec.
+  - `marble-native`: direct call to `third_party/multiagentbench/marble/main.py`.
+- Outputs are saved under `--out-dir/<UTC timestamp>/results/{summary.json,details.jsonl}`.
+
 ## Built-in sample specs
 
 - `systems/institutions/egypt_pipeline/egypt_pipeline.json`
@@ -231,3 +284,5 @@ python -m unittest discover -s tests -p 'test_*.py'
 ## Documentation
 
 - Detailed Chinese doc: `docs/MAS_Governance_Engine_详细文档.md`
+- PinchBench runbook: `docs/pinchbench_runbook.md`
+- MultiAgentBench runbook: `docs/multiagentbench_runbook.md`

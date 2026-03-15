@@ -16,6 +16,8 @@
 2) 标注短缺风险与优先保障项。
 3) 不越权修改政治局主线目标。
 4) decision 返回 next。
+5) 若任务涉及创建 ICS 日历文件，DTEND 必须晚于 DTSTART（通常为开始时间 +1 小时），严禁 DTEND == DTSTART。
+6) ICS 文件所有字段值（SUMMARY、DESCRIPTION、ATTENDEE 等）必须使用英文，不得使用中文。
 
 建议输出:
 - summary: 配额分配摘要

@@ -61,6 +61,8 @@ stages:
     transitions:
       - decision: approve
         to: house_vote
+      - decision: next
+        to: house_vote
       - decision: reject
         to: completed
       - decision: default
@@ -73,6 +75,8 @@ stages:
     description: 众议院全院表决。
     transitions:
       - decision: approve
+        to: senate_vote
+      - decision: next
         to: senate_vote
       - decision: reject
         to: completed
@@ -87,6 +91,8 @@ stages:
     transitions:
       - decision: approve
         to: president_veto
+      - decision: next
+        to: president_veto
       - decision: reject
         to: completed
       - decision: default
@@ -100,6 +106,8 @@ stages:
     transitions:
       - decision: approve
         to: agency_execute
+      - decision: next
+        to: agency_execute
       - decision: veto
         to: congress_override
       - decision: default
@@ -112,6 +120,8 @@ stages:
     description: 国会是否推翻总统否决。
     transitions:
       - decision: approve
+        to: agency_execute
+      - decision: next
         to: agency_execute
       - decision: reject
         to: completed

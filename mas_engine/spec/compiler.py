@@ -265,6 +265,12 @@ def _parse_raw(raw: dict[str, Any]) -> GovernanceSpec:
             voters = c.get("voters", [])
             if not isinstance(voters, list):
                 raise SpecError(f"stages[{idx}].consensus.voters must be list")
+            error_handling_raw = str(c.get("error_handling", "reject")).strip().lower()
+            if error_handling_raw not in {"reject", "abstain"}:
+                raise SpecError(
+                    f"stages[{idx}].consensus.error_handling must be 'reject' or 'abstain', "
+                    f"got '{error_handling_raw}'"
+                )
             consensus = ConsensusConfig(
                 voters=[str(v) for v in voters],
                 algorithm=str(c.get("algorithm", "majority")),
@@ -277,6 +283,7 @@ def _parse_raw(raw: dict[str, Any]) -> GovernanceSpec:
                         f"stages[{idx}].consensus.weights",
                     ).items()
                 },
+                error_handling=error_handling_raw,
             )
 
         members = []

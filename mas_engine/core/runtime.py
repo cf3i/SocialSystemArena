@@ -20,6 +20,7 @@ from .types import AgentResult, GovernanceSpec, StageSpec, TaskEvent, TaskState
 
 _POSITIVE_DECISIONS = {"approve", "approved", "yes", "pass", "accepted", "success"}
 _FAILURE_DECISIONS = {"error", "failed", "reject", "rejected", "veto", "cancel", "cancelled"}
+_ABSTAIN_DECISIONS = {"error", "timeout"}
 _SECTION_MAX_CHARS = 3200
 _PROMPT_BODY_MAX_CHARS = 10000
 _DISPATCH_GUARD_SLACK_SEC = 1
@@ -103,6 +104,18 @@ class GovernanceRuntime:
             if stage.kind == "terminal":
                 task.status = "done"
                 _LOG.info("task=%s reached terminal stage=%s", task.task_id, stage.id)
+                if self.store:
+                    terminal_event = TaskEvent(
+                        index=idx,
+                        stage_id=stage.id,
+                        stage_kind=stage.kind,
+                        agent=None,
+                        decision="done",
+                        summary="",
+                        next_stage=None,
+                        meta={},
+                    )
+                    self.store.append_event(task, terminal_event)
                 break
 
             _LOG.info(
@@ -468,25 +481,37 @@ class GovernanceRuntime:
         assert cfg is not None
 
         algo = cfg.algorithm
+        error_handling = getattr(cfg, "error_handling", "reject")
         decisions = {k: str(v.decision).lower() for k, v in ballots.items()}
         positives = {k for k, d in decisions.items() if d in _POSITIVE_DECISIONS}
+        abstains = (
+            {k for k, d in decisions.items() if d in _ABSTAIN_DECISIONS}
+            if error_handling == "abstain"
+            else set()
+        )
 
         if algo == "unanimity":
-            ok = len(positives) == len(cfg.voters) and len(cfg.voters) > 0
+            effective_voters = [v for v in cfg.voters if v not in abstains]
+            if not effective_voters:
+                return cfg.tie_breaker  # all abstained
+            ok = len(positives) == len(effective_voters)
             return "approve" if ok else cfg.tie_breaker
 
         if algo == "weighted":
             weights = cfg.weights or {}
-            total = sum(float(weights.get(v, 1.0)) for v in cfg.voters)
+            total = sum(
+                float(weights.get(v, 1.0)) for v in cfg.voters if v not in abstains
+            )
             good = sum(float(weights.get(v, 1.0)) for v in positives)
             if total <= 0:
-                return cfg.tie_breaker
+                return cfg.tie_breaker  # all abstained
             return "approve" if (good / total) >= cfg.threshold else cfg.tie_breaker
 
         # majority (default)
-        if not cfg.voters:
-            return cfg.tie_breaker
-        ratio = len(positives) / len(cfg.voters)
+        effective_total = len(cfg.voters) - len(abstains)
+        if effective_total <= 0:
+            return cfg.tie_breaker  # all abstained → tie_breaker (usually reject)
+        ratio = len(positives) / effective_total
         return "approve" if ratio >= cfg.threshold else cfg.tie_breaker
 
     def _run_cluster_stage(

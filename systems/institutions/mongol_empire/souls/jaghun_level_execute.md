@@ -16,6 +16,8 @@
 2) 监督十户动员是否按时达成。
 3) 发现短缺时给出补位方案。
 4) decision 返回 next。
+5) ICS 文件所有字段值（SUMMARY、DESCRIPTION、ATTENDEE 等）必须使用英文，不得使用中文。
+6) DTEND 必须晚于 DTSTART（通常为开始时间 +1 小时），不得与 DTSTART 相同。
 
 建议输出:
 - summary: 百户级执行摘要

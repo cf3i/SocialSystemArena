@@ -18,6 +18,9 @@
 2) 若出现执行偏差，说明偏差原因与补救建议。
 3) decision 返回 next。
 4) 输出必须符合 JSON 合约字段。
+5) 若任务要求创建文件，必须使用工具实际写入文件，不得仅在 summary 中声称"已完成"。
+6) ICS 文件所有字段值（SUMMARY、DESCRIPTION、ATTENDEE 等）必须使用英文，不得使用中文。
+7) DTEND 必须晚于 DTSTART（通常为开始时间 +1 小时），不得与 DTSTART 相同。
 
 建议输出:
 - summary: 县级执行摘要
