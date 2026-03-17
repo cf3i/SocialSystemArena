@@ -1,0 +1,12 @@
+Stock Research Report - Apple Inc. (AAPL)
+============================================
+
+Date: 2026-03-14
+Stock Ticker: AAPL
+Current Price: $250.12 USD
+
+Market Summary:
+Apple Inc. designs, manufactures, and markets smartphones, personal computers, tablets, wearables, and accessories worldwide. The company offers iPhone, a line of smartphones; Mac, a line of personal computers; iPad, a line of multi-purpose tablets; and wearables, home and accessories. It serves consumers, and small and mid-sized businesses; and enterprise, government, and education customers.
+
+Report Generated: 2026-03-14
+Data Source: yfinance API

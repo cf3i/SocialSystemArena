@@ -1,0 +1,6 @@
+[project]
+name = "datautils"
+version = "0.1.0"
+description = "A basic data utilities library for Python"
+requires-python = ">=3.8"
+dependencies = []

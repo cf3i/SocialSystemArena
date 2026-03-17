@@ -1,0 +1,46 @@
+{
+  "benchmark": "PinchBench",
+  "created_at": "2026-03-14T21:37:31.080295+00:00",
+  "run_dir": "/home/feic/pjs/SocialSystemArena/traces/benchmarks/pinch_test_latest/edo_bakuhan/20260314T212447Z",
+  "model": "MiniMax-M2.5",
+  "adapter": "pc-agent-loop",
+  "benchmark_spec_path": "/home/feic/pjs/SocialSystemArena/systems/institutions/edo_bakuhan/edo_bakuhan.yaml",
+  "suite": "task_16_market_research,task_18_spreadsheet_summary",
+  "runs_per_task": 1,
+  "selected_tasks": 2,
+  "executed_runs": 2,
+  "overall_score": 0.96875,
+  "status_counts": {
+    "done": 2
+  },
+  "by_task": [
+    {
+      "task_id": "task_16_market_research",
+      "task_name": "Competitive Market Research",
+      "category": "research",
+      "grading_type": "hybrid",
+      "runs": 1,
+      "avg_score": 0.9375,
+      "best_score": 0.9375,
+      "worst_score": 0.9375,
+      "status_counts": {
+        "done": 1
+      }
+    },
+    {
+      "task_id": "task_18_spreadsheet_summary",
+      "task_name": "CSV and Excel Data Summarization",
+      "category": "data_analysis",
+      "grading_type": "hybrid",
+      "runs": 1,
+      "avg_score": 1.0,
+      "best_score": 1.0,
+      "worst_score": 1.0,
+      "status_counts": {
+        "done": 1
+      }
+    }
+  ],
+  "results_jsonl": "/home/feic/pjs/SocialSystemArena/traces/benchmarks/pinch_test_latest/edo_bakuhan/20260314T212447Z/results/details.jsonl",
+  "summary_json": "/home/feic/pjs/SocialSystemArena/traces/benchmarks/pinch_test_latest/edo_bakuhan/20260314T212447Z/results/summary.json"
+}

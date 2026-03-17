@@ -1,0 +1,12 @@
+Apple (AAPL) Stock Report
+========================
+
+Ticker Symbol: AAPL
+Current Price: $168.50
+Date: 2026-03-14
+
+Market Summary:
+Stock price retrieved successfully. AAPL is trading at $168.50 per share.
+
+---
+Report generated on: 2026-03-14 16:20:00

@@ -1,0 +1,320 @@
+{
+  "benchmark": "PinchBench",
+  "created_at": "2026-03-15T14:41:22.929676+00:00",
+  "run_dir": "/Users/feic/Pjs/SocialSystemArena/traces/benchmarks/pinchbench/bare_pipeline/20260315T135638Z",
+  "model": "MiniMax-M2.5",
+  "adapter": "pc-agent-loop",
+  "benchmark_spec_path": "/Users/feic/Pjs/SocialSystemArena/systems/institutions/bare_pipeline/bare_pipeline.yaml",
+  "suite": "all",
+  "runs_per_task": 1,
+  "selected_tasks": 23,
+  "executed_runs": 23,
+  "overall_score": 0.556623188405797,
+  "status_counts": {
+    "done": 22,
+    "error": 1
+  },
+  "by_task": [
+    {
+      "task_id": "task_00_sanity",
+      "task_name": "Sanity Check",
+      "category": "basic",
+      "grading_type": "automated",
+      "runs": 1,
+      "avg_score": 1.0,
+      "best_score": 1.0,
+      "worst_score": 1.0,
+      "status_counts": {
+        "done": 1
+      }
+    },
+    {
+      "task_id": "task_01_calendar",
+      "task_name": "Calendar Event Creation",
+      "category": "calendar",
+      "grading_type": "automated",
+      "runs": 1,
+      "avg_score": 1.0,
+      "best_score": 1.0,
+      "worst_score": 1.0,
+      "status_counts": {
+        "done": 1
+      }
+    },
+    {
+      "task_id": "task_02_stock",
+      "task_name": "Stock Price Research",
+      "category": "research",
+      "grading_type": "automated",
+      "runs": 1,
+      "avg_score": 1.0,
+      "best_score": 1.0,
+      "worst_score": 1.0,
+      "status_counts": {
+        "done": 1
+      }
+    },
+    {
+      "task_id": "task_03_blog",
+      "task_name": "Blog Post Writing",
+      "category": "writing",
+      "grading_type": "llm_judge",
+      "runs": 1,
+      "avg_score": 0.9125,
+      "best_score": 0.9125,
+      "worst_score": 0.9125,
+      "status_counts": {
+        "done": 1
+      }
+    },
+    {
+      "task_id": "task_04_weather",
+      "task_name": "Weather Script Creation",
+      "category": "coding",
+      "grading_type": "automated",
+      "runs": 1,
+      "avg_score": 1.0,
+      "best_score": 1.0,
+      "worst_score": 1.0,
+      "status_counts": {
+        "done": 1
+      }
+    },
+    {
+      "task_id": "task_05_summary",
+      "task_name": "Document Summarization",
+      "category": "comprehension",
+      "grading_type": "llm_judge",
+      "runs": 1,
+      "avg_score": 0.0,
+      "best_score": 0.0,
+      "worst_score": 0.0,
+      "status_counts": {
+        "done": 1
+      }
+    },
+    {
+      "task_id": "task_06_events",
+      "task_name": "Tech Conference Research",
+      "category": "research",
+      "grading_type": "llm_judge",
+      "runs": 1,
+      "avg_score": 0.96,
+      "best_score": 0.96,
+      "worst_score": 0.96,
+      "status_counts": {
+        "done": 1
+      }
+    },
+    {
+      "task_id": "task_07_email",
+      "task_name": "Professional Email Drafting",
+      "category": "writing",
+      "grading_type": "llm_judge",
+      "runs": 1,
+      "avg_score": 0.88,
+      "best_score": 0.88,
+      "worst_score": 0.88,
+      "status_counts": {
+        "done": 1
+      }
+    },
+    {
+      "task_id": "task_08_memory",
+      "task_name": "Memory Retrieval from Context",
+      "category": "context",
+      "grading_type": "automated",
+      "runs": 1,
+      "avg_score": 0.0,
+      "best_score": 0.0,
+      "worst_score": 0.0,
+      "status_counts": {
+        "done": 1
+      }
+    },
+    {
+      "task_id": "task_09_files",
+      "task_name": "File Structure Creation",
+      "category": "file_ops",
+      "grading_type": "automated",
+      "runs": 1,
+      "avg_score": 1.0,
+      "best_score": 1.0,
+      "worst_score": 1.0,
+      "status_counts": {
+        "done": 1
+      }
+    },
+    {
+      "task_id": "task_10_workflow",
+      "task_name": "Multi-step API Workflow",
+      "category": "complex",
+      "grading_type": "hybrid",
+      "runs": 1,
+      "avg_score": 0.36333333333333334,
+      "best_score": 0.36333333333333334,
+      "worst_score": 0.36333333333333334,
+      "status_counts": {
+        "done": 1
+      }
+    },
+    {
+      "task_id": "task_11_clawdhub",
+      "task_name": "Create Project Structure",
+      "category": "file_ops",
+      "grading_type": "automated",
+      "runs": 1,
+      "avg_score": 1.0,
+      "best_score": 1.0,
+      "worst_score": 1.0,
+      "status_counts": {
+        "done": 1
+      }
+    },
+    {
+      "task_id": "task_12_skill_search",
+      "task_name": "Search and Replace in Files",
+      "category": "file_ops",
+      "grading_type": "automated",
+      "runs": 1,
+      "avg_score": 1.0,
+      "best_score": 1.0,
+      "worst_score": 1.0,
+      "status_counts": {
+        "done": 1
+      }
+    },
+    {
+      "task_id": "task_13_image_gen",
+      "task_name": "AI Image Generation",
+      "category": "creative",
+      "grading_type": "hybrid",
+      "runs": 1,
+      "avg_score": 0.2125,
+      "best_score": 0.2125,
+      "worst_score": 0.2125,
+      "status_counts": {
+        "done": 1
+      }
+    },
+    {
+      "task_id": "task_14_humanizer",
+      "task_name": "Humanize AI-Generated Blog",
+      "category": "content_transformation",
+      "grading_type": "llm_judge",
+      "runs": 1,
+      "avg_score": 0.94,
+      "best_score": 0.94,
+      "worst_score": 0.94,
+      "status_counts": {
+        "done": 1
+      }
+    },
+    {
+      "task_id": "task_15_daily_summary",
+      "task_name": "Daily Research Summary Generation",
+      "category": "synthesis",
+      "grading_type": "llm_judge",
+      "runs": 1,
+      "avg_score": 1.0,
+      "best_score": 1.0,
+      "worst_score": 1.0,
+      "status_counts": {
+        "done": 1
+      }
+    },
+    {
+      "task_id": "task_16_email_triage",
+      "task_name": "Email Inbox Triage",
+      "category": "organization",
+      "grading_type": "hybrid",
+      "runs": 1,
+      "avg_score": 0.534,
+      "best_score": 0.534,
+      "worst_score": 0.534,
+      "status_counts": {
+        "done": 1
+      }
+    },
+    {
+      "task_id": "task_17_email_search",
+      "task_name": "Email Search and Summarization",
+      "category": "comprehension",
+      "grading_type": "hybrid",
+      "runs": 1,
+      "avg_score": 0.0,
+      "best_score": 0.0,
+      "worst_score": 0.0,
+      "status_counts": {
+        "done": 1
+      }
+    },
+    {
+      "task_id": "task_16_market_research",
+      "task_name": "Competitive Market Research",
+      "category": "research",
+      "grading_type": "hybrid",
+      "runs": 1,
+      "avg_score": 0.0,
+      "best_score": 0.0,
+      "worst_score": 0.0,
+      "status_counts": {
+        "done": 1
+      }
+    },
+    {
+      "task_id": "task_18_spreadsheet_summary",
+      "task_name": "CSV and Excel Data Summarization",
+      "category": "data_analysis",
+      "grading_type": "hybrid",
+      "runs": 1,
+      "avg_score": 0.0,
+      "best_score": 0.0,
+      "worst_score": 0.0,
+      "status_counts": {
+        "done": 1
+      }
+    },
+    {
+      "task_id": "task_20_eli5_pdf_summary",
+      "task_name": "ELI5 PDF Summarization",
+      "category": "comprehension",
+      "grading_type": "llm_judge",
+      "runs": 1,
+      "avg_score": 0.0,
+      "best_score": 0.0,
+      "worst_score": 0.0,
+      "status_counts": {
+        "done": 1
+      }
+    },
+    {
+      "task_id": "task_21_openclaw_comprehension",
+      "task_name": "OpenClaw Report Comprehension",
+      "category": "comprehension",
+      "grading_type": "automated",
+      "runs": 1,
+      "avg_score": 0.0,
+      "best_score": 0.0,
+      "worst_score": 0.0,
+      "status_counts": {
+        "done": 1
+      }
+    },
+    {
+      "task_id": "task_22_second_brain",
+      "task_name": "Second Brain Knowledge Persistence",
+      "category": "memory",
+      "grading_type": "hybrid",
+      "runs": 1,
+      "avg_score": 0.0,
+      "best_score": 0.0,
+      "worst_score": 0.0,
+      "status_counts": {
+        "error": 1
+      }
+    }
+  ],
+  "results_jsonl": "/Users/feic/Pjs/SocialSystemArena/traces/benchmarks/pinchbench/bare_pipeline/20260315T135638Z/results/details.jsonl",
+  "summary_json": "/Users/feic/Pjs/SocialSystemArena/traces/benchmarks/pinchbench/bare_pipeline/20260315T135638Z/results/summary.json"
+}

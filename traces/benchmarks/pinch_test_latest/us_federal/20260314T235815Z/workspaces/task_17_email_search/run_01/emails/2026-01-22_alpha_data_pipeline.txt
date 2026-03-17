@@ -1,0 +1,36 @@
+From: raj.patel@mycompany.com (Raj Patel, Senior Data Engineer)
+To: sarah.chen@mycompany.com
+Cc: engineering-team@mycompany.com
+Date: Thu, 22 Jan 2026 14:30:00 -0500
+Subject: Re: Project Alpha - Data Pipeline Architecture Proposal
+
+Hi Sarah,
+
+Here's the data pipeline architecture proposal for Phase 1:
+
+Ingestion Layer:
+- Apache Kafka for real-time event streaming from client applications
+- Batch ingestion via Airflow DAGs for historical data migration
+- Expected throughput: ~50K events/sec at peak
+
+Processing:
+- Apache Flink for stream processing and aggregation
+- dbt for batch transformations and data modeling
+- Data quality checks via Great Expectations
+
+Storage:
+- TimescaleDB for time-series metrics (as decided)
+- Redis for caching frequently accessed aggregations
+- S3 for raw data lake storage
+
+One concern: the estimated data volume (~2TB/day) is higher than initially
+projected. This will push our infrastructure costs up by approximately $15K/month
+beyond the original budget. I recommend we discuss this at Friday's standup.
+
+Also, I've identified a potential risk with the Kafka cluster sizing. We may need
+to provision 6 brokers instead of 3 to handle the peak load safely. This adds
+another $8K/month to our cloud spend.
+
+I've documented everything in detail: https://docs.mycompany.com/alpha-pipeline-arch
+
+Raj

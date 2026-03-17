@@ -49,16 +49,24 @@
 
 ### 制度指纹速查
 
-| 制度 | Pattern | 门控数 | 分支数 | 回环数 | 最大行宽 | 深度 | 校正均分 |
+均步数 = 实测每任务平均 agent 调用次数（回环/重试会推高此值）
+
+| 制度 | Pattern | 门控数 | 分支数 | 回环数 | 深度 | 均步数/任务 | 校正均分 |
 |---|---|---:|---:|---:|---:|---:|---:|
-| Mongol Empire | `pipeline` | 0 | 0 | 0 | 1 | 6 | 97.8 |
-| Edo Bakuhan | `autonomous_cluster` | 0 | 2 | 0 | 4 | 3 | 85.4 |
-| Tang Sanshengliubu | `gated_pipeline` | 1 | 2 | 3 | 6 | 5 | 82.0 |
-| Soviet Party State | `pipeline` | 0 | 0 | 0 | 1 | 5 | 78.9 |
-| Qinhan Junxian | `pipeline` | 0 | 1 | 1 | 1 | 4 | 69.4 |
-| Athens Democracy | `consensus` | 0 | 2 | 0 | 7 | 2 | 68.4 |
-| US Federal | `gated_pipeline` | 5 | 5 | 0 | 1 | 2 | 64.4 |
-| **Bare Pipeline** *(baseline)* | `pipeline` | 0 | 0 | 0 | 1 | 1 | **55.2** |
+| Mongol Empire | `pipeline` | 0 | 0 | 0 | 6 | **5.6** | 97.8 |
+| Edo Bakuhan | `autonomous_cluster` | 0 | 2 | 0 | 3 | 9.0 | 85.4 |
+| Tang Sanshengliubu | `gated_pipeline` | 1 | 2 | 3 | 5 | 10.9 *(max 24)* | 82.0 |
+| Soviet Party State | `pipeline` | 0 | 0 | 0 | 5 | **5.0** | 78.9 |
+| Qinhan Junxian | `pipeline` | 0 | 1 | 1 | 4 | 8.0 | 69.4 |
+| Athens Democracy | `consensus` | 0 | 2 | 0 | 2 | 8.9 | 68.4 |
+| US Federal | `gated_pipeline` | 5 | 5 | 0 | 2 | 5.8 | 64.4 |
+| **Bare Pipeline** *(baseline)* | `pipeline` | 0 | 0 | 0 | 1 | **1.0** | **55.2** |
+
+**步数视角的关键发现：**
+
+- **Mongol（5.6步→97.8分）vs US Federal（5.8步→64.4分）**：步数几乎相同，但蒙古每步都在干活（深流水线），美国联邦每步都在审批（门控链）。步数不是负担，步数花在哪里才是。
+- **Tang（10.9步→82分）**：步数最多，但大部分超出来自回环重试（最高单任务 24步），是主动纠错而非官僚冗余。
+- **Bare Pipeline（1步→55.2分）**：只有1步，agent 单次调用包揽一切——简单任务全满分，需要读文件/多轮推理的任务全零分。说明"步数≥1"是完成复杂任务的必要条件。
 
 ### 拓扑对比：同样"复杂"，为什么分数差这么多？
 

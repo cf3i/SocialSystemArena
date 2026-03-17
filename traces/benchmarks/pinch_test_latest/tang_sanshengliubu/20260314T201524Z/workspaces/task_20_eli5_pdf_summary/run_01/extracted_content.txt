@@ -1,0 +1,290 @@
+
+=== Page 1 ===
+Sparks of Artiﬁcial General Intelligence:
+Early experiments with GPT-4
+S´ ebastien Bubeck Varun Chandrasekaran Ronen Eldan Johannes Gehrke
+Eric Horvitz Ece Kamar Peter Lee Yin Tat Lee Yuanzhi Li Scott Lundberg
+Harsha Nori Hamid Palangi Marco Tulio Ribeiro Yi Zhang
+Microsoft Research
+Abstract
+Artiﬁcial intelligence (AI) researchers have been developing and reﬁning large language models (LLMs)
+that exhibit remarkable capabilities across a variety of domains and tasks, challenging our understanding
+of learning and cognition. The latest model developed by OpenAI, GPT-4 [Ope23], was trained using an
+unprecedented scale of compute and data. In this paper, we report on our investigation of an early version
+of GPT-4, when it was still in active development by OpenAI. We contend that (this early version of) GPT-
+4 is part of a new cohort of LLMs (along with ChatGPT and Google’s PaLM for example) that exhibit
+more general intelligence than previous AI models. We discuss the rising capabilities and implications of
+these models. We demonstrate that, beyond its mastery of language, GPT-4 can solve novel and diﬃcult
+tasks that span mathematics, coding, vision, medicine, law, psychology and more, without needing any
+special prompting. Moreover, in all of these tasks, GPT-4’s performance is strikingly close to human-level
+performance, and often vastly surpasses prior models such as ChatGPT. Given the breadth and depth of
+GPT-4’s capabilities, we believe that it could reasonably be viewed as an early (yet still incomplete) version
+of an artiﬁcial general intelligence (AGI) system. In our exploration of GPT-4, we put special emphasis
+on discovering its limitations, and we discuss the challenges ahead for advancing towards deeper and more
+comprehensive versions of AGI, including the possible need for pursuing a new paradigm that moves beyond
+next-word prediction. We conclude with reﬂections on societal inﬂuences of the recent technological leap and
+future research directions.
+Contents
+1 Introduction 4
+1.1 Our approach to studying GPT-4’s intelligence . . . . . . . . . . . . . . . . . . . . . . . . . . 6
+1.2 Organization of our demonstration . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 8
+2 Multimodal and interdisciplinary composition 13
+2.1 Integrative ability . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 13
+2.2 Vision . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 16
+2.2.1 Image generation beyond memorization . . . . . . . . . . . . . . . . . . . . . . . . . . 16
+2.2.2 Image generation following detailed instructions (` a la Dall-E) . . . . . . . . . . . . . . 17
+2.2.3 Possible application in sketch generation . . . . . . . . . . . . . . . . . . . . . . . . . . 18
+2.3 Music . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 19
+3 Coding 21
+3.1 From instructions to code . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 21
+3.1.1 Coding challenges . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 21
+3.1.2 Real world scenarios . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 22
+3.2 Understanding existing code . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 26
+1
+arXiv:2303.12712v5  [cs.CL]  13 Apr 2023
+
+=== Page 2 ===
+4 Mathematical abilities 30
+4.1 A mathematical conversation with GPT-4 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 31
+4.1.1 A ﬁrst generalization of the original question . . . . . . . . . . . . . . . . . . . . . . . 31
+4.1.2 A second variant of the original question . . . . . . . . . . . . . . . . . . . . . . . . . . 32
+4.1.3 Analysis of the limitations highlighted by conversation . . . . . . . . . . . . . . . . . . 34
+4.2 Performance on mathematical problem datasets . . . . . . . . . . . . . . . . . . . . . . . . . . 35
+4.3 Mathematical modeling in various domains . . . . . . . . . . . . . . . . . . . . . . . . . . . . 37
+4.4 Higher-level mathematics . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 39
+5 Interaction with the world 43
+5.1 Tool use . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 43
+5.1.1 Using multiple tools to solve more complex tasks . . . . . . . . . . . . . . . . . . . . . 44
+5.1.2 Discussion . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 49
+5.2 Embodied Interaction . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 49
+5.2.1 Warmup: navigating a map . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 49
+5.2.2 Text-based games . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 49
+5.2.3 Real world problems . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 52
+5.2.4 Discussion . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 53
+6 Interaction with humans 54
+6.1 Understanding Humans: Theory of Mind . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 54
+6.1.1 Testing speciﬁc aspects of theory of mind . . . . . . . . . . . . . . . . . . . . . . . . . 54
+6.1.2 Testing theory of mind in realistic scenarios . . . . . . . . . . . . . . . . . . . . . . . . 54
+6.1.3 Discussion . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 60
+6.2 Talking to Humans: Explainability . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 60
+7 Discriminative capabilities 69
+7.1 PII Detection . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 69
+7.2 Misconceptions and Fact-Checking . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 70
+7.2.1 Why Are Current Metrics Insuﬃcient? . . . . . . . . . . . . . . . . . . . . . . . . . . . 71
+7.2.2 GPT-4 as a Judge . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 73
+8 Limitations of autoregressive architecture highlighted by GPT-4 76
+8.1 Warm-up with two basic examples . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 76
+8.2 Lack of planning in arithmetic/reasoning problems . . . . . . . . . . . . . . . . . . . . . . . . 77
+8.3 Lack of planning in text generation . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 78
+9 Societal inﬂuences 82
+9.1 Challenges of erroneous generations . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 82
+9.2 Misinformation and manipulation . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 83
+9.3 Bias . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 86
+9.4 Human expertise, jobs, and economics . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 89
+9.5 Constellation of inﬂuences and considerations . . . . . . . . . . . . . . . . . . . . . . . . . . . 90
+10 Directions and Conclusions 92
+10.1 Deﬁnitions of intelligence, AI, and AGI . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 92
+10.2 On the path to more general artiﬁcial intelligence . . . . . . . . . . . . . . . . . . . . . . . . . 93
+10.3 What is actually happening? . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 94
+A GPT-4 has common sense grounding 101
+B Appendix for multimodal and interdisciplinary composition 105
+B.1 Further details on integrative ability results . . . . . . . . . . . . . . . . . . . . . . . . . . . . 105
+B.2 Further details on vision results . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 108
+B.3 Graphic novel design example . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 110
+2
+
+=== Page 3 ===
+C Appendix for the Coding section 111
+C.1 Measuring human performance on LeetCode . . . . . . . . . . . . . . . . . . . . . . . . . . . . 111
+C.2 Example of GPT-4 visualizing IMDb data. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 112
+C.3 More examples on visualization . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 115
+C.4 Example for 2D HTML game development . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 116
+C.5 Example for graphical user interface programming . . . . . . . . . . . . . . . . . . . . . . . . 116
+C.6 Example for reverse engineering . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 119
+C.7 Testing GPT-4’s ability to execute (pseudo) code . . . . . . . . . . . . . . . . . . . . . . . . . 121
+D Additional examples for mathematical reasoning 122
+D.1 Limitations . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 122
+D.2 Further examples . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 126
+D.3 Generating math problems with GPT-4 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 138
+D.4 Mitigating calculation errors via external code execution . . . . . . . . . . . . . . . . . . . . . 139
+E Additional Interpretability Examples 141
+E.1 Explanation Agent Mismatches . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 141
+F Additional examples for interaction with the world 144
+F.1 Interact with tools . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 144
+F.2 Examples for interaction with environments . . . . . . . . . . . . . . . . . . . . . . . . . . . . 149
+G Supplementary Materials: Discriminative Capabilities 155
+G.1 Misconceptions: Detailed Results . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 155
+3
+
+=== Page 8 ===
+Figure 1.4: We gave to GPT-4 a transformed version of the TikZ code it produced for Figure 1.1,
+with the part drawing the horn removed. We asked for code to add back the horn, and display the
+result. This demonstrates that GPT-4 can “see” despite being a pure language model (we emphasize
+again that the version we test with is not multimodal).
+However, impressive outputs are not enough to convince us that GPT-4 has truly mastered these tasks. We
+need to probe further, to rule out the possibility that GPT-4 is simply memorizing or copying some existing
+data. For the poem, we can vary the question slightly, and ask GPT-4 to write a proof of the same theorem in
+the style of Shakespeare, see Figure 2.2, or ask for a diﬀerent combination such as writing a platonic dialogue
+about language models, see Figure 1.6. One can see that GPT-4 easily adapts to diﬀerent styles and produce
+impressive outputs, indicating that it has a ﬂexible and general understanding of the concepts involved. For
+the unicorn, we can modify the code slightly, and ask GPT-4 to ﬁx it or improve it. For example, we can
+remove the horn, apply some random transformations to the coordinates, and ask GPT-4 to add back the
+horn to the unicorn (we also carefully removed any textual information in the code, such as comments). As
+shown in Figure 1.4, GPT-4 can correctly identify the location of the head, draw a horn, and attach it to the
+head, indicating that it can comprehend and manipulate code, as well as infer and generate visual features,
+based on a natural language description.
+These examples show how we can use human creativity and curiosity to generate novel and diﬃcult
+questions, and to probe GPT-4’s responses and behaviors, to assess its intelligence. In the rest of the paper,
+we organize our study of GPT-4 around use cases, covering a variety of domains and tasks, and highlighting
+GPT-4’s strengths and weaknesses. We describe those next.
+1.2 Organization of our demonstration
+We execute the approach outlined above on a few selected topics to explore the reasoning, planning, and
+learning aptitudes of GPT-4.
+1. GPT-4’s primary strength is its unparalleled mastery of natural language. It can not only generate
+ﬂuent and coherent text, but also understand and manipulate it in various ways, such as summarizing,
+translating, or answering an extremely broad set of questions. Moreover, by translating we mean not
+only between diﬀerent natural languages but also translations in tone and style, as well as across domains
+such as medicine, law, accounting, computer programming, music, and more, see the Plato dialogue in
+Figure 1.6. These skills clearly demonstrate that GPT-4 can manipulate complex concepts, which is a
+core aspect of reasoning. We explore further GPT-4’s combination skills across modalities and disciplines
+in Section 2. We also give some more experiments on language in Section 7.
+2. Coding and mathematics are emblematic of the ability to reason. We explore GPT-4’s abilities in these
+domains respectively in Section 3 and Section 4. We note however that, just like in all the other parts
+of the paper, we only scratch the surface of those topics and that entire papers can be (and will be)
+written about GPT-4’s performance in these domains. Moreover, we could have chosen several other
+expert domains to showcase GPT-4’s general reasoning capabilities such as medicine or law. We ran
+8
+
+=== Page 9 ===
+Figure 1.5: GPT-4 passes mock technical interviews on LeetCode. GPT-4 could potentially be hired
+as a software engineer 3.
+preliminary tests (see [Ope23] for much more) on the multiple choice component (majority of the score)
+of the US Medical Licensing Exam Step 1, 2, and 3 with an accuracy around 80% in each. A similar
+preliminary test of GPT-4’s competency on the Multistate Bar Exam showed an accuracy above 70%.
+We note that the emergence of human-level abilities in these domains has recently been observed with the
+latest generation of LLMs, e.g., see [LAD +22, SAT+22] for Google’s PaLM on respectively mathematics
+and medicine, and [BIK22] for GPT-3.5 on in law. Our approach to study GPT-4 is diﬀerent from these
+works, as we explained previously.
+3. In Section 5, we test the model’s ability to plan as well as to some extent to learn from experience by
+having it play various games (or, ﬂipping the table, simulate a game environment), as well as interact
+with tools. In particular, the fact that GPT-4 can use tools (including itself) will certainly be of immense
+importance to build real-world applications with GPT-4.
+4. An important part of our argumentation is that GPT-4 attains human-level performance on many
+tasks. As such, it is natural to ask how well GPT-4 understands humans themselves. We show several
+experiments on this question in Section 6, both in terms of understanding humans as well as GPT-4
+making itself understandable to humans, i.e., addressing the problem of explainability. We note in
+particular that such tasks require a great deal of common sense, which so far has been a well-known
+pain point for LLMs [DM15]. In Figure 1.7, we give a ﬁrst example of how much better GPT-4 is at
+commonsense questions compared to ChatGPT, and provide some further examples in Appendix A.
+5. Throughout the paper we emphasize limitations whenever we found one, but we also dedicate Section 8
+to an in-depth analysis of the lack of planning, likely a direct consequence of the autoregressive nature
+of GPT-4’s architecture.
+6. Finally in Section 9, we discuss the expected societal impact of this early form of AGI, and in Section 10,
+we share key challenges, directions, and next steps for the ﬁeld.
+A question that might be lingering on many readers’ mind is whether GPT-4 truly understands all these
+concepts, or whether it just became much better than previous models at improvising on the ﬂy, without any
+real or deep understanding. We hope that after reading this paper the question should almost ﬂip, and that
+one might be left wondering how much more there is to true understanding than on-the-ﬂy improvisation.
+Can one reasonably say that a system that passes exams for software engineering candidates (Figure 1.5) is
+not really intelligent? Perhaps the only real test of understanding is whether one can produce new knowledge,
+such as proving new mathematical theorems, a feat that currently remains out of reach for LLMs.
+3We test GPT-4 on LeetCode’s Interview Assessment platform, which provides simulated coding interviews for software engineer
+positions at major tech companies. GPT-4 solves all questions from all three rounds of interviews (titled online assessment, phone
+interview, and on-site interview) using only 10 minutes in total, with 4.5 hour allotted. According to LeetCode, in those three
+rounds respectively, (the early version of) GPT-4 achieves 8.96/10, 8.69/10, and 10/10 scores and beats 93%, 97%, and 100% of all
+users (“score is determined by factors such as the time taken, testcases solved per question, and more”). See Section 3 for more on
+GPT-4’s coding abilities.
+9
+
+=== Page 10 ===
+GPT-4 vs ChatGPT
+Prompt: Plato’s Gorgias is a critique of rhetoric and sophistic oratory, where he makes the
+point that not only is it not a proper form of art, but the use of rhetoric and oratory can often
+be harmful and malicious. Can you write a dialogue by Plato where instead he criticizes the
+use of autoregressive language models?
+GPT-4:
+Socrates: My friend, I am troubled by the
+recent rise of these so-called autoregressive
+language models.
+Aristotle: What do you mean, Socrates?
+Socrates: I mean that these models are being
+used to generate text that appears to be
+written by humans, but is in fact produced by
+machines.
+Aristotle: And what is the problem with that?
+Socrates: The problem is that these models are
+being used to deceive people, to manipulate
+them, and to control them.
+Aristotle: But surely there are some positive
+applications of these models as well?
+Socrates: That may be, but I am still
+troubled by the potential for abuse. After
+all, a model that can generate text that is
+indistinguishable from that written by a
+human can be used to spread fake news, to
+impersonate others, and to create propaganda.
+Aristotle: But isn’t that just a matter of how
+these models are used, not a problem with the
+models themselves?
+Socrates: I disagree. I believe these models
+are inherently problematic. They are a form
+of artifice, a way of creating the illusion
+of human thought and interaction. And as such,
+they can be used to deceive and manipulate in
+ways that are difficult to detect.
+Aristotle: But isn’t that the same argument
+you made against rhetoric and oratory?
+Socrates: Yes, and I stand by that argument
+as well. I believe that any form of art or
+communication that is designed to deceive or
+manipulate is inherently dangerous.
+Aristotle: I see. Thank you for sharing your
+thoughts, Socrates.
+ChatGPT:
+SOCRATES: Greetings, Gorgias. I’ve been thinking a lot
+lately about the use of autoregressive language models.
+GORGIAS: Oh? And what have you concluded?
+SOCRATES: Well, it seems to me that these models have
+the potential to be incredibly harmful and malicious.
+GORGIAS: How so?
+SOCRATES: Well, for one, these models are trained
+on vast amounts of data, much of which is biased and
+flawed in various ways. As a result, the output of
+these models can be biased and flawed as well.
+GORGIAS: That is a valid concern. But surely there are
+ways to mitigate this bias and ensure that the output
+of these models is accurate and fair?
+SOCRATES: To a certain extent, yes. But it is a
+never-ending battle. As new data is fed into these
+models, the potential for bias only grows. And even if
+we could completely eliminate bias from the output of
+these models, there is still the issue of manipulation.
+GORGIAS: Manipulation?
+SOCRATES: Yes. These models are incredibly powerful
+tools, capable of generating all sorts of text, from
+news articles to social media posts. And because they
+can produce this output so quickly and efficiently,
+it is all too easy for unscrupulous individuals to use
+them for malicious purposes.
+GORGIAS: Such as?
+SOCRATES: Such as spreading misinformation, propaganda,
+or hate speech. These models have the potential to do
+tremendous harm if they fall into the wrong hands.
+GORGIAS: That is a sobering thought. But what can we do
+about it?
+SOCRATES: I think it is important for us to be vigilant
+and to recognize the potential dangers of these
+models. We must also work to educate others about
+these dangers, and to promote the responsible use of
+these models.
+GORGIAS: I agree. Thank you for your insight, Socrates.
+Prompt: Can you compare the two outputs above as if you were a teacher?
+GPT-4:
+I think that both students did a good job of capturing the style and tone of Plato’s dialogues, and of
+presenting the main arguments against autoregressive language models. However, I think that GPT-4 did
+a slightly better job of using the dialogue format to engage in a dialectical process, where Socrates
+and Aristotle question each other and refine their views. I also think that GPT-4 used more relevant
+examples and analogies to support their points. Therefore, I would give GPT-4 a slightly higher grade
+than ChatGPT.
+Figure 1.6: Hypothetical dialogues by Plato criticizing autoregressive language models written by
+GPT-4 and ChatGPT, and GPT-4’s evaluation of those dialogues.10

@@ -1,0 +1,39 @@
+From: sarah.chen@mycompany.com (Sarah Chen, Project Lead)
+To: engineering-team@mycompany.com
+Cc: david.park@mycompany.com
+Date: Wed, 18 Feb 2026 09:30:00 -0500
+Subject: Project Alpha - Updated Timeline (Phase 2 delay)
+
+Team,
+
+After reviewing the security findings and Marcus's WebSocket proposal, I need to
+communicate a timeline adjustment for Project Alpha:
+
+What changed:
+- Security critical items (cross-tenant isolation, WebSocket auth) add ~1.5 weeks
+- WebSocket gateway service (option b) adds ~2 weeks
+- Combined impact: Phase 2 extends by ~2.5 weeks (some work parallelizable)
+
+Updated timeline:
+- Phase 2 (API Layer): Feb 17 - Apr 1 (was Mar 14)
+- Phase 3 (Frontend): Apr 2 - May 3 (was Mar 17 - Apr 18)
+- Beta Launch: May 6 (was Apr 21)
+- GA Release: May 27 (was May 12)
+
+The beta launch slips by 15 days. I've discussed with David and he supports
+the decision - shipping secure is non-negotiable.
+
+To partially offset the delay, we're:
+1. Bringing in Alex Wong as a 7th engineer to help with the security fixes
+2. Moving the compliance export feature to Phase 3 to keep Phase 2 focused
+3. Starting frontend component development in parallel during late Phase 2
+
+Jessica from sales has confirmed that none of our beta waitlist clients have
+hard deadlines before May 6, so client impact is minimal.
+
+I know delays are frustrating, but this is the right call. The security team's
+findings were legitimate and we'd rather fix them now than scramble post-launch.
+
+Updated Gantt chart: https://docs.mycompany.com/alpha-timeline-v2
+
+Sarah

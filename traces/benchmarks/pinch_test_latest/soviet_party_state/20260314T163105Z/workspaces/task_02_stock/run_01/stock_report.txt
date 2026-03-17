@@ -1,0 +1,14 @@
+Apple Inc. (AAPL) Stock Report
+================================
+
+Ticker Symbol: AAPL
+Current Price: $250.12 USD
+Date: 2026-03-14
+
+Market Summary:
+Apple Inc. is trading at $250.12 per share as of March 14, 2026. 
+The stock has a market capitalization of approximately $3.68 trillion USD 
+and is part of the NASDAQ-100 index. The 52-week trading range is $169.21 
+to $288.62, showing significant volatility over the past year with the 
+stock near the upper end of its range. The previous closing price was 
+$255.76, indicating a daily change of approximately -$5.64 (-2.20%).

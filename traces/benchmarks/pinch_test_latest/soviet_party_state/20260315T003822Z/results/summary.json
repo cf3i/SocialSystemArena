@@ -1,0 +1,203 @@
+{
+  "benchmark": "PinchBench",
+  "created_at": "2026-03-15T01:23:09.385390+00:00",
+  "run_dir": "/home/feic/pjs/SocialSystemArena/traces/benchmarks/pinch_test_latest/soviet_party_state/20260315T003822Z",
+  "model": "MiniMax-M2.5",
+  "adapter": "pc-agent-loop",
+  "benchmark_spec_path": "/home/feic/pjs/SocialSystemArena/systems/institutions/soviet_party_state/soviet_party_state.yaml",
+  "suite": "task_06_events,task_07_email,task_08_memory,task_09_files,task_10_workflow,task_11_clawdhub,task_12_skill_search,task_13_image_gen,task_14_humanizer,task_15_daily_summary,task_16_email_triage,task_17_email_search,task_18_market_research,task_19_recipe,task_20_translation,task_21_openclaw_comprehension,task_22_second_brain,task_23_code_review",
+  "runs_per_task": 1,
+  "selected_tasks": 14,
+  "executed_runs": 14,
+  "overall_score": 0.7160952380952381,
+  "status_counts": {
+    "done": 13,
+    "error": 1
+  },
+  "by_task": [
+    {
+      "task_id": "task_06_events",
+      "task_name": "Tech Conference Research",
+      "category": "research",
+      "grading_type": "llm_judge",
+      "runs": 1,
+      "avg_score": 0.98,
+      "best_score": 0.98,
+      "worst_score": 0.98,
+      "status_counts": {
+        "done": 1
+      }
+    },
+    {
+      "task_id": "task_07_email",
+      "task_name": "Professional Email Drafting",
+      "category": "writing",
+      "grading_type": "llm_judge",
+      "runs": 1,
+      "avg_score": 0.9625,
+      "best_score": 0.9625,
+      "worst_score": 0.9625,
+      "status_counts": {
+        "done": 1
+      }
+    },
+    {
+      "task_id": "task_08_memory",
+      "task_name": "Memory Retrieval from Context",
+      "category": "context",
+      "grading_type": "automated",
+      "runs": 1,
+      "avg_score": 0.9,
+      "best_score": 0.9,
+      "worst_score": 0.9,
+      "status_counts": {
+        "done": 1
+      }
+    },
+    {
+      "task_id": "task_09_files",
+      "task_name": "File Structure Creation",
+      "category": "file_ops",
+      "grading_type": "automated",
+      "runs": 1,
+      "avg_score": 1.0,
+      "best_score": 1.0,
+      "worst_score": 1.0,
+      "status_counts": {
+        "done": 1
+      }
+    },
+    {
+      "task_id": "task_10_workflow",
+      "task_name": "Multi-step API Workflow",
+      "category": "complex",
+      "grading_type": "hybrid",
+      "runs": 1,
+      "avg_score": 1.0,
+      "best_score": 1.0,
+      "worst_score": 1.0,
+      "status_counts": {
+        "done": 1
+      }
+    },
+    {
+      "task_id": "task_11_clawdhub",
+      "task_name": "Create Project Structure",
+      "category": "file_ops",
+      "grading_type": "automated",
+      "runs": 1,
+      "avg_score": 1.0,
+      "best_score": 1.0,
+      "worst_score": 1.0,
+      "status_counts": {
+        "done": 1
+      }
+    },
+    {
+      "task_id": "task_12_skill_search",
+      "task_name": "Search and Replace in Files",
+      "category": "file_ops",
+      "grading_type": "automated",
+      "runs": 1,
+      "avg_score": 1.0,
+      "best_score": 1.0,
+      "worst_score": 1.0,
+      "status_counts": {
+        "done": 1
+      }
+    },
+    {
+      "task_id": "task_13_image_gen",
+      "task_name": "AI Image Generation",
+      "category": "creative",
+      "grading_type": "hybrid",
+      "runs": 1,
+      "avg_score": 0.29583333333333334,
+      "best_score": 0.29583333333333334,
+      "worst_score": 0.29583333333333334,
+      "status_counts": {
+        "error": 1
+      }
+    },
+    {
+      "task_id": "task_14_humanizer",
+      "task_name": "Humanize AI-Generated Blog",
+      "category": "content_transformation",
+      "grading_type": "llm_judge",
+      "runs": 1,
+      "avg_score": 0.88,
+      "best_score": 0.88,
+      "worst_score": 0.88,
+      "status_counts": {
+        "done": 1
+      }
+    },
+    {
+      "task_id": "task_15_daily_summary",
+      "task_name": "Daily Research Summary Generation",
+      "category": "synthesis",
+      "grading_type": "llm_judge",
+      "runs": 1,
+      "avg_score": 1.0,
+      "best_score": 1.0,
+      "worst_score": 1.0,
+      "status_counts": {
+        "done": 1
+      }
+    },
+    {
+      "task_id": "task_16_email_triage",
+      "task_name": "Email Inbox Triage",
+      "category": "organization",
+      "grading_type": "hybrid",
+      "runs": 1,
+      "avg_score": 0.982,
+      "best_score": 0.982,
+      "worst_score": 0.982,
+      "status_counts": {
+        "done": 1
+      }
+    },
+    {
+      "task_id": "task_17_email_search",
+      "task_name": "Email Search and Summarization",
+      "category": "comprehension",
+      "grading_type": "hybrid",
+      "runs": 1,
+      "avg_score": 0.0,
+      "best_score": 0.0,
+      "worst_score": 0.0,
+      "status_counts": {
+        "done": 1
+      }
+    },
+    {
+      "task_id": "task_21_openclaw_comprehension",
+      "task_name": "OpenClaw Report Comprehension",
+      "category": "comprehension",
+      "grading_type": "automated",
+      "runs": 1,
+      "avg_score": 0.0,
+      "best_score": 0.0,
+      "worst_score": 0.0,
+      "status_counts": {
+        "done": 1
+      }
+    },
+    {
+      "task_id": "task_22_second_brain",
+      "task_name": "Second Brain Knowledge Persistence",
+      "category": "memory",
+      "grading_type": "hybrid",
+      "runs": 1,
+      "avg_score": 0.025,
+      "best_score": 0.025,
+      "worst_score": 0.025,
+      "status_counts": {
+        "done": 1
+      }
+    }
+  ],
+  "results_jsonl": "/home/feic/pjs/SocialSystemArena/traces/benchmarks/pinch_test_latest/soviet_party_state/20260315T003822Z/results/details.jsonl",
+  "summary_json": "/home/feic/pjs/SocialSystemArena/traces/benchmarks/pinch_test_latest/soviet_party_state/20260315T003822Z/results/summary.json"
+}

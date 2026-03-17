@@ -1,0 +1,15 @@
+From: office-admin@mycompany.com (Office Administration)
+To: all-staff@mycompany.com
+Date: Fri, 20 Feb 2026 11:00:00 -0500
+Subject: Team Appreciation Lunch - Next Friday
+
+Hi everyone!
+
+To celebrate a great Q1, we're hosting a team appreciation lunch next Friday,
+Feb 27 at noon in the main cafeteria. Please fill out the dietary preferences
+form by Wednesday: https://forms.mycompany.com/lunch-prefs
+
+Menu options include Mediterranean, Asian fusion, and BBQ stations.
+
+See you there!
+Office Admin

@@ -1,0 +1,4 @@
+[project]
+name = "datautils"
+version = "0.1.0"
+description = "A collection of data utility functions"

@@ -1,0 +1,28 @@
+From: linda.zhao@mycompany.com (Linda Zhao, CFO)
+To: sarah.chen@mycompany.com
+Cc: david.park@mycompany.com
+Date: Tue, 03 Feb 2026 10:15:00 -0500
+Subject: Re: Project Alpha - Budget Overrun Risk
+
+Sarah,
+
+I've reviewed the updated infrastructure cost projections you forwarded from Raj.
+The additional $23K/month ($15K data volume + $8K Kafka scaling) translates to
+roughly $92K over the 4-month project timeline. This would push us from $340K to
+potentially $432K - a 27% overrun.
+
+Before I can approve the expanded budget, I need:
+
+1. A detailed cost-benefit analysis showing ROI at the higher spend level
+2. Confirmation from the sales team that the projected $2.1M ARR from the
+   analytics product still holds
+3. An exploration of cost optimization options - can we use spot instances?
+   Can we tier the data retention to reduce storage costs?
+
+I've flagged this to David (CTO) as well. Let's schedule a 30-min budget review
+meeting this week. Thursday at 2pm works for me.
+
+This isn't a "no" - it's a "show me the numbers." I want this project to succeed
+but we need fiscal discipline.
+
+Linda

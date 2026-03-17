@@ -1,0 +1,29 @@
+================================================================================
+                         STOCK RESEARCH REPORT
+================================================================================
+
+Ticker Symbol: AAPL (Apple Inc.)
+Current Price: $250.12 USD
+Previous Close: $255.76 USD
+Date: 2026-03-14
+Trading Volume: 34,193,754 shares
+
+================================================================================
+                          MARKET SUMMARY
+================================================================================
+
+Apple Inc. (AAPL) is currently trading at $250.12 per share, representing a 
+decrease of $5.64 (approximately 2.20%) from the previous close of $255.76. 
+The stock is trading well below its 52-week high while remaining above its 
+52-week low, indicating moderate volatility in recent sessions. With a daily 
+trading volume of over 34 million shares, AAPL continues to be one of the most 
+actively traded securities on the NASDAQ. Investors are closely watching 
+Apple's upcoming product pipeline and services revenue growth as key catalysts 
+for future price movement.
+
+================================================================================
+                         DATA SOURCE
+================================================================================
+Source: Yahoo Finance API
+Retrieved: 2026-03-14
+================================================================================

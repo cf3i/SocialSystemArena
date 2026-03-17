@@ -1,0 +1,25 @@
+Apple (AAPL) Stock Price Report
+=====================================
+Date: 2026-03-15
+Time: 2026-03-15 13:18:43
+
+Stock Symbol: AAPL
+Company Name: Apple Inc.
+
+Current Price: $250.12
+Previous Close: $255.76
+Day High: $256.33
+Day Low: $249.52
+
+Market Cap: $3,676,245,065,728
+52-Week High: $288.62
+52-Week Low: $169.21
+P/E Ratio: 31.660759
+Dividend Yield: 0.42
+Trading Volume: 34,193,754 shares
+
+Market Summary:
+Apple Inc. (AAPL) is trading at $250.12. The stock has a market cap of $3,676,245,065,728 with a P/E ratio of 31.660759. It has a 52-week range of $169.21 - $288.62. Today's volume is 34,193,754 shares.
+
+=====================================
+Report generated on 2026-03-15 13:18:43

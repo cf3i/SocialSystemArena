@@ -1,0 +1,8 @@
+1. 5705 (total skills)
+2. 2999 (filtered skills)
+3. SKILL.md
+4. WebSocket API
+5. February 7, 2026
+6. 8 use-case categories
+7. 10 benchmark tasks
+8. 6 new proposed tasks
