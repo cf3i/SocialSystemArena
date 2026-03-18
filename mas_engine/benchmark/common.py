@@ -171,8 +171,17 @@ def extract_pc_agent_loop_transcript(history: list[Any]) -> list[dict[str, Any]]
     seen: set[str] = set()
     for event in history:
         summary = str(getattr(event, "summary", "") or "").strip()
-        if summary:
-            skey = f"summary|{summary}"
+        meta = getattr(event, "meta", {})
+        raw_tail = ""
+        if isinstance(meta, dict):
+            raw_tail = str(meta.get("raw_tail", "") or "")
+
+        # Prefer raw_tail (full agent output) over summary (short JSON field).
+        # raw_tail contains the agent's natural-language reasoning and answer,
+        # which is what LLM judges need to evaluate communication quality.
+        text_for_message = raw_tail.strip() or summary
+        if text_for_message:
+            skey = f"text|{text_for_message}"
             if skey not in seen:
                 seen.add(skey)
                 rows.append(
@@ -183,17 +192,12 @@ def extract_pc_agent_loop_transcript(history: list[Any]) -> list[dict[str, Any]]
                             "content": [
                                 {
                                     "type": "text",
-                                    "text": summary,
+                                    "text": text_for_message,
                                 }
                             ],
                         },
                     }
                 )
-
-        meta = getattr(event, "meta", {})
-        raw_tail = ""
-        if isinstance(meta, dict):
-            raw_tail = str(meta.get("raw_tail", "") or "")
 
         tool_calls = _parse_pc_tool_calls(raw_tail)
         tool_calls.extend(

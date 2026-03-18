@@ -1,0 +1,37 @@
+{
+  "benchmark": "ClawEval",
+  "created_at": "2026-03-18T17:17:47.843229+00:00",
+  "run_dir": "/home/feic/pjs/SocialSystemArena/traces/benchmarks/clawebench/20260318T165406Z",
+  "model": "minimax-m2-5",
+  "adapter": "pc-agent-loop",
+  "benchmark_spec_path": "/home/feic/pjs/SocialSystemArena/systems/institutions/egypt_pipeline/egypt_pipeline.yaml",
+  "suite": "T02_email_triage",
+  "runs_per_task": 1,
+  "selected_tasks": 1,
+  "executed_runs": 1,
+  "overall_score": 0.2,
+  "total_elapsed_sec": 86.63,
+  "total_tokens": 16568,
+  "total_tokens_input": 13620,
+  "total_tokens_output": 2948,
+  "status_counts": {
+    "done": 1
+  },
+  "by_task": [
+    {
+      "task_id": "T02_email_triage",
+      "task_name": "Email Triage",
+      "category": "communication",
+      "difficulty": "simple",
+      "runs": 1,
+      "avg_score": 0.2,
+      "best_score": 0.2,
+      "worst_score": 0.2,
+      "status_counts": {
+        "done": 1
+      }
+    }
+  ],
+  "results_jsonl": "/home/feic/pjs/SocialSystemArena/traces/benchmarks/clawebench/20260318T165406Z/results/details.jsonl",
+  "summary_json": "/home/feic/pjs/SocialSystemArena/traces/benchmarks/clawebench/20260318T165406Z/results/summary.json"
+}

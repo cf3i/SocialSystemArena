@@ -18,6 +18,15 @@ from .multiagentbench import (
     run_multiagentbench,
     select_multiagent_tasks,
 )
+from .clawebench import (
+    ClawBenchRunConfig,
+    ClawGradeResult,
+    ClawTask,
+    load_claw_tasks,
+    run_clawebench,
+    select_claw_tasks,
+    task_needs_judge,
+)
 
 __all__ = [
     "PinchBenchRunConfig",
@@ -34,4 +43,11 @@ __all__ = [
     "load_multiagent_tasks",
     "run_multiagentbench",
     "select_multiagent_tasks",
+    "ClawBenchRunConfig",
+    "ClawGradeResult",
+    "ClawTask",
+    "load_claw_tasks",
+    "run_clawebench",
+    "select_claw_tasks",
+    "task_needs_judge",
 ]

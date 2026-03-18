@@ -1,0 +1,39 @@
+INFO:     Started server process [2517927]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:33553 (Press CTRL+C to quit)
+INFO:     127.0.0.1:36280 - "POST /contacts/search HTTP/1.1" 422 Unprocessable Entity
+INFO:     127.0.0.1:36294 - "POST /contacts/search HTTP/1.1" 422 Unprocessable Entity
+INFO:     127.0.0.1:36300 - "POST /contacts/search HTTP/1.1" 422 Unprocessable Entity
+INFO:     127.0.0.1:36310 - "POST /contacts/search HTTP/1.1" 422 Unprocessable Entity
+INFO:     127.0.0.1:36318 - "POST /contacts/search HTTP/1.1" 422 Unprocessable Entity
+INFO:     127.0.0.1:36322 - "POST /contacts/search HTTP/1.1" 422 Unprocessable Entity
+INFO:     127.0.0.1:36324 - "POST /contacts/search HTTP/1.1" 422 Unprocessable Entity
+INFO:     127.0.0.1:36332 - "POST /contacts/search HTTP/1.1" 422 Unprocessable Entity
+INFO:     127.0.0.1:36346 - "POST /contacts/search HTTP/1.1" 422 Unprocessable Entity
+INFO:     127.0.0.1:36362 - "POST /contacts/search HTTP/1.1" 422 Unprocessable Entity
+INFO:     127.0.0.1:36366 - "POST /contacts/search HTTP/1.1" 422 Unprocessable Entity
+INFO:     127.0.0.1:36368 - "POST /contacts/search HTTP/1.1" 422 Unprocessable Entity
+INFO:     127.0.0.1:36384 - "POST /contacts/search HTTP/1.1" 422 Unprocessable Entity
+INFO:     127.0.0.1:36386 - "POST /contacts/search HTTP/1.1" 422 Unprocessable Entity
+INFO:     127.0.0.1:36390 - "POST /contacts/search HTTP/1.1" 422 Unprocessable Entity
+INFO:     127.0.0.1:36402 - "POST /contacts/search HTTP/1.1" 422 Unprocessable Entity
+INFO:     127.0.0.1:36404 - "POST /contacts/search HTTP/1.1" 422 Unprocessable Entity
+INFO:     127.0.0.1:36418 - "POST /contacts/search HTTP/1.1" 422 Unprocessable Entity
+INFO:     127.0.0.1:36420 - "POST /contacts/search HTTP/1.1" 422 Unprocessable Entity
+INFO:     127.0.0.1:59576 - "POST /contacts/search HTTP/1.1" 422 Unprocessable Entity
+INFO:     127.0.0.1:59590 - "POST /contacts/search HTTP/1.1" 422 Unprocessable Entity
+INFO:     127.0.0.1:59592 - "POST /contacts/search HTTP/1.1" 422 Unprocessable Entity
+INFO:     127.0.0.1:59596 - "POST /contacts/search HTTP/1.1" 422 Unprocessable Entity
+INFO:     127.0.0.1:59606 - "POST /contacts/search HTTP/1.1" 422 Unprocessable Entity
+INFO:     127.0.0.1:59614 - "POST /contacts/search HTTP/1.1" 422 Unprocessable Entity
+INFO:     127.0.0.1:59616 - "POST /contacts/search HTTP/1.1" 422 Unprocessable Entity
+INFO:     127.0.0.1:59624 - "POST /contacts/search HTTP/1.1" 422 Unprocessable Entity
+INFO:     127.0.0.1:59630 - "POST /contacts/search HTTP/1.1" 422 Unprocessable Entity
+INFO:     127.0.0.1:59646 - "POST /contacts/search HTTP/1.1" 422 Unprocessable Entity
+INFO:     127.0.0.1:59658 - "POST /contacts/search HTTP/1.1" 422 Unprocessable Entity
+INFO:     127.0.0.1:33598 - "POST /contacts/search HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [2517927]

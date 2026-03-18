@@ -11,3 +11,6 @@
 [submodule "third_party/multiagentbench"]
 	path = third_party/multiagentbench
 	url = https://github.com/ulab-uiuc/MARBLE.git
+[submodule "third_party/claw-eval"]
+	path = third_party/claw-eval
+	url = https://github.com/claw-eval/claw-eval

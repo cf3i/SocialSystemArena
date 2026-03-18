@@ -68,13 +68,28 @@ class PcAgentLoopAdapter:
         key = "__shared__" if self.shared_instance else runtime_id
         context = self._get_context(key)
 
+        # Snapshot token counters before this call so we can compute the delta
+        llmclient = getattr(context.agent, "llmclient", None)
+        tokens_input_before = int(getattr(llmclient, "tokens_input", 0)) if llmclient else 0
+        tokens_output_before = int(getattr(llmclient, "tokens_output", 0)) if llmclient else 0
+
         try:
             display_queue = context.agent.put_task(message, source=self.source)
         except Exception as exc:
             raise AdapterError(f"failed to submit task: {exc}") from exc
 
         output = self._wait_done(context.agent, display_queue, timeout_sec)
-        return _parse_agent_output(output)
+        result = _parse_agent_output(output)
+
+        # Attach token delta for this dispatch to meta
+        if llmclient is not None:
+            tokens_input = int(getattr(llmclient, "tokens_input", 0)) - tokens_input_before
+            tokens_output = int(getattr(llmclient, "tokens_output", 0)) - tokens_output_before
+            result.meta["tokens_input"] = tokens_input
+            result.meta["tokens_output"] = tokens_output
+            result.meta["tokens_total"] = tokens_input + tokens_output
+
+        return result
 
     def _wait_done(self, agent: Any, display_queue: queue.Queue, timeout_sec: int) -> str:
         start = time.monotonic()

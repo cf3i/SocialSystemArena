@@ -160,7 +160,7 @@ class GovernanceRuntime:
                 next_stage=next_stage,
                 meta={
                     **result.meta,
-                    "raw_tail": result.raw_output[-500:],
+                    "raw_tail": result.raw_output[-8000:],
                     "updates": result.updates,
                     "monitor": ctx.get("monitor", []),
                 },
@@ -625,7 +625,7 @@ class GovernanceRuntime:
                 "runtime_id": runtime_id,
                 "decision": result.decision,
                 "summary": result.summary,
-                "raw_tail": result.raw_output[-500:],
+                "raw_tail": result.raw_output[-8000:],
                 "updates": result.updates,
                 "meta": result.meta,
             }

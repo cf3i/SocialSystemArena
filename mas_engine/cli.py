@@ -11,8 +11,10 @@ from pathlib import Path
 
 from .adapters import MockAdapter, OpenClawAdapter, PcAgentLoopAdapter
 from .benchmark import (
+    ClawBenchRunConfig,
     MultiAgentBenchRunConfig,
     PinchBenchRunConfig,
+    run_clawebench,
     run_multiagentbench,
     run_pinchbench,
 )
@@ -220,6 +222,102 @@ def main() -> None:
         action="store_true",
         help="share one pc-agent-loop agent instance for all runtime_ids",
     )
+    p_bench_claw = sub.add_parser(
+        "bench-claw",
+        help="run claw-eval tasks via MAS runtime (GovernanceRuntime + GenericAgent)",
+    )
+    p_bench_claw.add_argument(
+        "--claw-root",
+        default="third_party/claw-eval",
+        help="path to claw-eval repo root (contains tasks/). Default: third_party/claw-eval",
+    )
+    p_bench_claw.add_argument(
+        "--model",
+        required=True,
+        help="worker model id label (pc-agent-loop backend label)",
+    )
+    p_bench_claw.add_argument(
+        "--adapter",
+        choices=["pc-agent-loop"],
+        default="pc-agent-loop",
+        help="runtime adapter backend (currently pc-agent-loop only)",
+    )
+    p_bench_claw.add_argument(
+        "--spec",
+        default="",
+        help=(
+            "optional governance spec file or directory for runtime execution "
+            "(e.g. systems/institutions/egypt_pipeline)"
+        ),
+    )
+    p_bench_claw.add_argument(
+        "--suite",
+        default="all",
+        help=(
+            'task selection: "all", "en", "zh", "category:<name>", '
+            '"difficulty:<level>", or comma-separated task IDs'
+        ),
+    )
+    p_bench_claw.add_argument(
+        "--runs",
+        type=int,
+        default=1,
+        help="number of runs per task",
+    )
+    p_bench_claw.add_argument(
+        "--worker-timeout",
+        type=int,
+        default=0,
+        help="minimum worker timeout seconds for each stage dispatch. 0 keeps spec/task defaults.",
+    )
+    p_bench_claw.add_argument(
+        "--out-dir",
+        default="traces/benchmarks/clawebench",
+        help="output directory for benchmark artifacts",
+    )
+    p_bench_claw.add_argument(
+        "--judge-model",
+        default="",
+        help="judge model id (default: same as --model)",
+    )
+    p_bench_claw.add_argument(
+        "--judge-timeout",
+        type=int,
+        default=180,
+        help="judge timeout in seconds",
+    )
+    p_bench_claw.add_argument(
+        "--no-judge",
+        action="store_true",
+        help="skip llm judge grading",
+    )
+    p_bench_claw.add_argument(
+        "--keep-agents",
+        action="store_true",
+        help="do not delete temporary agents after run",
+    )
+    p_bench_claw.add_argument(
+        "--pc-agent-root",
+        default="third_party/pc-agent-loop",
+        help="path to pc-agent-loop root directory",
+    )
+    p_bench_claw.add_argument(
+        "--pc-mykey",
+        default="",
+        help="optional path to mykey.py/mykey.json for pc-agent-loop",
+    )
+    p_bench_claw.add_argument(
+        "--pc-llm-no",
+        type=int,
+        default=-1,
+        help="select backend index in pc-agent-loop (default: keep runtime default)",
+    )
+    p_bench_claw.add_argument(
+        "--pc-shared-instance",
+        action="store_true",
+        help="share one pc-agent-loop agent instance for all runtime_ids",
+    )
+
     p_bench_mab = sub.add_parser(
         "bench-mab",
         help="run MultiAgentBench tasks via MAS runtime or MARBLE native runtime",
@@ -377,6 +475,8 @@ def main() -> None:
             return _cmd_serve(args)
         if args.cmd == "bench-pinch":
             return _cmd_bench_pinch(args)
+        if args.cmd == "bench-claw":
+            return _cmd_bench_claw(args)
         if args.cmd == "bench-mab":
             return _cmd_bench_mab(args)
     except SpecError as exc:
@@ -508,6 +608,29 @@ def _cmd_bench_pinch(args: argparse.Namespace) -> None:
         benchmark_spec_path=(Path(args.spec).expanduser() if str(args.spec).strip() else None),
     )
     out = run_pinchbench(config)
+    print(json.dumps(out, ensure_ascii=False, indent=2))
+
+
+def _cmd_bench_claw(args: argparse.Namespace) -> None:
+    config = ClawBenchRunConfig(
+        claw_root=Path(args.claw_root),
+        model=str(args.model).strip(),
+        output_dir=Path(args.out_dir),
+        suite=str(args.suite).strip() or "all",
+        runs=max(1, int(args.runs)),
+        adapter=str(args.adapter).strip() or "pc-agent-loop",
+        pc_agent_root=str(args.pc_agent_root).strip() or "third_party/pc-agent-loop",
+        pc_mykey=(str(args.pc_mykey).strip() or None),
+        pc_llm_no=(args.pc_llm_no if int(args.pc_llm_no) >= 0 else None),
+        pc_shared_instance=bool(args.pc_shared_instance),
+        worker_timeout_sec=max(0, int(args.worker_timeout)),
+        judge_model=(str(args.judge_model).strip() or None),
+        judge_timeout_sec=max(30, int(args.judge_timeout)),
+        no_judge=bool(args.no_judge),
+        keep_agents=bool(args.keep_agents),
+        benchmark_spec_path=(Path(args.spec).expanduser() if str(args.spec).strip() else None),
+    )
+    out = run_clawebench(config)
     print(json.dumps(out, ensure_ascii=False, indent=2))
 
 
