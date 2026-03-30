@@ -27,4 +27,23 @@ temp/
 
 mykey.py
 
+# Agent / IDE config
 .claude/
+.codex
+
+# Local runtime data
+memory/
+sche_tasks/
+pc-agent-loop-patch/
+workspace/
+
+# Traces: only keep jsonl + workspaces, ignore the rest
+*.svc_logs/
+**/svc_logs/
+**/results/summary.json
+traces/benchmarks/_tables/
+traces/benchmarks/generate_tables.py
+traces/benchmarks/*/clawebench/_score_reports/
+traces/benchmarks/*/clawebench/calc_macro_scores.py
+traces/benchmarks/*/pinch_test_notoken_notime/
+traces/benchmarks/pinch_test_latest/
