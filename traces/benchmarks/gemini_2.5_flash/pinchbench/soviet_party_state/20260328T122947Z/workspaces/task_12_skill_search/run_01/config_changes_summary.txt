@@ -1,0 +1,91 @@
+--- Summary of Changes ---
+
+File: production.yaml
+--- a/production.yaml
++++ b/production.yaml
+@@ -1,6 +1,5 @@
+-
++api_endpoint: https://api.example.com
+ database:
+-  host: localhost
++  host: prod-db.example.com
+   name: myapp_prod
+-api_endpoint: http://localhost:3000
+ log_level: info
+
+File: test.json
+--- a/test.json
++++ b/test.json
+@@ -1,8 +1,8 @@
+ {
+     "database": {
+-        "host": "localhost",
+-        "name": "myapp_test"
++        "host": "prod-db.example.com",
++        "name": "myapp_prod"
+     },
+-    "api_endpoint": "http://localhost:3000",
++    "api_endpoint": "https://api.example.com",
+     "test_mode": true
+ }
+
+File: database.yml
+--- a/database.yml
++++ b/database.yml
+@@ -1,15 +1,14 @@
+ development:
+   adapter: postgresql
+-  host: localhost
++  database: myapp_prod
++  host: prod-db.example.com
++  password: dev_password_123
+   port: 5432
+-  database: myapp_dev
+   username: devuser
+-  password: dev_password_123
+-
+ test:
+   adapter: postgresql
+-  host: localhost
++  database: myapp_prod
++  host: prod-db.example.com
++  password: dev_password_123
+   port: 5432
+-  database: myapp_test
+   username: devuser
+-  password: dev_password_123
+
+File: development.json
+--- a/development.json
++++ b/development.json
+@@ -1,8 +1,8 @@
+ {
+     "database": {
+-        "host": "localhost",
+-        "name": "myapp_dev"
++        "host": "prod-db.example.com",
++        "name": "myapp_prod"
+     },
+-    "api_endpoint": "http://localhost:3000",
++    "api_endpoint": "https://api.example.com",
+     "log_level": "debug"
+ }
+
+File: settings.json
+--- a/settings.json
++++ b/settings.json
+@@ -1,11 +1,11 @@
+ {
+     "app_name": "My Application",
+-    "log_level": "debug",
++    "log_level": "warn",
+     "feature_flags": {
+         "new_ui": true
+     },
+     "database": {
+-        "host": "localhost",
+-        "name": "myapp_dev"
++        "host": "prod-db.example.com",
++        "name": "myapp_prod"
+     }
+ }

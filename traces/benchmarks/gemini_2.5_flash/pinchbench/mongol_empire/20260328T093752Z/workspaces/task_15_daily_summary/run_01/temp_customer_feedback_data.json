@@ -1,0 +1,32 @@
+{
+    "report_title": "Customer Feedback Summary - Daily Digest",
+    "date": "February 15, 2026",
+    "compiled_by": "Customer Success Team",
+    "support_tickets": {
+        "total": 247,
+        "critical": 12,
+        "high_priority": 45,
+        "medium_low": 190
+    },
+    "top_issues": [
+        "API rate limiting errors (34 tickets) - Engineering investigating",
+        "Dashboard loading slowly (28 tickets) - Related to yesterday's update",
+        "Export feature not working for large datasets (19 tickets) - Known issue, fix ETA Monday",
+        "Mobile app crashes on Android 14 (15 tickets) - New issue, escalated to mobile team"
+    ],
+    "positive_feedback_highlights": [
+        "\"The new reporting feature saved our team 10 hours this week\" - Enterprise client",
+        "\"Best customer support I've experienced in SaaS\" - NPS score 72 this month",
+        "3 case studies approved by customers for marketing use",
+        "15 new G2 reviews, average rating 4.6 stars"
+    ],
+    "churn_risk_alerts": [
+        "MegaCorp (ARR $450K) - Evaluating competitors, exec meeting scheduled",
+        "TechStart (ARR $85K) - Missed renewal call, follow-up required",
+        "GlobalRetail (ARR $220K) - Budget cuts mentioned, may downgrade"
+    ],
+    "upsell_opportunities": [
+        "FinanceHub (current ARR $120K) - Interested in enterprise tier",
+        "HealthTech (current ARR $95K) - Expanding team, needs more seats"
+    ]
+}

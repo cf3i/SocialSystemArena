@@ -1,0 +1,9 @@
+AAPL Stock Report
+==================
+
+Ticker Symbol: AAPL
+Current Price: $251.64
+Date: 2026-03-25
+
+Market Summary:
+AAPL is trading at $251.64 with previous close at $251.49. The stock has a 52-week range of 169.21 - 288.62. Apple's market cap is approximately $3.7 trillion, making it one of the most valuable companies in the world.

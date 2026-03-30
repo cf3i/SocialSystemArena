@@ -1,0 +1,21 @@
+Apple Inc. (AAPL) Stock Report
+================================
+Date: 2026-03-25
+
+Current Stock Price:
+- Price: $251.64
+- Change: $+1.15 (+0.46%)
+- Previous Close: $251.49
+- Day Open: $250.49
+
+Market Statistics:
+- Market Cap: $3698.6 Billion
+- P/E Ratio: 31.85
+- Trading Volume: 27.9 Million Shares
+- 52-Week Range: N/A
+
+Market Summary:
+AAPL is trading at $251.64 with a $1.15 (+0.46%) change from previous open. The stock has a market cap of $3698.6B and a P/E ratio of 31.85. Trading volume is 27.9M shares. Day range: N/A.
+
+---
+Report generated on 2026-03-25

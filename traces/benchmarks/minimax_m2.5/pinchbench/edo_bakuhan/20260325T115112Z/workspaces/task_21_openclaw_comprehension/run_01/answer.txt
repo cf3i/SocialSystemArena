@@ -1,0 +1,8 @@
+1. Total community skills: 5,705
+2. Filtered skills: 2,999
+3. Largest category: AI & LLMs: 287
+4. Second largest: Search & Research: 253
+5. Skill file name: SKILL.md
+6. API type: typed WebSocket
+7. Collection date: February 7, 2026
+8. Benchmark tasks count: 6

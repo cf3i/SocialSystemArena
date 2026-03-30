@@ -1,0 +1,5 @@
+api_endpoint: https://api.example.com
+database:
+  host: prod-db.example.com
+  name: myapp_prod
+log_level: info

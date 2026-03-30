@@ -1,0 +1,11 @@
+Stock Price Report - Apple (AAPL)
+=====================================
+Date: 2026-03-25
+Ticker Symbol: AAPL
+Current Price: $251.64
+
+Market Summary:
+Apple Inc. designs, manufactures, and markets smartphones, personal computers, tablets, wearables, and accessories worldwide. The company offers iPhone, a line of smartphones; Mac, a line of personal 
+
+Recent Performance:
+Apple Inc. (AAPL) is a global technology company. Current price: $251.64, previous close: $251.49, change: +0.15 (+0.06%).

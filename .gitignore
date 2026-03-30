@@ -20,11 +20,11 @@ dist/
 
 sample/
 
-scripts/
-
 *.err
 *.out
 
 temp/
+
+mykey.py
 
 .claude/

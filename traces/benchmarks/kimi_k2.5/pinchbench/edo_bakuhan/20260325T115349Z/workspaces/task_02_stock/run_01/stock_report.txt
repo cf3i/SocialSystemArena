@@ -1,0 +1,17 @@
+APPLE INC. (AAPL) STOCK REPORT
+==============================
+
+Ticker Symbol: AAPL
+Current Stock Price: $251.64
+Report Date: 2026-03-25
+
+Market Summary & Analysis:
+Apple Inc. demonstrates resilient performance with a market capitalization of $3,698,586,025,984 and a price-to-earnings ratio of 31.85. Trading near its 52-week range of $169.21-$288.62, the stock reflects sustained investor confidence in Apple's innovation cycle and services revenue expansion.
+
+Key Metrics:
+- Market Cap: $3,698,586,025,984
+- P/E Ratio: 31.85
+- 52-Week Range: $169.21 - $288.62
+
+Data Source: Yahoo Finance via yfinance API
+Generated: 2026-03-25 12:15:20

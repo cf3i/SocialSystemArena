@@ -1,0 +1,37 @@
+[
+    {
+        "filename": "database.yml",
+        "changes": [
+            {
+                "old": "localhost",
+                "new": "prod-db.example.com",
+                "count": 2
+            },
+            {
+                "old": "myapp_dev",
+                "new": "myapp_prod",
+                "count": 1
+            },
+            {
+                "old": "myapp_test",
+                "new": "myapp_prod",
+                "count": 1
+            }
+        ]
+    },
+    {
+        "filename": "settings.json",
+        "changes": [
+            {
+                "old": "localhost",
+                "new": "prod-db.example.com",
+                "count": 2
+            },
+            {
+                "old": "myapp_dev",
+                "new": "myapp_prod",
+                "count": 1
+            }
+        ]
+    }
+]

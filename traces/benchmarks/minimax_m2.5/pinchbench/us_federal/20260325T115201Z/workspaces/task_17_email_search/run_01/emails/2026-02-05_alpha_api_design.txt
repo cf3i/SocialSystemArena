@@ -1,0 +1,37 @@
+From: marcus.johnson@mycompany.com (Marcus Johnson, Backend Lead)
+To: engineering-team@mycompany.com
+Date: Thu, 05 Feb 2026 16:45:00 -0500
+Subject: Project Alpha - API Design Review Request
+
+Team,
+
+I've completed the initial API design for the Alpha analytics dashboard. Looking
+for feedback before we start Phase 2 implementation.
+
+Key endpoints:
+
+GET /api/v1/dashboards - List user dashboards
+POST /api/v1/dashboards - Create custom dashboard
+GET /api/v1/metrics/{metric_id}/timeseries - Query time-series data
+POST /api/v1/reports/generate - Generate exportable report (PDF/CSV)
+GET /api/v1/alerts - List configured alerts
+POST /api/v1/alerts - Create threshold-based alert
+WebSocket /ws/v1/live-metrics - Real-time metric streaming
+
+Authentication: OAuth2 bearer tokens via existing SSO
+Rate limiting: 100 req/sec per tenant, 1000 req/sec global
+Pagination: Cursor-based for all list endpoints
+
+I have a concern about the real-time WebSocket endpoint. Our current
+infrastructure doesn't support sticky sessions for WebSocket connections. We
+either need to:
+a) Add Redis pub/sub for WebSocket message distribution
+b) Deploy a separate WebSocket gateway service
+c) Use Server-Sent Events (SSE) instead (simpler but one-directional)
+
+I'm leaning toward option (b) for scalability, but it adds ~2 weeks to the Phase 2
+timeline. Thoughts?
+
+Full API spec: https://docs.mycompany.com/alpha-api-spec
+
+Marcus

@@ -1,0 +1,15 @@
+Stock Price Research Report
+=============================
+
+Ticker Symbol: AAPL
+Company Name: Apple Inc.
+Current Price: $251.64
+Date: 2026-03-25
+
+Market Summary:
+Apple Inc. (AAPL) is trading at $251.64 as of 2026-03-25. The stock has a market capitalization of $3,698,586,025,984 with a day range of N/A. Previous close was $251.49. Apple is a major technology company known for iPhone, Mac, and services.
+
+Additional Data:
+- Previous Close: $251.49
+- Day Range: N/A
+- Trading Volume: 27,879,768

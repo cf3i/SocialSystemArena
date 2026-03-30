@@ -1,0 +1,12 @@
+AAPL Stock Report
+==================
+Ticker: AAPL
+Date: 2026-03-24
+Current Price: $251.64
+Day High: $254.82
+Day Low: $249.55
+Volume: 27,882,961
+Market Cap: $3,698,586,025,984
+
+Market Summary:
+AAPL当日交易活跃，股价在$249.55-$254.82区间波动，成交量达27,882,961股。苹果作为全球领先的消费电子与科技公司，其股价走势反映市场对iPhone、服务业务及AI战略的综合预期。

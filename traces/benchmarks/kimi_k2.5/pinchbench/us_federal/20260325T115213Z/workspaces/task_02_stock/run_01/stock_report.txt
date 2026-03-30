@@ -1,0 +1,18 @@
+Apple Inc. (AAPL) Stock Report
+================================
+
+Ticker Symbol: AAPL
+Company: Apple Inc.
+
+Current Stock Price: $251.64
+Report Date: 2026-03-25
+
+Market Summary:
+Apple Inc. continues to be a leading technology company with a market capitalization 
+of approximately $3.70 trillion. The stock is currently trading at a price-to-earnings 
+ratio of 31.85, reflecting investor confidence in the company's growth prospects. 
+The 52-week trading range shows a low of $169.21 and a high of $288.62, indicating 
+significant volatility in the past year. As of the report date, AAPL remains one of 
+the most valuable publicly traded companies globally.
+
+Data Source: Yahoo Finance (yfinance)

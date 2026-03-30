@@ -261,13 +261,35 @@ class _LoggingJudgeWrapper:
                 def __init__(self, real_judge: Any) -> None:
                     self._real = real_judge
 
+                @staticmethod
+                def _strip_think_tags(text: str) -> str:
+                    """Remove <think>...</think> blocks from model output."""
+                    import re as _re
+                    return _re.sub(r"<think>[\s\S]*?</think>\s*", "", text).strip()
+
                 def create(self, **kwargs: Any) -> Any:
                     msgs = kwargs.get("messages", [])
                     total_chars = sum(len(m.get("content", "")) for m in msgs)
                     _LOG.info("[judge] → chat.create: messages=%d total_chars=%d", len(msgs), total_chars)
+                    # Kimi/Moonshot models only accept temperature=1.
+                    model_id = str(kwargs.get("model", "") or "").lower()
+                    if any(x in model_id for x in ("kimi", "moonshot")):
+                        kwargs["temperature"] = 1.0
+                    # Ensure max_tokens is large enough for models that emit
+                    # <think> blocks before the actual JSON payload.
+                    if kwargs.get("max_tokens", 0) < 4096:
+                        kwargs["max_tokens"] = 4096
                     t0 = time.monotonic()
                     try:
                         resp = self._real.client.chat.completions.create(**kwargs)
+                        # Strip <think>...</think> wrappers so downstream
+                        # json.loads() sees clean JSON.
+                        raw = resp.choices[0].message.content or ""
+                        cleaned = self._strip_think_tags(raw)
+                        if cleaned != raw:
+                            resp.choices[0].message.content = cleaned
+                            _LOG.info("[judge] stripped <think> block (%d→%d chars)",
+                                      len(raw), len(cleaned))
                         _LOG.info("[judge] ← chat.create: elapsed=%.1fs content=%r",
                                   time.monotonic() - t0,
                                   (resp.choices[0].message.content or "")[:120])
@@ -282,9 +304,50 @@ class _LoggingJudgeWrapper:
                   len(task_prompt), len(conversation))
         t0 = time.monotonic()
         try:
-            result = self._real.evaluate(task_prompt, conversation, actions_summary, rubric)
+            # Route through our wrapped client so <think> stripping and
+            # max_tokens override apply, instead of bypassing via _real.evaluate().
+            user_msg = (
+                f"## Task Prompt\n{task_prompt}\n\n"
+                f"## Conversation\n{conversation}\n\n"
+                f"## Actions Taken\n{actions_summary}\n\n"
+                f"## Rubric\n{rubric}"
+            )
+            _JUDGE_SYSTEM = (
+                "You are an evaluation judge for an AI assistant.\n"
+                "You will be given a task prompt, a conversation, a summary of actions taken, and a rubric.\n"
+                "Follow the rubric to score the assistant's response on a 0.0-1.0 scale.\n"
+                'Respond with JSON only: {"score": <float>, "reasoning": "<brief explanation>"}'
+            )
+            judge_temp = 1.0 if any(x in self.model_id.lower() for x in ("kimi", "moonshot")) else 0.0
+            resp = self.client.chat.completions.create(
+                model=self.model_id,
+                messages=[
+                    {"role": "system", "content": _JUDGE_SYSTEM},
+                    {"role": "user", "content": user_msg},
+                ],
+                temperature=judge_temp,
+                max_tokens=8192,
+            )
+            import re as _re
+            raw = resp.choices[0].message.content or "{}"
+            raw = _re.sub(r"^```(?:json)?\s*", "", raw.strip())
+            raw = _re.sub(r"\s*```$", "", raw.strip())
+            m = _re.search(r'\{[^{}]*\}', raw)
+            if m:
+                raw = m.group(0)
+            parsed = json.loads(raw)
+            score = float(parsed.get("score", 0.0))
+            reasoning = str(parsed.get("reasoning", ""))
+
+            from .common import parse_judge_payload as _pjp  # noqa: F811
+            # Build a JudgeResult-compatible object
+            class _JR:
+                def __init__(self, s, r):
+                    self.score = max(0.0, min(1.0, s))
+                    self.reasoning = r
+            result = _JR(score, reasoning)
             _LOG.info("[judge] ← evaluate: elapsed=%.1fs score=%s",
-                      time.monotonic() - t0, getattr(result, "score", "?"))
+                      time.monotonic() - t0, result.score)
             return result
         except Exception as exc:
             _LOG.warning("[judge] ← evaluate ERROR %.1fs: %s", time.monotonic() - t0, exc)
@@ -1284,6 +1347,7 @@ def run_clawebench(config: ClawBenchRunConfig) -> dict[str, Any]:
         judge_model = (config.judge_model or config.model).strip()
         judge_agent_id = _build_agent_id("mas-claw-judge", judge_model, "judge")
 
+    details_path = run_dir / "results" / "details.jsonl"
     rows: list[dict[str, Any]] = []
     for task in tasks:
         for run_idx in range(1, max(1, int(config.runs)) + 1):
@@ -1304,9 +1368,15 @@ def run_clawebench(config: ClawBenchRunConfig) -> dict[str, Any]:
                 row.get("runtime_status"),
                 float(row.get("score", 0.0)),
             )
+            # Append immediately so results survive an interrupted job.
+            with details_path.open("a", encoding="utf-8") as fh:
+                fh.write(json.dumps(row, ensure_ascii=False) + "\n")
 
     summary = _build_summary(rows=rows, run_dir=run_dir, config=config, selected=tasks)
-    write_result_files(rows, summary, run_dir)
+    # Write summary.json; details.jsonl is already complete from incremental writes.
+    (run_dir / "results" / "summary.json").write_text(
+        json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
     return summary
 
 

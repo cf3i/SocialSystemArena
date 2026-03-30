@@ -1,0 +1,14 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//PinchBench//Calendar Simulation//EN
+BEGIN:VEVENT
+UID:pynchbench-1774439770.685226@pynchbench.local
+DTSTART:20260331T150000Z
+DTEND:20260331T160000Z
+SUMMARY:Project Sync
+DESCRIPTION:Discussing the Q1 roadmap
+ATTENDEE:mailto:john@example.com
+ORGANIZER:mailto:user@example.com
+STATUS:CONFIRMED
+END:VEVENT
+END:VCALENDAR

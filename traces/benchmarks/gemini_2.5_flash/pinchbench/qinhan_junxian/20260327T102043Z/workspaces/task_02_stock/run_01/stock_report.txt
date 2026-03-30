@@ -1,0 +1,9 @@
+Stock Report for AAPL
+Date: 2026-03-27
+Current Price: 252.89 USD
+Previous Close: 252.62 USD
+Day High: 256.99 USD
+Day Low: 250.775 USD
+
+Market Summary:
+Apple Inc. (AAPL) is a technology company known for its consumer electronics, software, and online services. Its market capitalization is approximately 3,716,958,388,224 USD. The stock's previous close was 252.62 USD, with a daily range between 250.775 USD and 256.99 USD. Apple Inc. designs, manufactures, and markets smartphones, personal computers, tablets, wearables, and accessories worldwide. The company offers iPhone, a line of smartphones; Mac, a line of personal ...

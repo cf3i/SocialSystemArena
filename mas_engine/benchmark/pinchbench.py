@@ -354,6 +354,8 @@ def _run_single_task(
     except Exception as exc:  # noqa: BLE001 - benchmark should continue
         runtime_error = str(exc)
 
+    elapsed_sec = round(time.time() - started_at, 2)
+
     transcript: list[dict[str, Any]] = []
     if use_openclaw_agent_lifecycle:
         for runtime_id in worker_agent_ids:
@@ -365,6 +367,12 @@ def _run_single_task(
             )
     elif state is not None:
         transcript.extend(_extract_pc_agent_loop_transcript(state.history))
+
+    tokens_input = 0
+    tokens_output = 0
+    tokens_total = 0
+    if state is not None:
+        tokens_input, tokens_output, tokens_total = _count_stage_tokens(state.history)
 
     grade = _grade_task(
         task=task,
@@ -393,6 +401,10 @@ def _run_single_task(
         ),
         "runtime_error": runtime_error,
         "steps": (len(state.history) if state is not None else 0),
+        "elapsed_sec": elapsed_sec,
+        "tokens_total": tokens_total,
+        "tokens_input": tokens_input,
+        "tokens_output": tokens_output,
         "score": grade.score,
         "max_score": grade.max_score,
         "score_ratio": (grade.score / grade.max_score if grade.max_score > 0 else 0.0),
@@ -587,6 +599,10 @@ def _build_summary(
         )
 
     overall_score = _average([float(x.get("score", 0.0)) for x in rows])
+    total_elapsed_sec = round(sum(float(x.get("elapsed_sec", 0.0)) for x in rows), 2)
+    total_tokens = sum(int(x.get("tokens_total", 0)) for x in rows)
+    total_tokens_input = sum(int(x.get("tokens_input", 0)) for x in rows)
+    total_tokens_output = sum(int(x.get("tokens_output", 0)) for x in rows)
     return {
         "benchmark": "PinchBench",
         "created_at": datetime.now(timezone.utc).isoformat(),
@@ -603,6 +619,10 @@ def _build_summary(
         "selected_tasks": len(selected),
         "executed_runs": len(rows),
         "overall_score": overall_score,
+        "total_elapsed_sec": total_elapsed_sec,
+        "total_tokens": total_tokens,
+        "total_tokens_input": total_tokens_input,
+        "total_tokens_output": total_tokens_output,
         "status_counts": _count_by(rows, "runtime_status"),
         "by_task": by_task,
         "results_jsonl": str((run_dir / "results" / "details.jsonl").resolve()),
@@ -1138,6 +1158,32 @@ def _average(values: list[float]) -> float:
     if not values:
         return 0.0
     return sum(values) / len(values)
+
+
+def _count_stage_tokens(history: list[Any]) -> tuple[int, int, int]:
+    tokens_input = 0
+    tokens_output = 0
+    tokens_total = 0
+    for event in history:
+        meta = getattr(event, "meta", {})
+        if not isinstance(meta, dict):
+            continue
+        try:
+            i = int(meta.get("tokens_input", 0) or 0)
+        except (TypeError, ValueError):
+            i = 0
+        try:
+            o = int(meta.get("tokens_output", 0) or 0)
+        except (TypeError, ValueError):
+            o = 0
+        try:
+            t = int(meta.get("tokens_total", i + o) or (i + o))
+        except (TypeError, ValueError):
+            t = i + o
+        tokens_input += i
+        tokens_output += o
+        tokens_total += t
+    return tokens_input, tokens_output, tokens_total
 
 
 def _clip01(x: float) -> float:

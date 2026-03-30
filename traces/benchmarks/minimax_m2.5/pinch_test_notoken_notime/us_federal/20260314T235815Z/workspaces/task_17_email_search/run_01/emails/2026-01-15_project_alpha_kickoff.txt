@@ -1,0 +1,34 @@
+From: sarah.chen@mycompany.com (Sarah Chen, Project Lead)
+To: engineering-team@mycompany.com
+Date: Thu, 15 Jan 2026 09:00:00 -0500
+Subject: Project Alpha - Kickoff and Timeline
+
+Hi team,
+
+Excited to announce that Project Alpha has been officially greenlit! This is our
+new customer-facing analytics dashboard that will replace the legacy reporting
+system. Here's what you need to know:
+
+Timeline:
+- Phase 1 (Data Pipeline): Jan 20 - Feb 14
+- Phase 2 (API Layer): Feb 17 - Mar 14
+- Phase 3 (Frontend): Mar 17 - Apr 18
+- Beta Launch: Apr 21
+- GA Release: May 12
+
+Key decisions from the planning meeting:
+- We're going with PostgreSQL + TimescaleDB for the time-series data
+- API will be built with FastAPI (Python)
+- Frontend will use React with the new charting library (Recharts)
+- Authentication will integrate with our existing SSO via OAuth2
+
+Budget has been approved for $340K total, broken down as:
+- Infrastructure: $85K
+- Engineering (6 FTEs, 4 months): $220K
+- QA and testing: $35K
+
+I'll be sending out individual role assignments by end of week. Please review
+the PRD linked here: https://docs.mycompany.com/alpha-prd
+
+Let's make this one a success!
+Sarah

@@ -1,0 +1,18 @@
+From: noreply@techconference.io
+To: sarah.chen@mycompany.com
+Date: Sun, 22 Feb 2026 08:00:00 -0500
+Subject: Early bird pricing ends soon - TechSummit 2026
+
+Don't miss TechSummit 2026 - the premier conference for engineering leaders!
+
+June 15-17, 2026 | San Francisco, CA
+
+Featured speakers:
+- AI in Production: Scaling ML Pipelines
+- The Future of Real-Time Analytics
+- Building Resilient Distributed Systems
+
+Early bird pricing: $799 (regular: $1,299)
+Use code EARLYBIRD26 for an additional 10% off.
+
+Register now: https://techsummit2026.io/register

@@ -1,0 +1,11 @@
+{
+    "app_name": "My Application",
+    "log_level": "warn",
+    "feature_flags": {
+        "new_ui": true
+    },
+    "database": {
+        "host": "prod-db.example.com",
+        "name": "myapp_prod"
+    }
+}

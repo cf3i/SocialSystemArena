@@ -1,0 +1,5 @@
+[project]
+name = "datautils"
+version = "0.1.0"
+description = "Data utilities for pinchbench"
+requires-python = ">=3.8"

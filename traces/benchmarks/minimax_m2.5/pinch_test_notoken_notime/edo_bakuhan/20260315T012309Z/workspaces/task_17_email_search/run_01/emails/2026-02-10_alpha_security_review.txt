@@ -1,0 +1,36 @@
+From: security@mycompany.com (Security Team)
+To: sarah.chen@mycompany.com, marcus.johnson@mycompany.com
+Date: Tue, 10 Feb 2026 11:00:00 -0500
+Subject: Project Alpha - Mandatory Security Review Findings
+
+Hi Sarah and Marcus,
+
+We've completed the preliminary security review of Project Alpha's architecture
+and API design. Here are our findings:
+
+CRITICAL (must fix before launch):
+1. The /api/v1/metrics/{metric_id}/timeseries endpoint allows cross-tenant
+   data access if metric_id is guessable. Must implement tenant isolation
+   at the query layer, not just the API layer.
+2. WebSocket connections must implement per-message authentication tokens,
+   not just connection-time auth. Long-lived connections are a known attack
+   vector.
+
+HIGH (should fix before launch):
+3. Rate limiting should be per-tenant AND per-user to prevent single-user
+   abuse within a tenant.
+4. The report generation endpoint (POST /reports/generate) accepts format
+   parameters that could be exploited for SSRF if not properly validated.
+5. Audit logging is missing for dashboard creation and alert configuration
+   changes.
+
+MEDIUM (fix within 30 days post-launch):
+6. Consider implementing request signing for the API to prevent replay attacks.
+7. Add CORS configuration documentation and ensure allowlists are strict.
+
+We'll need a follow-up review after the critical and high items are addressed.
+Please schedule this at least 2 weeks before the beta launch date.
+
+Full report: https://docs.mycompany.com/alpha-security-review
+
+Security Team

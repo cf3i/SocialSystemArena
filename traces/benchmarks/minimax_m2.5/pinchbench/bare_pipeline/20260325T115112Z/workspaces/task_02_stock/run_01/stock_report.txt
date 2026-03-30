@@ -1,0 +1,18 @@
+Apple (AAPL) Stock Report
+========================
+Date: 2026-03-25
+Current Price: $251.64
+
+Market Data:
+- Previous Close: $251.49
+- Day High: $254.82
+- Day Low: $249.55
+- Volume: 27,879,768
+- Market Cap: $3698.6B
+
+Market Summary:
+Apple Inc. (AAPL) is trading at $251.64 as of 2026-03-25. 
+The stock opened near previous close of $251.49, with day high of $254.82 
+and day low of $249.55. Market capitalization is approximately $3698.6 billion. 
+Apple continues to be one of the world's most valuable companies, with strong performance 
+driven by iPhone sales, services revenue, and AI initiatives.

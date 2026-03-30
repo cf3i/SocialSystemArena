@@ -62,6 +62,7 @@ _ENDPOINT_TO_TOOL: dict[str, str] = {
     "/calendar/events/update": "calendar_update_event",
     "/calendar/events/delete": "calendar_delete_event",
     "/calendar/events":        "calendar_list_events",
+    "/calendar/user_events":   "calendar_get_user_events",
     "/todo/tasks/create":      "todo_create_task",
     "/todo/tasks/update":      "todo_update_task",
     "/todo/tasks/delete":      "todo_delete_task",

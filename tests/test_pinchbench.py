@@ -6,7 +6,10 @@ from pathlib import Path
 
 from mas_engine.benchmark.pinchbench import (
     PinchTask,
+    PinchBenchRunConfig,
     _build_agent_id,
+    _build_summary,
+    _count_stage_tokens,
     _extract_pc_agent_loop_transcript,
     _infer_pc_tool_calls_from_text,
     _normalize_transcript_for_grading,
@@ -186,6 +189,68 @@ def grade(transcript, workspace_path):
         )
         self.assertIn(("read_file", {"files": ["notes.md"]}), calls)
         self.assertIn(("write_file", {"path": "answer.txt"}), calls)
+
+    def test_count_stage_tokens_from_history_meta(self) -> None:
+        class _Event:
+            def __init__(self, meta) -> None:
+                self.meta = meta
+
+        history = [
+            _Event({"tokens_input": 120, "tokens_output": 30, "tokens_total": 150}),
+            _Event({"tokens_input": "80", "tokens_output": "20"}),
+            _Event({"tokens_input": None, "tokens_output": "bad", "tokens_total": "bad"}),
+        ]
+        tokens_input, tokens_output, tokens_total = _count_stage_tokens(history)
+        self.assertEqual(tokens_input, 200)
+        self.assertEqual(tokens_output, 50)
+        self.assertEqual(tokens_total, 250)
+
+    def test_build_summary_includes_elapsed_and_token_totals(self) -> None:
+        task = PinchTask(
+            task_id="task_a",
+            name="A",
+            category="demo",
+            grading_type="automated",
+            timeout_seconds=120,
+            workspace_files=[],
+            prompt="p",
+            expected_behavior="e",
+            grading_criteria=[],
+        )
+        rows = [
+            {
+                "task_id": "task_a",
+                "runtime_status": "done",
+                "score": 0.6,
+                "elapsed_sec": 12.34,
+                "tokens_total": 300,
+                "tokens_input": 220,
+                "tokens_output": 80,
+            },
+            {
+                "task_id": "task_a",
+                "runtime_status": "done",
+                "score": 0.8,
+                "elapsed_sec": 7.66,
+                "tokens_total": 120,
+                "tokens_input": 90,
+                "tokens_output": 30,
+            },
+        ]
+        config = PinchBenchRunConfig(
+            pinch_root=Path("."),
+            model="demo-model",
+        )
+        summary = _build_summary(
+            rows=rows,
+            run_dir=Path("/tmp/pinchbench-demo"),
+            config=config,
+            selected=[task],
+        )
+        self.assertEqual(summary["total_elapsed_sec"], 20.0)
+        self.assertEqual(summary["total_tokens"], 420)
+        self.assertEqual(summary["total_tokens_input"], 310)
+        self.assertEqual(summary["total_tokens_output"], 110)
 
 
 if __name__ == "__main__":

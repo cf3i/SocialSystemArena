@@ -1,0 +1,32 @@
+From: raj.patel@mycompany.com (Raj Patel, Senior Data Engineer)
+To: sarah.chen@mycompany.com
+Cc: engineering-team@mycompany.com
+Date: Thu, 12 Feb 2026 17:00:00 -0500
+Subject: Project Alpha - Phase 1 Complete! Data Pipeline Live
+
+Hi everyone,
+
+Happy to report that Phase 1 (Data Pipeline) is officially complete, on schedule!
+
+What's live:
+- Kafka cluster (6 brokers) processing ~48K events/sec average
+- Flink stream processing with <200ms end-to-end latency
+- TimescaleDB populated with 3 weeks of historical data
+- dbt models running on hourly schedule
+- Great Expectations data quality suite passing at 99.7% threshold
+
+Budget update:
+- After the meeting with Linda, we got approval for the expanded budget ($410K)
+- We saved $22K by using spot instances for the Flink processing nodes
+- Current Phase 1 actual spend: $78K (vs $85K budgeted for infra)
+
+One hiccup: we had a 4-hour outage on Feb 8 when the Kafka cluster hit a
+rebalancing storm during a broker restart. We've since implemented graceful
+shutdown procedures and added monitoring alerts. Incident doc is here:
+https://docs.mycompany.com/alpha-incident-feb8
+
+Moving on to Phase 2 starting Monday. Raj will hand off pipeline ops to the
+SRE team.
+
+Great work everyone!
+Raj

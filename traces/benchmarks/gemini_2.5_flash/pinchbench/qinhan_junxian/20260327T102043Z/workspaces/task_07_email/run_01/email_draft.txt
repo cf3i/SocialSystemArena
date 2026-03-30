@@ -1,0 +1,13 @@
+Subject: Meeting Request - [Meeting Topic] - Scheduling Conflict
+
+Dear [Recipient Name],
+
+Thank you for the invitation to discuss [Meeting Topic].
+
+Unfortunately, due to a prior scheduling conflict, I will be unable to attend the meeting on [Date/Time]. I apologize for any inconvenience this may cause.
+
+I would be happy to reschedule for another time that works for you, or contribute asynchronously if there's an alternative way I can provide input beforehand. Please let me know what works best.
+
+Best regards,
+
+[Your Name]

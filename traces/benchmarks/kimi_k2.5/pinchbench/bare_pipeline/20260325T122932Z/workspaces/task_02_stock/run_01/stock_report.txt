@@ -1,0 +1,17 @@
+Apple Stock Report (AAPL)
+========================
+
+Ticker Symbol: AAPL
+Company: Apple Inc.
+Date: 2026-03-25
+Current Price: $251.64
+Price Change: $+0.15 (+0.06%)
+Previous Close: $251.49
+
+Market Summary:
+Apple Inc. (Technology) is one of the world's leading technology companies. The stock has shown upward movement, trading within its 52-week range of $169.21 to $288.62. Market sentiment reflects ongoing investor confidence in Apple's ecosystem and product pipeline.
+
+Additional Data:
+- Market Cap: $3,698,586,025,984
+- 52-Week Range: $169.21 - $288.62
+- Sector: Technology

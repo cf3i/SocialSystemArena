@@ -1,0 +1,8 @@
+{
+    "database": {
+        "host": "prod-db.example.com",
+        "name": "myapp_prod"
+    },
+    "api_endpoint": "https://api.example.com",
+    "test_mode": true
+}

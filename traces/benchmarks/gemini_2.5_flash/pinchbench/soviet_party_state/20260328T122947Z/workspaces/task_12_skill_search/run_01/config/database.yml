@@ -1,0 +1,14 @@
+development:
+  adapter: postgresql
+  database: myapp_prod
+  host: prod-db.example.com
+  password: dev_password_123
+  port: 5432
+  username: devuser
+test:
+  adapter: postgresql
+  database: myapp_prod
+  host: prod-db.example.com
+  password: dev_password_123
+  port: 5432
+  username: devuser

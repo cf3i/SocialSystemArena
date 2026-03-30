@@ -1,0 +1,49 @@
+From: jessica.torres@mycompany.com (Jessica Torres, Head of Sales)
+To: sarah.chen@mycompany.com, david.park@mycompany.com
+Date: Fri, 14 Feb 2026 13:20:00 -0500
+Subject: Project Alpha - Early Client Feedback from Beta Waitlist
+
+Sarah, David,
+
+Wanted to share some exciting feedback from our beta waitlist clients. We've had
+preliminary demos with 5 enterprise prospects and the response has been very
+positive:
+
+Acme Corp ($500K ARR potential):
+- "The real-time dashboard is exactly what we've been looking for"
+- Want custom alerting based on business KPIs, not just technical metrics
+- Asked about SSO integration with their Okta instance
+
+GlobalTech ($350K ARR):
+- Impressed with the data pipeline latency numbers
+- Need CSV and PDF export for compliance reporting
+- Want API access for programmatic data pulls
+
+Nexus Industries ($280K ARR):
+- Love the UI mockups
+- Concerned about multi-region data residency requirements (GDPR)
+- Asked about SLA guarantees for the real-time streaming
+
+Summit Financial ($420K ARR):
+- Very interested in the anomaly detection features (not yet built)
+- Need SOC 2 Type II compliance before they can sign
+- Want white-labeling options for their own clients
+
+DataFlow Inc ($300K ARR):
+- Wants to integrate with their existing Snowflake data warehouse
+- Asked about custom metric definitions via the API
+- Budget approval contingent on Q2 board meeting
+
+Total pipeline from these 5 alone: $1.85M ARR. Combined with existing prospects,
+we're tracking toward $2.8M ARR - ahead of our $2.1M projection.
+
+The top feature requests across all prospects:
+1. Custom alerting / anomaly detection
+2. Compliance-ready export (PDF/CSV)
+3. API access for programmatic use
+4. Multi-region / data residency support
+5. White-labeling capabilities
+
+Let me know if you want me to join the next sprint planning to prioritize these.
+
+Jessica
