@@ -1,8 +1,0 @@
-Stock Price Research Report for AAPL
-
-Date: 2026-03-27
-Ticker: AAPL
-Current Price: $252.89
-
-Market Summary:
-Apple Inc. designs, manufactures, and markets smartphones, personal computers, tablets, wearables, and accessories worldwide. The company offers iPhone, a line of smartphones; Mac, a line of personal 

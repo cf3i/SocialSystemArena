@@ -1,5 +1,0 @@
-Imagine you have a super smart helper, like a magical brain, that can understand not just what you say in words, but also what you show it in pictures! That's kind of what GPT-4 is. It's a very clever computer program that was taught by lots of smart people using tons of information, like books and drawings.
-
-This helper is so good that it can pass really tough school tests, like the ones grown-ups take to become doctors or lawyers, and even do well in complicated jobs. It's like having a friend who knows everything and can help you with your homework, no matter how hard it is!
-
-The people who made GPT-4 worked very hard to make sure it's safe and friendly. They taught it good manners, just like you learn to be kind to your friends. But even though it's super smart, it's not perfect. Sometimes, it can still get confused, make up silly answers, or get things wrong, just like sometimes we might forget something or make a mistake. So, it's a powerful tool, but we still need to be a bit careful with it, like a grown-up watching over a very clever but sometimes clumsy robot.
