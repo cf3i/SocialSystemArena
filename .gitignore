@@ -47,3 +47,6 @@ traces/benchmarks/*/clawebench/_score_reports/
 traces/benchmarks/*/clawebench/calc_macro_scores.py
 traces/benchmarks/*/pinch_test_notoken_notime/
 traces/benchmarks/pinch_test_latest/
+
+
+paper/

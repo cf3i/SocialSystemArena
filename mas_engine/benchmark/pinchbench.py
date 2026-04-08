@@ -154,6 +154,7 @@ def run_pinchbench(config: PinchBenchRunConfig) -> dict[str, Any]:
                 workspace=judge_workspace,
             )
 
+    details_path = run_dir / "results" / "details.jsonl"
     rows: list[dict[str, Any]] = []
     try:
         for task in selected_tasks:
@@ -177,12 +178,18 @@ def run_pinchbench(config: PinchBenchRunConfig) -> dict[str, Any]:
                     row.get("runtime_status"),
                     float(row.get("score", 0.0)),
                 )
+                # Append immediately so results survive an interrupted job.
+                with details_path.open("a", encoding="utf-8") as fh:
+                    fh.write(json.dumps(row, ensure_ascii=False) + "\n")
     finally:
         if judge_agent_id and not config.keep_agents and use_openclaw_agent_lifecycle:
             _delete_openclaw_agent(config.openclaw_bin, judge_agent_id)
 
     summary = _build_summary(rows=rows, run_dir=run_dir, config=config, selected=selected_tasks)
-    _write_results(rows=rows, summary=summary, run_dir=run_dir)
+    # Write summary.json; details.jsonl is already complete from incremental writes.
+    (run_dir / "results" / "summary.json").write_text(
+        json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
     return summary
 
 
@@ -629,18 +636,6 @@ def _build_summary(
         "summary_json": str((run_dir / "results" / "summary.json").resolve()),
     }
 
-
-def _write_results(rows: list[dict[str, Any]], summary: dict[str, Any], run_dir: Path) -> None:
-    results_dir = run_dir / "results"
-    results_dir.mkdir(parents=True, exist_ok=True)
-    details = results_dir / "details.jsonl"
-    with details.open("w", encoding="utf-8") as f:
-        for row in rows:
-            f.write(json.dumps(row, ensure_ascii=False) + "\n")
-    (results_dir / "summary.json").write_text(
-        json.dumps(summary, ensure_ascii=False, indent=2),
-        encoding="utf-8",
-    )
 
 
 def _prepare_workspace(task: PinchTask, workspace: Path, assets_dir: Path) -> None:
