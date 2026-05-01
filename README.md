@@ -110,7 +110,7 @@ For detailed failure analysis and historical interpretation, see [docs/analysis.
 
 ```bash
 # Clone with submodules
-git clone --recursive https://github.com/<owner>/SocialSystemArena.git
+git clone --recursive https://github.com/cf3i/SocialSystemArena.git
 cd SocialSystemArena
 
 # Install
