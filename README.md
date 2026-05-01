@@ -45,12 +45,12 @@ Flat pipelines (Mongol Empire, 97.8) dramatically outperform deep gated architec
 |:---:|---|---|:---:|:---:|:---:|
 | 1 | Mongol Empire | `pipeline` | **97.8** | 20 / 21 | 0 |
 | 2 | Edo Bakuhan | `autonomous_cluster` | **85.4** | 16 / 21 | 2 |
-| 3 | Tang Sanshengliubu | `gated_pipeline` | **82.0** | 16 / 21 | 2 |
-| 4 | Soviet Party State | `pipeline` | **78.9** | 15 / 21 | 3 |
+| 3 | Tang Sanshengliubu | `gated_pipeline` | **82.0** | 16 / 21 | 3 |
+| 4 | Soviet Party State | `pipeline` | **78.9** | 15 / 21 | 2 |
 | 5 | Qin-Han Junxian | `pipeline` | **69.4** | 11 / 21 | 2 |
 | 6 | Athens Democracy | `consensus` | **68.4** | 13 / 21 | 5 |
-| 7 | US Federal | `gated_pipeline` | **64.4** | 12 / 21 | 8 |
-| — | *Bare Pipeline (baseline)* | `pipeline` | **55.2** | 10 / 21 | 8 |
+| 7 | US Federal | `gated_pipeline` | **64.4** | 12 / 21 | 7 |
+| — | *Bare Pipeline (baseline)* | `pipeline` | **55.1** | 10 / 21 | 8 |
 
 ### Institution Fingerprints
 
@@ -65,7 +65,7 @@ Avg. steps = measured per-task mean agent invocations (loops and retries increas
 | Qin-Han Junxian | `pipeline` | 0 | 1 | 1 | 4 | 8.0 | 69.4 |
 | Athens Democracy | `consensus` | 0 | 2 | 0 | 2 | 8.9 | 68.4 |
 | US Federal | `gated_pipeline` | 5 | 5 | 0 | 2 | 5.8 | 64.4 |
-| *Bare Pipeline* | `pipeline` | 0 | 0 | 0 | 1 | 1.0 | 55.2 |
+| *Bare Pipeline* | `pipeline` | 0 | 0 | 0 | 1 | 1.0 | 55.1 |
 
 <details>
 <summary>Full 22-task score matrix</summary>
@@ -96,7 +96,7 @@ Avg. steps = measured per-task mean agent invocations (loops and retries increas
 | `task_20` ELI5 PDF Summarization | 100 | 0 | 98 | 93† | 100 | 91 | 100 | 0 | 73 |
 | `task_21` OpenClaw Report Comprehension | 0 | 100 | 100† | 11† | 0 | 100 | 0 | 0 | 39 |
 | `task_22` Second Brain Knowledge Persistence | 57 | 50 | 100 | 60 | 2 | 65 | 0 | 0 | 42 |
-| **Adj. Mean** (excl. task_13) | **68.4** | **85.4** | **97.8** | **69.4** | **78.9** | **82.0** | **64.4** | **55.2** | |
+| **Adj. Mean** (excl. task_13) | **68.4** | **85.4** | **97.8** | **69.4** | **78.9** | **82.0** | **64.4** | **55.1** | |
 
 </details>
 
