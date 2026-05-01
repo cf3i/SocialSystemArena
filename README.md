@@ -1,162 +1,145 @@
-# 王朝大乱斗
+# SocialSystemArena
 
-> 把 7 个历史制度建模为 AI 治理规范，让它们用真实任务互相 PK。
->
-> 核心抽象：**Pattern（消息流拓扑）+ Feature（可叠加特性）** → 声明式 spec → 多智能体运行时。
+**When Agents Evolve, Institutions Follow**
 
----
+[![arXiv](https://img.shields.io/badge/arXiv-2604.27691-b31b1b.svg)](https://arxiv.org/abs/2604.27691)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-## 🏆 大乱斗结果
+[**Paper**](https://arxiv.org/abs/2604.27691) | [**中文版 README**](README_zh.md)
 
-> 模型：MiniMax-M2.5（pc-agent-loop adapter）| 21 个任务（排除环境限制的 `task_13`）
->
-> → [完整分数矩阵 & 失效分析](docs/analysis.md)
-
-| 排名 | 制度 | Pattern | 校正均分 | ≥90分任务 | 零分任务 |
-|:---:|---|---|:---:|:---:|:---:|
-| 🥇 1 | Mongol Empire | `pipeline` | **97.8** | 20/21 | 0 |
-| 🥈 2 | Edo Bakuhan | `autonomous_cluster` | **85.4** | 16/21 | 2 |
-| 🥉 3 | Tang Sanshengliubu | `gated_pipeline` | **82.0** | 16/21 | 2 |
-| 4 | Soviet Party State | `pipeline` | **78.9** | 15/21 | 3 |
-| 5 | Qinhan Junxian | `pipeline` | **69.4** | 11/21 | 2 |
-| 6 | Athens Democracy | `consensus` | **68.4** | 13/21 | 5 |
-| 7 | US Federal | `gated_pipeline` | **64.4** | 12/21 | 8 |
-| 8 | **Bare Pipeline** *(baseline)* | `pipeline` | **55.2** | 10/21 | 8 |
-
-**核心结论：** 扁平线性链（蒙古帝国 97.8）在 agent 任务中全面碾压多层门控架构（美国联邦 64.4）。深度不是负担，分叉与门控密度才是。Bare Pipeline（无 soul、无治理 spec，55.2）作为纯 agent 基线垫底——所有历史制度都跑赢了裸跑，印证了治理结构的实际价值。
+SocialSystemArena models seven historical governance systems as declarative multi-agent specifications and benchmarks them on real-world tasks. Each institution is defined by a **Pattern** (message-flow topology) and composable **Features** (system-level capabilities), compiled into a unified governance runtime. The result is an empirical comparison of how different organizational structures affect agent task completion.
 
 ---
 
-## ⚔️ 制度是怎么建模的？
+## News
 
-每个历史制度被建模为一个**声明式 spec**（YAML / JSON / CUE），spec 定义：
+- **2026-04** — Paper released on [arXiv](https://arxiv.org/abs/2604.27691). Code and benchmark data open-sourced.
 
-- **Stages**：执行节点（哪些 agent，什么角色）
-- **Transitions**：转移规则（decision → 下一个 stage）
-- **Pattern**：消息流的整体拓扑
-- **Features**：可叠加的系统级特性（Monitor、递归 Executor、Emergency Handler 等）
+---
 
-### 4 种 Pattern
+## Overview
 
-| Pattern | 拓扑描述 | 典型制度 |
+Multi-agent systems (MAS) often adopt ad-hoc coordination strategies. We take a different approach: drawing from seven real historical institutions — from the Mongol Empire's flat command chain to Athenian direct democracy — and encoding each as a declarative spec (YAML / JSON / CUE). A shared governance runtime executes all specs under identical conditions, enabling controlled comparison.
+
+### Four Topology Patterns
+
+| Pattern | Description | Example Institutions |
 |---|---|---|
-| `pipeline` | 单向链路，无阻断节点 | 蒙古帝国、苏联、秦汉郡县 |
-| `gated_pipeline` | 管道中插入 Gate，可 reject / veto / modify | 唐三省六部、美国联邦 |
-| `autonomous_cluster` | Orchestrator + 内部闭环自治子系统 | 江户幕藩体制 |
-| `consensus` | 集体投票决策，无单一控制节点 | 雅典直接民主 |
+| `pipeline` | Linear chain, no blocking gates | Mongol Empire, Soviet Party State, Qin-Han Junxian |
+| `gated_pipeline` | Pipeline with gate nodes that can reject / veto / modify | Tang Sanshengliubu, US Federal |
+| `autonomous_cluster` | Orchestrator + internally autonomous subsystems | Edo Bakuhan |
+| `consensus` | Collective voting, no single control node | Athens Democracy |
 
-→ 完整 Pattern 理论体系，含 28 个历史制度逐一分析：**[MAS 架构模式报告](docs/MAS_架构模式报告_修正版.md)**
+### Key Finding
 
-### 制度指纹速查
+Flat pipelines (Mongol Empire, 97.8) dramatically outperform deep gated architectures (US Federal, 64.4) on agent tasks. Depth is not the bottleneck — branching and gate density are. All seven historical institutions outperform a bare single-agent baseline (55.2), confirming that governance structure adds measurable value.
 
-均步数 = 实测每任务平均 agent 调用次数（回环/重试会推高此值）
+---
 
-| 制度 | Pattern | 门控数 | 分支数 | 回环数 | 深度 | 均步数/任务 | 校正均分 |
+## Benchmark Results
+
+> Model: MiniMax-M2.5 (pc-agent-loop adapter) | 21 tasks (excluding `task_13` due to environment constraints)
+
+| Rank | Institution | Pattern | Adj. Mean | Tasks ≥ 90 | Zero-Score Tasks |
+|:---:|---|---|:---:|:---:|:---:|
+| 1 | Mongol Empire | `pipeline` | **97.8** | 20 / 21 | 0 |
+| 2 | Edo Bakuhan | `autonomous_cluster` | **85.4** | 16 / 21 | 2 |
+| 3 | Tang Sanshengliubu | `gated_pipeline` | **82.0** | 16 / 21 | 2 |
+| 4 | Soviet Party State | `pipeline` | **78.9** | 15 / 21 | 3 |
+| 5 | Qin-Han Junxian | `pipeline` | **69.4** | 11 / 21 | 2 |
+| 6 | Athens Democracy | `consensus` | **68.4** | 13 / 21 | 5 |
+| 7 | US Federal | `gated_pipeline` | **64.4** | 12 / 21 | 8 |
+| — | *Bare Pipeline (baseline)* | `pipeline` | **55.2** | 10 / 21 | 8 |
+
+### Institution Fingerprints
+
+Avg. steps = measured per-task mean agent invocations (loops and retries increase this value).
+
+| Institution | Pattern | Gates | Branches | Loops | Depth | Avg. Steps | Adj. Mean |
 |---|---|---:|---:|---:|---:|---:|---:|
-| Mongol Empire | `pipeline` | 0 | 0 | 0 | 6 | **5.6** | 97.8 |
+| Mongol Empire | `pipeline` | 0 | 0 | 0 | 6 | 5.6 | 97.8 |
 | Edo Bakuhan | `autonomous_cluster` | 0 | 2 | 0 | 3 | 9.0 | 85.4 |
-| Tang Sanshengliubu | `gated_pipeline` | 1 | 2 | 3 | 5 | 10.9 *(max 24)* | 82.0 |
-| Soviet Party State | `pipeline` | 0 | 0 | 0 | 5 | **5.0** | 78.9 |
-| Qinhan Junxian | `pipeline` | 0 | 1 | 1 | 4 | 8.0 | 69.4 |
+| Tang Sanshengliubu | `gated_pipeline` | 1 | 2 | 3 | 5 | 10.9 | 82.0 |
+| Soviet Party State | `pipeline` | 0 | 0 | 0 | 5 | 5.0 | 78.9 |
+| Qin-Han Junxian | `pipeline` | 0 | 1 | 1 | 4 | 8.0 | 69.4 |
 | Athens Democracy | `consensus` | 0 | 2 | 0 | 2 | 8.9 | 68.4 |
 | US Federal | `gated_pipeline` | 5 | 5 | 0 | 2 | 5.8 | 64.4 |
-| **Bare Pipeline** *(baseline)* | `pipeline` | 0 | 0 | 0 | 1 | **1.0** | **55.2** |
-
-**步数视角的关键发现：**
-
-- **Mongol（5.6步→97.8分）vs US Federal（5.8步→64.4分）**：步数几乎相同，但蒙古每步都在干活（深流水线），美国联邦每步都在审批（门控链）。步数不是负担，步数花在哪里才是。
-- **Tang（10.9步→82分）**：步数最多，但大部分超出来自回环重试（最高单任务 24步），是主动纠错而非官僚冗余。
-- **Bare Pipeline（1步→55.2分）**：只有1步，agent 单次调用包揽一切——简单任务全满分，需要读文件/多轮推理的任务全零分。说明"步数≥1"是完成复杂任务的必要条件。
-
-### 拓扑对比：同样"复杂"，为什么分数差这么多？
-
-**Tang 三省六部**（`gated_pipeline`，82.0 分）——门控有限、回环协作、集群宽度并存：
-
-![Tang topology](figures/tang_sanshengliubu/tang_sanshengliubu_zh.svg)
-
-**US Federal**（`gated_pipeline`，64.4 分）——5 层门控、5 路分叉，审批链耗尽 agent 注意力预算：
-
-![US Federal topology](figures/us_federal/us_federal_gated_zh.svg)
-
-> 读图规则：一行 = 一个 stage，行内每个节点 = 一个 agent，边标签 = transition 的 decision。
-
----
-
-## 🔬 为什么它们失败了？
-
-| 制度 | 主要失效原因 |
-|---|---|
-| **Athens** | 共识通过后执行断层——agent 把"宣布要做"当成"任务完成"（5 个零分） |
-| **US Federal** | 多层门控耗尽注意力预算，到执行阶段没有实质产出（8 个零分） |
-| **Qinhan** | soul/prompt 稳定性敏感，`error→重试`回路未被触发，模型持续返回 `decision=next` |
-| **Soviet** | 状态叙述替代工具调用，`formal_ratify` 把"向上汇报完成"混同为"任务完成" |
-| **Tang** | 结构性延迟超过评测时限（180s），底层工作可能完成但未及时交付 |
-| **Bare Pipeline** | 无 soul 指导，agent 不知道如何处理"读取上下文文件→结构化输出"类任务；简单任务全满分，文件理解/记忆/数据分析类任务全零分 |
+| *Bare Pipeline* | `pipeline` | 0 | 0 | 0 | 1 | 1.0 | 55.2 |
 
 <details>
-<summary>▶ 完整 22 任务分数矩阵（含 Bare Pipeline 基线）</summary>
+<summary>Full 22-task score matrix</summary>
 
-`†` = 运行时报错但仍被评分 | ⚠️ task_13 为环境限制（无图像生成 API），已从校正均分排除
+`†` = runtime error but still scored | task_13 excluded from adjusted mean (no image generation API available)
 
-| 任务 | Athens | Edo | Mongol | Qinhan | Soviet | Tang | US Fed | **Bare** | 均分 |
-|:-----|:------:|:---:|:------:|:------:|:------:|:----:|:------:|:--------:|----:|
-| `task_01` Calendar Event Creation | 100 | 100 | 100 | 100 | 100 | 100 | 83 | **100** | 98 |
-| `task_02` Stock Price Research | 100 | 100 | 100 | 100 | 100 | 100 | 0 | **100** | 88 |
-| `task_03` Blog Post Writing | 96 | 100 | 96 | 96 | 78 | 95 | 100 | **91** | 94 |
-| `task_04` Weather Script Creation | 100 | 100 | 100† | 0 | 14 | 100 | 100 | **100** | 77 |
-| `task_05` Document Summarization | 100 | 100 | 100 | 0 | 100 | 100 | 100 | **0** | 75 |
-| `task_06` Tech Conference Research | 0 | 100 | 100 | 88 | 98 | 91 | 100 | **96** | 84 |
-| `task_07` Professional Email Drafting | 0 | 96 | 100 | 96 | 96 | 0 | 100 | **88** | 72 |
-| `task_08` Memory Retrieval from Context | 100 | 100 | 90 | 90 | 90 | 100 | 80 | **0** | 81 |
-| `task_09` File Structure Creation | 100 | 100 | 100 | 100 | 100 | 100 | 0 | **100** | 88 |
-| `task_10` Multi-step API Workflow | 94 | 92 | 98 | 8 | 100 | 100 | 0 | **36** | 66 |
-| `task_11` Create Project Structure | 100 | 100 | 100† | 100 | 100 | 100 | 0 | **100** | 88 |
-| `task_12` Search and Replace in Files | 17 | 83 | 100 | 100 | 100 | 100 | 0 | **100** | 75 |
-| `task_13` ⚠️ AI Image Generation *(env)* | 0 | 54 | 25† | 0† | 30† | 33 | 0† | **21** | 20 |
-| `task_14` Humanize AI-Generated Blog | 0 | 94 | 94 | 85 | 88 | 100 | 100 | **94** | 82 |
-| `task_15` Daily Research Summary | 88 | 0 | 100 | 100 | 100 | 0† | 100 | **100** | 74 |
-| `task_16` Email Inbox Triage | 91 | 100 | 98 | 75 | 98 | 0† | 98 | **53** | 77 |
-| `task_16` Competitive Market Research | 94 | 94 | 94 | 47† | 94 | 84† | 94 | **0** | 75 |
-| `task_17` Email Search and Summarization | 0 | 86 | 87 | 9 | 0 | 97 | 97 | **0** | 47 |
-| `task_18` CSV/Excel Data Summarization | 100 | 100 | 100 | 100 | 100 | 100 | 100 | **0** | 88 |
-| `task_20` ELI5 PDF Summarization | 100 | 0 | 98 | 93† | 100 | 91 | 100 | **0** | 73 |
-| `task_21` OpenClaw Report Comprehension | 0 | 100 | 100† | 11† | 0 | 100 | 0 | **0** | 39 |
-| `task_22` Second Brain Knowledge Persistence | 57 | 50 | 100 | 60 | 2 | 65 | 0 | **0** | 42 |
-| **校正均分**（排除 task_13） | **68.4** | **85.4** | **97.8** | **69.4** | **78.9** | **82.0** | **64.4** | **55.2** | |
+| Task | Athens | Edo | Mongol | Qinhan | Soviet | Tang | US Fed | Bare | Mean |
+|:-----|:------:|:---:|:------:|:------:|:------:|:----:|:------:|:----:|----:|
+| `task_01` Calendar Event Creation | 100 | 100 | 100 | 100 | 100 | 100 | 83 | 100 | 98 |
+| `task_02` Stock Price Research | 100 | 100 | 100 | 100 | 100 | 100 | 0 | 100 | 88 |
+| `task_03` Blog Post Writing | 96 | 100 | 96 | 96 | 78 | 95 | 100 | 91 | 94 |
+| `task_04` Weather Script Creation | 100 | 100 | 100† | 0 | 14 | 100 | 100 | 100 | 77 |
+| `task_05` Document Summarization | 100 | 100 | 100 | 0 | 100 | 100 | 100 | 0 | 75 |
+| `task_06` Tech Conference Research | 0 | 100 | 100 | 88 | 98 | 91 | 100 | 96 | 84 |
+| `task_07` Professional Email Drafting | 0 | 96 | 100 | 96 | 96 | 0 | 100 | 88 | 72 |
+| `task_08` Memory Retrieval from Context | 100 | 100 | 90 | 90 | 90 | 100 | 80 | 0 | 81 |
+| `task_09` File Structure Creation | 100 | 100 | 100 | 100 | 100 | 100 | 0 | 100 | 88 |
+| `task_10` Multi-step API Workflow | 94 | 92 | 98 | 8 | 100 | 100 | 0 | 36 | 66 |
+| `task_11` Create Project Structure | 100 | 100 | 100† | 100 | 100 | 100 | 0 | 100 | 88 |
+| `task_12` Search and Replace in Files | 17 | 83 | 100 | 100 | 100 | 100 | 0 | 100 | 75 |
+| `task_13` AI Image Generation *(env)* | 0 | 54 | 25† | 0† | 30† | 33 | 0† | 21 | 20 |
+| `task_14` Humanize AI-Generated Blog | 0 | 94 | 94 | 85 | 88 | 100 | 100 | 94 | 82 |
+| `task_15` Daily Research Summary | 88 | 0 | 100 | 100 | 100 | 0† | 100 | 100 | 74 |
+| `task_16` Email Inbox Triage | 91 | 100 | 98 | 75 | 98 | 0† | 98 | 53 | 77 |
+| `task_16` Competitive Market Research | 94 | 94 | 94 | 47† | 94 | 84† | 94 | 0 | 75 |
+| `task_17` Email Search and Summarization | 0 | 86 | 87 | 9 | 0 | 97 | 97 | 0 | 47 |
+| `task_18` CSV/Excel Data Summarization | 100 | 100 | 100 | 100 | 100 | 100 | 100 | 0 | 88 |
+| `task_20` ELI5 PDF Summarization | 100 | 0 | 98 | 93† | 100 | 91 | 100 | 0 | 73 |
+| `task_21` OpenClaw Report Comprehension | 0 | 100 | 100† | 11† | 0 | 100 | 0 | 0 | 39 |
+| `task_22` Second Brain Knowledge Persistence | 57 | 50 | 100 | 60 | 2 | 65 | 0 | 0 | 42 |
+| **Adj. Mean** (excl. task_13) | **68.4** | **85.4** | **97.8** | **69.4** | **78.9** | **82.0** | **64.4** | **55.2** | |
 
 </details>
 
+For detailed failure analysis and historical interpretation, see [docs/analysis.md](docs/analysis.md).
+
 ---
 
-## 🚀 快速开始
+## Installation
 
-**环境要求：** Python ≥ 3.10
+**Requirements:** Python >= 3.10
 
 ```bash
-# 1. 初始化第三方子模块
-git submodule update --init --recursive
+# Clone with submodules
+git clone --recursive https://github.com/<owner>/SocialSystemArena.git
+cd SocialSystemArena
 
-# 2. 安装
+# Install
 pip install -e .
 ```
 
-### 运行一个制度（mock adapter）
+---
+
+## Quick Start
+
+### Validate a spec
 
 ```bash
-# 校验 spec
 python -m mas_engine.cli validate \
   --spec systems/institutions/tang_sanshengliubu/tang_sanshengliubu.json
+```
 
-# 运行任务
+### Run a task with the mock adapter
+
+```bash
 python -m mas_engine.cli run \
   --spec systems/institutions/tang_sanshengliubu/tang_sanshengliubu.json \
-  --title "测试任务" \
-  --input "请完成一个复杂任务" \
+  --title "Test task" \
+  --input "Complete a complex task" \
   --adapter mock \
   --trace-out traces/test.jsonl
 ```
 
-### 启动 Dashboard
+### Launch the dashboard
 
 ```bash
 python -m mas_engine.cli serve \
@@ -165,45 +148,45 @@ python -m mas_engine.cli serve \
   --institutions systems/institutions.yaml
 ```
 
-打开 `http://127.0.0.1:8787`，可视化拓扑、实时事件流、任务提交与 trace 联动。
+Open `http://127.0.0.1:8787` for topology visualization, live event streams, and trace exploration.
 
 <details>
-<summary>▶ 使用真实 adapter（pc-agent-loop / OpenClaw）</summary>
+<summary>Using real adapters (pc-agent-loop / OpenClaw)</summary>
 
-**pc-agent-loop：**
+**pc-agent-loop:**
 
 ```bash
 python -m mas_engine.cli run \
   --spec systems/institutions/tang_sanshengliubu/tang_sanshengliubu.json \
-  --title "真实任务" --input "请执行..." \
+  --title "Real task" --input "Execute..." \
   --adapter pc-agent-loop \
   --pc-agent-root third_party/pc-agent-loop \
   --pc-mykey third_party/pc-agent-loop/mykey.py \
   --trace-out traces/live.jsonl
 ```
 
-可选参数：`--pc-shared-instance`（所有 runtime_id 共享一个后端实例）、`--pc-llm-no N`（选择 LLM 索引）
+Optional flags: `--pc-shared-instance` (share one backend instance across all runtime IDs), `--pc-llm-no N` (select LLM index).
 
-**OpenClaw：**
+**OpenClaw:**
 
 ```bash
 python -m mas_engine.cli run \
   --spec systems/institutions/tang_sanshengliubu/tang_sanshengliubu.json \
-  --title "真实任务" --input "请执行..." \
+  --title "Real task" --input "Execute..." \
   --adapter openclaw \
   --openclaw-deliver-mode auto \
   --openclaw-project-dir /path/to/openclaw/project \
   --trace-out traces/live.jsonl
 ```
 
-`--openclaw-deliver-mode`：`auto`（推荐）/ `always` / `never`
+`--openclaw-deliver-mode`: `auto` (recommended) / `always` / `never`
 
 </details>
 
 <details>
-<summary>▶ 运行基准测试（PinchBench / MultiAgentBench）</summary>
+<summary>Running benchmarks (PinchBench / MultiAgentBench)</summary>
 
-**PinchBench（OpenClaw）：**
+**PinchBench (OpenClaw):**
 
 ```bash
 python -m mas_engine.cli bench-pinch \
@@ -214,9 +197,9 @@ python -m mas_engine.cli bench-pinch \
   --out-dir traces/benchmarks/pinchbench
 ```
 
-→ [PinchBench 完整运行手册](docs/pinchbench_runbook.md)
+See [PinchBench runbook](docs/pinchbench_runbook.md) for full configuration.
 
-**MultiAgentBench（MAS native）：**
+**MultiAgentBench (MAS native):**
 
 ```bash
 python -m mas_engine.cli bench-mab \
@@ -228,70 +211,74 @@ python -m mas_engine.cli bench-mab \
   --out-dir traces/benchmarks/multiagentbench
 ```
 
-→ [MultiAgentBench 完整运行手册](docs/multiagentbench_runbook.md)
+See [MultiAgentBench runbook](docs/multiagentbench_runbook.md) for full configuration.
 
 </details>
 
 ---
 
-## 🏛️ 加入新王朝
+## Adding a New Institution
 
 ```bash
-# 生成 starter spec
 python -m mas_engine.cli init-spec \
-  --id my_dynasty \
-  --name "我的王朝" \
+  --id my_institution \
+  --name "My Institution" \
   --pattern gated_pipeline \
-  --out systems/institutions/my_dynasty/my_dynasty.json
+  --out systems/institutions/my_institution/my_institution.json
 ```
 
-然后编辑 spec，定义 stages / transitions / soul，注册到 `systems/institutions.yaml`，即可运行与跑分。
+Edit the generated spec to define stages, transitions, and soul prompts, then register it in `systems/institutions.yaml`.
 
-→ [Spec 编写完整指南](docs/MAS_Governance_Engine_详细文档.md) | [Pattern 选型参考](docs/MAS_架构模式报告_修正版.md)
+See [Spec authoring guide](docs/MAS_Governance_Engine_详细文档.md) and [Pattern selection reference](docs/MAS_架构模式报告_修正版.md) for details.
 
 ---
 
-## 📚 参考
-
-### 目录结构
+## Project Structure
 
 ```
 mas_engine/
-├── core/            运行时核心（types / errors / features / runtime）
-├── spec/            规范系统（templates / compiler / validators）
-├── adapters/        运行时适配器（PcAgentLoop / OpenClaw / Mock）
-├── observability/   事件流 + 异步任务管理
-├── web/             Dashboard 前端
+├── core/              Runtime core (types, errors, features, runtime)
+├── spec/              Spec system (templates, compiler, validators)
+├── adapters/          Runtime adapters (PcAgentLoop, OpenClaw, Mock)
+├── observability/     Event stream + async task management
+├── web/               Dashboard frontend
 ├── dashboard_server.py
 └── cli.py
 
 systems/
-├── institutions/<id>/    制度 spec + soul 文件
-├── institutions.yaml     institution → spec 映射注册表
-└── pattern_souls/        可复用 pattern 级 soul 文件
+├── institutions/<id>/   Institution specs + soul files
+├── institutions.yaml    Institution-to-spec registry
+└── pattern_souls/       Reusable pattern-level soul templates
 
-dsl/     CUE schema
-traces/  运行输出
-tests/   单元测试
+dsl/       CUE schema definitions
+traces/    Run outputs
+tests/     Unit tests
 ```
 
-### 运行测试
+### Running Tests
 
 ```bash
 python -m unittest discover -s tests -p 'test_*.py'
 ```
 
-### 备注
+---
 
-- 加载 `.cue` 文件需要安装 `cue` CLI；JSON / YAML spec 无此依赖
-- 可视化功能需要 `pip install -e ".[visualize]"`
+## Citation
 
-### 文档索引
+If you find this work useful, please cite our paper:
 
-| 文档 | 内容 |
-|---|---|
-| [MAS 架构模式报告](docs/MAS_架构模式报告_修正版.md) | 4 种 Pattern 定义 + 28 个历史制度逐一分析 |
-| [引擎详细文档](docs/MAS_Governance_Engine_详细文档.md) | Spec 编写、运行时原理、Dashboard API 参考 |
-| [基准结果分析](docs/analysis.md) | 22 任务分数矩阵、失效模式深析、历史视角解读 |
-| [PinchBench 运行手册](docs/pinchbench_runbook.md) | PinchBench 详细配置与运行说明 |
-| [MultiAgentBench 运行手册](docs/multiagentbench_runbook.md) | MAB 详细配置、SLURM 脚本说明 |
+```bibtex
+@misc{fei2026agentsevolveinstitutionsfollow,
+      title={When Agents Evolve, Institutions Follow},
+      author={Chao Fei and Hongcheng Guo and Yanghua Xiao},
+      year={2026},
+      eprint={2604.27691},
+      archivePrefix={arXiv},
+      primaryClass={cs.AI},
+      url={https://arxiv.org/abs/2604.27691},
+}
+```
+
+## License
+
+This project is released under the [MIT License](LICENSE).
